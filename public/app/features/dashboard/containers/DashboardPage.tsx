@@ -381,11 +381,11 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
           {initError && <DashboardFailed />}
           {showSubMenu && (
-            <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
+            <section aria-label={selectors.pages.Dashboard.SubMenu.submenu} className={'submenu'}>
               <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
             </section>
           )}
-
+        <div className={'dashboard-title'}>{dashboard.title}</div>
           <DashboardGrid
             dashboard={dashboard}
             isEditable={!!dashboard.meta.canEdit}
