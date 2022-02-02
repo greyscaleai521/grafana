@@ -359,20 +359,23 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, initError, queryParams, isPublic } = this.props;
+    const { dashboard, initError, queryParams, isPublic, theme } = this.props;
     const { editPanel, viewPanel, updateScrollTop } = this.state;
     const kioskMode = !isPublic ? getKioskMode() : KioskMode.Full;
-
+    const styles = getStyles(theme, kioskMode);
     if (!dashboard) {
       return <DashboardLoading initPhase={this.props.initPhase} />;
     }
 
     const inspectPanel = this.getInspectPanel();
-    const containerClassNames = classnames({ 'panel-in-fullscreen': viewPanel });
+    const containerClassNames = classnames(styles.dashboardContainer, {
+      'panel-in-fullscreen': viewPanel,
+    });
 
-    const showSubMenu = !editPanel && kioskMode === KioskMode.Off && !this.props.queryParams.editview;
+    const showSubMenu =
+      !editPanel && (kioskMode === KioskMode.Off || kioskMode === KioskMode.TV) && !this.props.queryParams.editview;
     const toolbar = kioskMode !== KioskMode.Full && (
-      <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
+      <header data-testid={selectors.pages.Dashboard.DashNav.navV2} className={styles.dashboardHeader}>
         <DashNav
           dashboard={dashboard}
           title={dashboard.title}
@@ -398,11 +401,11 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
         {initError && <DashboardFailed />}
         {showSubMenu && (
-          <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
+          <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}  className={'submenu'}>
             <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
           </section>
         )}
-
+        <div className={'dashboard-title'}>{dashboard.title}</div>
         <DashboardGrid dashboard={dashboard} viewPanel={viewPanel} editPanel={editPanel} />
 
         {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
@@ -412,6 +415,45 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     );
   }
 }
+
+/*
+ * Styles
+ */
+export const getStyles = stylesFactory((theme: GrafanaTheme2, kioskMode) => {
+  const contentPadding = kioskMode !== KioskMode.Full ? theme.spacing(0, 2, 2) : theme.spacing(2);
+  return {
+    dashboardContainer: css`
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex: 1 1 0;
+      flex-direction: column;
+      min-height: 0;
+    `,
+    dashboardScroll: css`
+      width: 100%;
+      flex-grow: 1;
+      min-height: 0;
+      display: flex;
+    `,
+    dashboardContent: css`
+      padding: ${contentPadding};
+      flex-basis: 100%;
+      flex-grow: 1;
+    `,
+    dashboardHeader: css`
+      -webkit-box-align: center;
+      align-items: center;
+      background: rgb(244, 245, 245);
+      display: flex;
+      flex-wrap: wrap;
+      -webkit-box-pack: end;
+      justify-content: flex-end;
+      padding: 12px 16px;
+      background: white;
+    `,
+  };
+});
 
 export const DashboardPage = withTheme2(UnthemedDashboardPage);
 DashboardPage.displayName = 'DashboardPage';

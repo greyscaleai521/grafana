@@ -163,31 +163,31 @@ export const DashNav = React.memo<Props>((props) => {
       buttons.push(<Tag name="Public" colorIndex={5} data-testid={selectors.publicDashboardTag}></Tag>);
     }
 
-    if (dashboard.uid && config.featureToggles.dashboardComments) {
-      buttons.push(
-        <ModalsController key="button-dashboard-comments">
-          {({ showModal, hideModal }) => (
-            <DashNavButton
-              tooltip={t({ id: 'dashboard.toolbar.comments-show', message: 'Show dashboard comments' })}
-              icon="comment-alt-message"
-              iconSize="lg"
-              onClick={() => {
-                showModal(DashboardCommentsModal, {
-                  dashboard,
-                  onDismiss: hideModal,
-                });
-              }}
-            />
-          )}
-        </ModalsController>
-      );
-    }
+  if (dashboard.uid && config.featureToggles.dashboardComments) {
+    buttons.push(
+      <ModalsController key="button-dashboard-comments">
+        {({ showModal, hideModal }) => (
+          <DashNavButton
+            tooltip={t({ id: 'dashboard.toolbar.comments-show', message: 'Show dashboard comments' })}
+            icon="comment-alt-message"
+            iconSize="lg"
+            onClick={() => {
+              showModal(DashboardCommentsModal, {
+                dashboard,
+                onDismiss: hideModal,
+              });
+            }}
+          />
+        )}
+      </ModalsController>
+    );
+  }
 
-    addCustomContent(customLeftActions, buttons);
-    return buttons;
-  };
+  addCustomContent(customLeftActions, buttons);
+  return buttons;
+};
 
-  const renderPlaylistControls = () => {
+const renderPlaylistControls = () => {
     return (
       <ButtonGroup key="playlist-buttons">
         <ToolbarButton
@@ -241,7 +241,7 @@ export const DashNav = React.memo<Props>((props) => {
     }
 
     if (kioskMode === KioskMode.TV) {
-      return [renderTimeControls(), tvButton];
+      return [renderTimeControls()];
     }
 
     if (canEdit && !isFullscreen) {
@@ -307,7 +307,7 @@ export const DashNav = React.memo<Props>((props) => {
     window.location.href = textUtil.sanitizeUrl(snapshotUrl);
   };
 
-  const { isFullscreen, title, folderTitle } = props;
+  const { isFullscreen, title, folderTitle, kioskMode } = props;
   // this ensures the component rerenders when the location changes
   const location = useLocation();
   const titleHref = locationUtil.getUrlForPartial(location, { search: 'open' });
@@ -329,6 +329,9 @@ export const DashNav = React.memo<Props>((props) => {
     );
   }
 
+    if (kioskMode === KioskMode.TV) {
+      return renderRightActions();
+    }
   return (
     <PageToolbar
       pageIcon={isFullscreen ? undefined : 'apps'}
