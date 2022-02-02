@@ -1,10 +1,21 @@
+.submenu {
+  margin: 0px -20px 10px -20px;
+}
+
+.dashboard-title {
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
 .submenu-controls {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
   align-content: flex-start;
   align-items: flex-start;
-  padding: 0 0 $space-sm 0;
+  background: white;
+  padding: 10px;
+  width: 100%;
 }
 
 .annotation-segment {
