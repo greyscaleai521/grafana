@@ -191,7 +191,7 @@ class DashNav extends PureComponent<Props> {
     }
 
     if (kioskMode === KioskMode.TV) {
-      return [this.renderTimeControls(), tvButton];
+      return [this.renderTimeControls()];
     }
 
     if (canEdit && !isFullscreen) {
@@ -243,11 +243,15 @@ class DashNav extends PureComponent<Props> {
   }
 
   render() {
-    const { isFullscreen, title, folderTitle } = this.props;
+    const { isFullscreen, title, folderTitle, kioskMode } = this.props;
     const onGoBack = isFullscreen ? this.onClose : undefined;
 
     const titleHref = locationUtil.updateSearchParams(window.location.href, '?search=open');
     const parentHref = locationUtil.updateSearchParams(window.location.href, '?search=open&folder=current');
+
+    if (kioskMode === KioskMode.TV) {
+      return this.renderRightActionsButton();
+    }
 
     return (
       <PageToolbar

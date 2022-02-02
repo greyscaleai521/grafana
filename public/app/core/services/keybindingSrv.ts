@@ -117,7 +117,10 @@ export class KeybindingSrv {
     }
 
     if (search.kiosk) {
-      exitKioskMode();
+      const removeKioskOnEscape = search.removeKioskOnEscape === false;
+      if (!removeKioskOnEscape) {
+        exitKioskMode();
+      }
     }
 
     if (search.search) {

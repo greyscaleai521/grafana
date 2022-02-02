@@ -329,12 +329,13 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     const containerClassNames = classnames(styles.dashboardContainer, {
       'panel-in-fullscreen': viewPanel,
     });
-    const showSubMenu = !editPanel && kioskMode === KioskMode.Off && !this.props.queryParams.editview;
+    const showSubMenu =
+      !editPanel && (kioskMode === KioskMode.Off || kioskMode === KioskMode.TV) && !this.props.queryParams.editview;
 
     return (
       <div className={containerClassNames}>
         {kioskMode !== KioskMode.Full && (
-          <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
+          <header data-testid={selectors.pages.Dashboard.DashNav.navV2} className={styles.dashboardHeader}>
             <DashNav
               dashboard={dashboard}
               title={dashboard.title}
@@ -359,11 +360,11 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             <div className={styles.dashboardContent}>
               {initError && <DashboardFailed />}
               {showSubMenu && (
-                <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
+                <section aria-label={selectors.pages.Dashboard.SubMenu.submenu} className={'submenu'}>
                   <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
                 </section>
               )}
-
+              <div className={'dashboard-title'}>{dashboard.title}</div>
               <DashboardGrid dashboard={dashboard} viewPanel={viewPanel} editPanel={editPanel} />
             </div>
           </CustomScrollbar>
@@ -401,6 +402,17 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, kioskMode) => {
       padding: ${contentPadding};
       flex-basis: 100%;
       flex-grow: 1;
+    `,
+    dashboardHeader: css`
+      -webkit-box-align: center;
+      align-items: center;
+      background: rgb(244, 245, 245);
+      display: flex;
+      flex-wrap: wrap;
+      -webkit-box-pack: end;
+      justify-content: flex-end;
+      padding: 12px 16px;
+      background: white;
     `,
   };
 });
