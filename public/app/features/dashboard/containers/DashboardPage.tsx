@@ -427,7 +427,6 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, kioskMode) => {
       flex-wrap: wrap;
       -webkit-box-pack: end;
       justify-content: flex-end;
-      padding: 12px 16px;
       background: white;
     `,
   };
