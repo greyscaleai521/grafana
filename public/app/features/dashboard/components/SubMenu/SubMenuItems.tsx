@@ -68,3 +68,5 @@ export const SubMenuItems: FunctionComponent<Props> = ({ variables }) => {
     </>
   );
 };
+
+SubMenuItems.displayName = 'SubMenu';
