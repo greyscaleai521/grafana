@@ -406,12 +406,11 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, kioskMode) => {
     dashboardHeader: css`
       -webkit-box-align: center;
       align-items: center;
-      background: rgb(244, 245, 245);
       display: flex;
       flex-wrap: wrap;
+      padding-right: 15px;
       -webkit-box-pack: end;
       justify-content: flex-end;
-      background: white;
     `,
   };
 });
