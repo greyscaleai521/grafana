@@ -64,7 +64,7 @@ export const SubMenuItems: FunctionComponent<Props> = ({ variables, readOnly }) 
         );
       })}
 
-      <Button onClick={onClearAllFilters} fill={'text'}>
+      <Button className="clearall-btn" onClick={onClearAllFilters} fill={'text'}>
         Clear All
       </Button>
     </>
