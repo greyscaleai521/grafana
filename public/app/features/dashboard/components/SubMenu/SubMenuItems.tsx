@@ -70,3 +70,5 @@ export const SubMenuItems = ({ variables, readOnly }: Props) => {
     </>
   );
 };
+
+SubMenuItems.displayName = 'SubMenu';
