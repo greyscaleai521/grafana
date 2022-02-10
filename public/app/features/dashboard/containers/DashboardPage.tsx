@@ -381,7 +381,8 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 /*
  * Styles
  */
-export const getStyles = stylesFactory((theme: GrafanaTheme2, kioskMode) => {
+export const getStyles = stylesFactory((theme: GrafanaTheme2, kioskMode: string) => {
+  const panelBg = theme.components.panel.background;
   const contentPadding = kioskMode !== KioskMode.Full ? theme.spacing(0, 2, 2) : theme.spacing(2);
   return {
     dashboardContainer: css`
@@ -408,6 +409,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, kioskMode) => {
       align-items: center;
       display: flex;
       flex-wrap: wrap;
+      background: ${panelBg};
       padding-right: 15px;
       -webkit-box-pack: end;
       justify-content: flex-end;
