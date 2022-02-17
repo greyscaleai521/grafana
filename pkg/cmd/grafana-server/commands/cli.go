@@ -98,7 +98,9 @@ func RunServer(opt ServerOptions) int {
 		runtime.SetBlockProfileRate(1)
 		go func() {
 			err := http.ListenAndServe(fmt.Sprintf("%s:%d", profileDiagnostics.addr, profileDiagnostics.port), nil)
+			//log.Println(http.ListenAndServe(":6060", nil))
 			if err != nil {
+				clilog.Debug("Profiling error", "err", err)
 				panic(err)
 			}
 		}()
