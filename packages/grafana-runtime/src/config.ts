@@ -73,7 +73,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
   rendererVersion = '';
-  http2Enabled = false;
+  http2Enabled = true;
   dateFormats?: SystemDateFormatSettings;
   sentry = {
     enabled: false,
