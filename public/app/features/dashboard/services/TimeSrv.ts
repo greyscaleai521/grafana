@@ -272,6 +272,11 @@ export class TimeSrv {
     this.setAutoRefresh(this.previousAutoRefresh);
   }
 
+  // expose locationservice
+  getLocationSrv() {
+    return locationService;
+  }
+
   setTime(time: RawTimeRange, fromRouteUpdate?: boolean) {
     extend(this.time, time);
 

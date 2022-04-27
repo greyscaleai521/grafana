@@ -41,5 +41,10 @@ export function initWindowRuntime() {
         return acc;
       }, {} as Record<number, PanelData | undefined>);
     },
+
+    // expose timeservice
+    getTimeService: () => {
+      return getTimeSrv();
+    },
   };
 }
