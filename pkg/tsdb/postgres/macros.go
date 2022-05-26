@@ -9,8 +9,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
+
+var macrosLogger = log.New("macros")
 
 const rsIdentifier = `([_a-zA-Z0-9]+)`
 const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
@@ -68,6 +71,8 @@ func (m *postgresMacroEngine) Interpolate(query *backend.DataQuery, timeRange ba
 
 //nolint:gocyclo
 func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *backend.DataQuery, name string, args []string) (string, error) {
+
+	macrosLogger.Info("evaluating macros", "args", fmt.Sprintf("%v", args))
 	switch name {
 	case "__time":
 		if len(args) == 0 {
@@ -83,7 +88,6 @@ func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
-
 		return fmt.Sprintf("%s BETWEEN '%s' AND '%s'", args[0], timeRange.From.UTC().Format(time.RFC3339Nano), timeRange.To.UTC().Format(time.RFC3339Nano)), nil
 	case "__timeFrom":
 		return fmt.Sprintf("'%s'", timeRange.From.UTC().Format(time.RFC3339Nano)), nil
@@ -154,6 +158,34 @@ func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *
 			return tg + " AS \"time\"", nil
 		}
 		return "", err
+
+	//GSAI - custom macros
+	case "__historicQuerySwitch":
+		if len(args) != 1 {
+			return "", fmt.Errorf("expecting threshold argument of type int alone to be passed: passed arguments are %v", args)
+		}
+		var thresholdInDays int
+		_, err := fmt.Sscan(args[0], &thresholdInDays)
+		if err != nil {
+			return "", fmt.Errorf("unable to parse threshold '%s': %w", args[0], err)
+		}
+
+		durationInHours := time.Now().UTC().Sub(timeRange.From.UTC()).Hours()
+
+		if int(durationInHours) > (24 * thresholdInDays) {
+			return "True", nil
+		}
+		return "False", nil
+
+	case "__defectFilterSwitch":
+		if len(args) != 2 {
+			return "", fmt.Errorf("missing $FmType, $FmSize arguments: passed arguments are %v", args)
+		}
+		if (args[0] == "NULL") && (args[1] == "NULL") {
+			return "True", nil
+		}
+		return "False", nil
+
 	default:
 		return "", fmt.Errorf("unknown macro %q", name)
 	}
