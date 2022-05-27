@@ -323,7 +323,7 @@ func TestMacroEngine(t *testing.T) {
 
 			_, err := engine.Interpolate(query, timeRange, "$__defectFilterSwitch(ewffrw)")
 
-			require.EqualError(t, err, "missing $FmType, $FmSize arguments: passed arguments are [ewffrw]")
+			require.EqualError(t, err, "expecting 2 arguments: passed arguments are [ewffrw]")
 		})
 
 		t.Run("if arguments are greater than 2", func(t *testing.T) {
@@ -331,7 +331,7 @@ func TestMacroEngine(t *testing.T) {
 
 			_, err := engine.Interpolate(query, timeRange, "$__defectFilterSwitch(ewffrw, wsddfe, wqedfw2efd)")
 
-			require.EqualError(t, err, "missing $FmType, $FmSize arguments: passed arguments are [ewffrw wsddfe wqedfw2efd]")
+			require.EqualError(t, err, "expecting 2 arguments: passed arguments are [ewffrw wsddfe wqedfw2efd]")
 		})
 
 	})

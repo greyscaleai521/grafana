@@ -179,7 +179,7 @@ func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *
 
 	case "__defectFilterSwitch":
 		if len(args) != 2 {
-			return "", fmt.Errorf("missing $FmType, $FmSize arguments: passed arguments are %v", args)
+			return "", fmt.Errorf("expecting 2 arguments: passed arguments are %v", args)
 		}
 		if (args[0] == "NULL") && (args[1] == "NULL") {
 			return "True", nil
