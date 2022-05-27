@@ -217,7 +217,7 @@ func TestMacroEngine(t *testing.T) {
 		})
 	})
 
-	t.Run("Macro: $__historicQuerySwitch", func(t *testing.T) {
+	t.Run("Macro: $__isTimeFromOutsideThreshold", func(t *testing.T) {
 
 		t.Run("given the from-time lies outside of threshold", func(t *testing.T) {
 			from := time.Date(1960, 2, 1, 7, 0, 0, 500e6, time.UTC)
@@ -225,7 +225,7 @@ func TestMacroEngine(t *testing.T) {
 				From: from,
 			}
 
-			sql, err := engine.Interpolate(query, timeRange, "$__historicQuerySwitch(30)")
+			sql, err := engine.Interpolate(query, timeRange, "$__isTimeFromOutsideThreshold(30)")
 
 			require.NoError(t, err)
 			require.Equal(t, "True", sql)
@@ -237,7 +237,7 @@ func TestMacroEngine(t *testing.T) {
 				From: from,
 			}
 
-			sql, err := engine.Interpolate(query, timeRange, "$__historicQuerySwitch(30)")
+			sql, err := engine.Interpolate(query, timeRange, "$__isTimeFromOutsideThreshold(30)")
 
 			require.NoError(t, err)
 			require.Equal(t, "False", sql)
@@ -249,7 +249,7 @@ func TestMacroEngine(t *testing.T) {
 				From: from,
 			}
 
-			sql, err := engine.Interpolate(query, timeRange, "$__historicQuerySwitch(30)")
+			sql, err := engine.Interpolate(query, timeRange, "$__isTimeFromOutsideThreshold(30)")
 
 			require.NoError(t, err)
 			require.Equal(t, "False", sql)
@@ -261,7 +261,7 @@ func TestMacroEngine(t *testing.T) {
 				From: from,
 			}
 
-			_, err := engine.Interpolate(query, timeRange, "$__historicQuerySwitch()")
+			_, err := engine.Interpolate(query, timeRange, "$__isTimeFromOutsideThreshold()")
 
 			require.EqualError(t, err, "unable to parse threshold '': EOF")
 		})
@@ -272,7 +272,7 @@ func TestMacroEngine(t *testing.T) {
 				From: from,
 			}
 
-			_, err := engine.Interpolate(query, timeRange, "$__historicQuerySwitch(30, wqsdqw, wqdq)")
+			_, err := engine.Interpolate(query, timeRange, "$__isTimeFromOutsideThreshold(30, wqsdqw, wqdq)")
 
 			require.EqualError(t, err, "expecting threshold argument of type int alone to be passed: passed arguments are [30 wqsdqw wqdq]")
 		})
@@ -283,57 +283,40 @@ func TestMacroEngine(t *testing.T) {
 				From: from,
 			}
 
-			_, err := engine.Interpolate(query, timeRange, "$__historicQuerySwitch(erfewg)")
+			_, err := engine.Interpolate(query, timeRange, "$__isTimeFromOutsideThreshold(erfewg)")
 
 			require.EqualError(t, err, "unable to parse threshold 'erfewg': expected integer")
 		})
 	})
 
-	t.Run("Macro: $__defectFilterSwitch", func(t *testing.T) {
+	t.Run("Macro: $__isNull", func(t *testing.T) {
 
-		t.Run("both arguments passed are 'NULL'", func(t *testing.T) {
+		t.Run("all arguments passed are 'NULL'", func(t *testing.T) {
 			timeRange := backend.TimeRange{}
 
-			sql, err := engine.Interpolate(query, timeRange, "$__defectFilterSwitch(NULL,NULL)")
+			sql, err := engine.Interpolate(query, timeRange, "$__isNull(NULL,NULL)")
 
 			require.NoError(t, err)
 			require.Equal(t, "True", sql)
 		})
 
-		t.Run("if one of the arguments is not NULL", func(t *testing.T) {
+		t.Run("if 1 of the arguments is not NULL", func(t *testing.T) {
 			timeRange := backend.TimeRange{}
 
-			sql, err := engine.Interpolate(query, timeRange, "$__defectFilterSwitch(NULL,ewffrw)")
+			sql, err := engine.Interpolate(query, timeRange, "$__isNull(NULL,ewffrw,NULL)")
 
 			require.NoError(t, err)
 			require.Equal(t, "False", sql)
 		})
 
-		t.Run("if both the arguments are not NULL", func(t *testing.T) {
+		t.Run("more than 1 arguments are not NULL", func(t *testing.T) {
 			timeRange := backend.TimeRange{}
 
-			sql, err := engine.Interpolate(query, timeRange, "$__defectFilterSwitch(adfq,ewffrw)")
+			sql, err := engine.Interpolate(query, timeRange, "$__isNull(adfq,ewffrw,NULL,krtd)")
 
 			require.NoError(t, err)
 			require.Equal(t, "False", sql)
 		})
-
-		t.Run("if arguments are less than 2", func(t *testing.T) {
-			timeRange := backend.TimeRange{}
-
-			_, err := engine.Interpolate(query, timeRange, "$__defectFilterSwitch(ewffrw)")
-
-			require.EqualError(t, err, "expecting 2 arguments: passed arguments are [ewffrw]")
-		})
-
-		t.Run("if arguments are greater than 2", func(t *testing.T) {
-			timeRange := backend.TimeRange{}
-
-			_, err := engine.Interpolate(query, timeRange, "$__defectFilterSwitch(ewffrw, wsddfe, wqedfw2efd)")
-
-			require.EqualError(t, err, "expecting 2 arguments: passed arguments are [ewffrw wsddfe wqedfw2efd]")
-		})
-
 	})
 
 }
