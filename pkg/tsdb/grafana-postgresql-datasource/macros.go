@@ -160,7 +160,7 @@ func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *
 		return "", err
 
 	//GSAI - custom macros
-	case "__historicQuerySwitch":
+	case "__isTimeFromOutsideThreshold":
 		if len(args) != 1 {
 			return "", fmt.Errorf("expecting threshold argument of type int alone to be passed: passed arguments are %v", args)
 		}
@@ -177,14 +177,13 @@ func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *
 		}
 		return "False", nil
 
-	case "__defectFilterSwitch":
-		if len(args) != 2 {
-			return "", fmt.Errorf("expecting 2 arguments: passed arguments are %v", args)
+	case "__isNull":
+		for _, arg := range args {
+			if arg != "NULL" {
+				return "False", nil
+			}
 		}
-		if (args[0] == "NULL") && (args[1] == "NULL") {
-			return "True", nil
-		}
-		return "False", nil
+		return "True", nil
 
 	default:
 		return "", fmt.Errorf("unknown macro %q", name)
