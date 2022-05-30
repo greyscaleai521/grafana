@@ -72,7 +72,7 @@ func (m *postgresMacroEngine) Interpolate(query *backend.DataQuery, timeRange ba
 //nolint:gocyclo
 func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *backend.DataQuery, name string, args []string) (string, error) {
 
-	macrosLogger.Info("evaluating macros", "args", fmt.Sprintf("%v", args))
+	macrosLogger.Debug("evaluating macros", "args", fmt.Sprintf("%v", args))
 	switch name {
 	case "__time":
 		if len(args) == 0 {
