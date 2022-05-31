@@ -7,20 +7,33 @@ import { Button } from '@grafana/ui';
 import { getTemplateSrv } from '../../../templating/template_srv';
 import { ALL_VARIABLE_TEXT } from '../../../variables/constants';
 import { PickerRenderer } from '../../../variables/pickers/PickerRenderer';
-import { TextBoxVariableModel, VariableHide, VariableModel } from '../../../variables/types';
+import { TextBoxVariableModel, VariableHide, VariableModel, VariableWithOptions } from '../../../variables/types';
 
 interface Props {
   variables: VariableModel[];
+  filtersExpanded: boolean;
   readOnly?: boolean;
 }
 
-export const SubMenuItems: FunctionComponent<Props> = ({ variables, readOnly }) => {
+export const SubMenuItems: FunctionComponent<Props> = ({ variables, filtersExpanded, readOnly }) => {
+  const modelVariable = variables as VariableWithOptions[];
   const [visibleVariables, setVisibleVariables] = useState<VariableModel[]>([]);
+  let advanceFilters = modelVariable.filter(
+    (vairable) => vairable.id.startsWith('Advanced') && vairable.current.selected
+  ).length;
 
   useEffect(() => {
-    setVisibleVariables(variables.filter((state) => state.hide !== VariableHide.hideVariable));
-  }, [variables]);
+    setVisibleVariables(
+      modelVariable.filter(
+        (state) => state.hide !== VariableHide.hideVariable && (filtersExpanded || !state.id.startsWith('Advanced'))
+      )
+    );
+  }, [modelVariable, filtersExpanded]);
 
+  function ExpandFilters() {
+    event?.preventDefault();
+    filtersExpanded = filtersExpanded ? false : true;
+  }
   function onClearAllFilters(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
 
@@ -64,7 +77,11 @@ export const SubMenuItems: FunctionComponent<Props> = ({ variables, readOnly }) 
           </div>
         );
       })}
-
+      {!filtersExpanded && (
+        <Button className="FilterCounter" onClick={ExpandFilters} fill={'text'}>
+          + {advanceFilters}
+        </Button>
+      )}
       <Button className="clearall-btn" onClick={onClearAllFilters} fill={'text'}>
         Clear All
       </Button>
