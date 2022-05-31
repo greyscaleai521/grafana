@@ -299,7 +299,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
     return (
       <div className={styles.variablesWrapper}>
-        <SubMenuItems variables={variables} />
+        <SubMenuItems variables={variables} filtersExpanded={true} />
       </div>
     );
   }

@@ -1,5 +1,5 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
-import { TextBoxVariableModel, VariableHide, VariableModel } from '../../../variables/types';
+import { TextBoxVariableModel, VariableHide, VariableModel, VariableWithOptions } from '../../../variables/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { PickerRenderer } from '../../../variables/pickers/PickerRenderer';
 import { ALL_VARIABLE_TEXT } from '../../../variables/state/types';
@@ -9,15 +9,28 @@ import { Button } from '@grafana/ui';
 
 interface Props {
   variables: VariableModel[];
+  filtersExpanded: boolean;
 }
 
-export const SubMenuItems: FunctionComponent<Props> = ({ variables }) => {
+export const SubMenuItems: FunctionComponent<Props> = ({ variables, filtersExpanded }) => {
+  const modelVariable = variables as VariableWithOptions[];
   const [visibleVariables, setVisibleVariables] = useState<VariableModel[]>([]);
+  let advanceFilters = modelVariable.filter(
+    (vairable) => vairable.id.startsWith('Advanced') && vairable.current.selected
+  ).length;
 
   useEffect(() => {
-    setVisibleVariables(variables.filter((state) => state.hide !== VariableHide.hideVariable));
-  }, [variables]);
+    setVisibleVariables(
+      modelVariable.filter(
+        (state) => state.hide !== VariableHide.hideVariable && (filtersExpanded || !state.id.startsWith('Advanced'))
+      )
+    );
+  }, [modelVariable, filtersExpanded]);
 
+  function ExpandFilters() {
+    event?.preventDefault();
+    filtersExpanded = filtersExpanded ? false : true;
+  }
   function onClearAllFilters(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
 
@@ -61,7 +74,11 @@ export const SubMenuItems: FunctionComponent<Props> = ({ variables }) => {
           </div>
         );
       })}
-
+      {!filtersExpanded && (
+        <Button className="FilterCounter" onClick={ExpandFilters} fill={'text'}>
+          + {advanceFilters}
+        </Button>
+      )}
       <Button className="clearall-btn" onClick={onClearAllFilters} fill={'text'}>
         Clear All
       </Button>
