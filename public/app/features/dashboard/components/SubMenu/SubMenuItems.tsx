@@ -19,17 +19,22 @@ export const SubMenuItems: FunctionComponent<Props> = ({ variables, filtersExpan
   const modelVariable = variables as VariableWithOptions[];
   const [visibleVariables, setVisibleVariables] = useState<VariableModel[]>([]);
   let advanceFilters = modelVariable.filter(
-    (vairable) => vairable.id.startsWith('Advanced') && vairable.current.selected
+    (vairable) => vairable.id.toLowerCase().startsWith('advanced') && !isDefault(vairable)
   ).length;
 
   useEffect(() => {
     setVisibleVariables(
       modelVariable.filter(
-        (state) => state.hide !== VariableHide.hideVariable && (filtersExpanded || !state.id.startsWith('Advanced'))
+        (state) =>
+          state.hide !== VariableHide.hideVariable &&
+          (filtersExpanded || !state.id.toLowerCase().startsWith('advanced'))
       )
     );
   }, [modelVariable, filtersExpanded]);
 
+  function isDefault(filter: VariableWithOptions) {
+    return filter.current.value.toString() === '' || filter.current.value.toString() === '$__all' ? true : false;
+  }
   function ChildFilters() {
     event?.preventDefault();
     ExpandFilters();
@@ -40,7 +45,7 @@ export const SubMenuItems: FunctionComponent<Props> = ({ variables, filtersExpan
     const updateQuery: any = {};
     const templateSrv = getTemplateSrv();
 
-    visibleVariables.map((variable) => {
+    modelVariable.map((variable) => {
       const variableName = `var-${variable.id}`;
       let allValue = templateSrv.getAllValue(variable);
       if (allValue === ALL_VARIABLE_TEXT) {
@@ -77,9 +82,9 @@ export const SubMenuItems: FunctionComponent<Props> = ({ variables, filtersExpan
           </div>
         );
       })}
-      {!filtersExpanded && (
+      {!filtersExpanded && advanceFilters > 0 && (
         <Button className="FilterCounter" onClick={ChildFilters} fill={'text'}>
-          + {advanceFilters}
+          + {advanceFilters} Filters Applied
         </Button>
       )}
       <Button className="clearall-btn" onClick={onClearAllFilters} fill={'text'}>
