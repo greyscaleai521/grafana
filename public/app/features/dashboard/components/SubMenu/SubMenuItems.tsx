@@ -12,10 +12,11 @@ import { TextBoxVariableModel, VariableHide, VariableModel, VariableWithOptions 
 interface Props {
   variables: VariableModel[];
   filtersExpanded: boolean;
+  ExpandFilters: Function;
   readOnly?: boolean;
 }
 
-export const SubMenuItems: FunctionComponent<Props> = ({ variables, filtersExpanded, readOnly }) => {
+export const SubMenuItems: FunctionComponent<Props> = ({ variables, filtersExpanded, ExpandFilters, readOnly }) => {
   const modelVariable = variables as VariableWithOptions[];
   const [visibleVariables, setVisibleVariables] = useState<VariableModel[]>([]);
   let advanceFilters = modelVariable.filter(
@@ -30,9 +31,9 @@ export const SubMenuItems: FunctionComponent<Props> = ({ variables, filtersExpan
     );
   }, [modelVariable, filtersExpanded]);
 
-  function ExpandFilters() {
+  function ChildFilters() {
     event?.preventDefault();
-    filtersExpanded = filtersExpanded ? false : true;
+    ExpandFilters();
   }
   function onClearAllFilters(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
@@ -78,7 +79,7 @@ export const SubMenuItems: FunctionComponent<Props> = ({ variables, filtersExpan
         );
       })}
       {!filtersExpanded && (
-        <Button className="FilterCounter" onClick={ExpandFilters} fill={'text'}>
+        <Button className="FilterCounter" onClick={ChildFilters} fill={'text'}>
           + {advanceFilters}
         </Button>
       )}

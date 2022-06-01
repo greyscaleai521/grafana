@@ -74,7 +74,12 @@ class SubMenuUnConnected extends PureComponent<Props, any> {
       <>
         <div className="submenu-controls">
           <form aria-label="Template variables" className={styles}>
-            <SubMenuItems variables={variables} filtersExpanded={this.state.filtersExpanded} readOnly={readOnlyVariables} />
+            <SubMenuItems
+              variables={variables}
+              filtersExpanded={this.state.filtersExpanded}
+              ExpandFilters={this.ExpandFilters}
+              readOnly={readOnlyVariables}
+            />
           </form>
           <Annotations
             annotations={annotations}
