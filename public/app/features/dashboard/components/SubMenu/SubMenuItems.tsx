@@ -10,9 +10,10 @@ import { Button } from '@grafana/ui';
 interface Props {
   variables: VariableModel[];
   filtersExpanded: boolean;
+  ExpandFilters: Function;
 }
 
-export const SubMenuItems: FunctionComponent<Props> = ({ variables, filtersExpanded }) => {
+export const SubMenuItems: FunctionComponent<Props> = ({ variables, filtersExpanded, ExpandFilters }) => {
   const modelVariable = variables as VariableWithOptions[];
   const [visibleVariables, setVisibleVariables] = useState<VariableModel[]>([]);
   let advanceFilters = modelVariable.filter(
@@ -27,9 +28,9 @@ export const SubMenuItems: FunctionComponent<Props> = ({ variables, filtersExpan
     );
   }, [modelVariable, filtersExpanded]);
 
-  function ExpandFilters() {
+  function ChildFilters() {
     event?.preventDefault();
-    filtersExpanded = filtersExpanded ? false : true;
+    ExpandFilters();
   }
   function onClearAllFilters(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
@@ -75,7 +76,7 @@ export const SubMenuItems: FunctionComponent<Props> = ({ variables, filtersExpan
         );
       })}
       {!filtersExpanded && (
-        <Button className="FilterCounter" onClick={ExpandFilters} fill={'text'}>
+        <Button className="FilterCounter" onClick={ChildFilters} fill={'text'}>
           + {advanceFilters}
         </Button>
       )}
