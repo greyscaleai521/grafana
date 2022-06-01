@@ -216,6 +216,109 @@ func TestMacroEngine(t *testing.T) {
 			require.Equal(t, fmt.Sprintf("WHERE time_column BETWEEN '%s' AND '%s'", from.Format(time.RFC3339Nano), to.Format(time.RFC3339Nano)), sql)
 		})
 	})
+
+	t.Run("Macro: $__isTimeFromOutsideThreshold", func(t *testing.T) {
+
+		t.Run("given the from-time lies outside of threshold", func(t *testing.T) {
+			from := time.Date(1960, 2, 1, 7, 0, 0, 500e6, time.UTC)
+			timeRange := backend.TimeRange{
+				From: from,
+			}
+
+			sql, err := engine.Interpolate(query, timeRange, "$__isTimeFromOutsideThreshold(30)")
+
+			require.NoError(t, err)
+			require.Equal(t, "True", sql)
+		})
+
+		t.Run("given the from-time lies within the threshold", func(t *testing.T) {
+			from := time.Now().UTC().Add(time.Hour * (-10))
+			timeRange := backend.TimeRange{
+				From: from,
+			}
+
+			sql, err := engine.Interpolate(query, timeRange, "$__isTimeFromOutsideThreshold(30)")
+
+			require.NoError(t, err)
+			require.Equal(t, "False", sql)
+		})
+
+		t.Run("given the from-time equals to threshold", func(t *testing.T) {
+			from := time.Now().UTC()
+			timeRange := backend.TimeRange{
+				From: from,
+			}
+
+			sql, err := engine.Interpolate(query, timeRange, "$__isTimeFromOutsideThreshold(30)")
+
+			require.NoError(t, err)
+			require.Equal(t, "False", sql)
+		})
+
+		t.Run("if no arguments", func(t *testing.T) {
+			from := time.Now().UTC()
+			timeRange := backend.TimeRange{
+				From: from,
+			}
+
+			_, err := engine.Interpolate(query, timeRange, "$__isTimeFromOutsideThreshold()")
+
+			require.EqualError(t, err, "unable to parse threshold '': EOF")
+		})
+
+		t.Run("if arguments are greater than 1", func(t *testing.T) {
+			from := time.Now().UTC()
+			timeRange := backend.TimeRange{
+				From: from,
+			}
+
+			_, err := engine.Interpolate(query, timeRange, "$__isTimeFromOutsideThreshold(30, wqsdqw, wqdq)")
+
+			require.EqualError(t, err, "expecting threshold argument of type int alone to be passed: passed arguments are [30 wqsdqw wqdq]")
+		})
+
+		t.Run("if argument passed is not an int", func(t *testing.T) {
+			from := time.Now().UTC()
+			timeRange := backend.TimeRange{
+				From: from,
+			}
+
+			_, err := engine.Interpolate(query, timeRange, "$__isTimeFromOutsideThreshold(erfewg)")
+
+			require.EqualError(t, err, "unable to parse threshold 'erfewg': expected integer")
+		})
+	})
+
+	t.Run("Macro: $__isNull", func(t *testing.T) {
+
+		t.Run("all arguments passed are 'NULL'", func(t *testing.T) {
+			timeRange := backend.TimeRange{}
+
+			sql, err := engine.Interpolate(query, timeRange, "$__isNull(NULL,NULL)")
+
+			require.NoError(t, err)
+			require.Equal(t, "True", sql)
+		})
+
+		t.Run("if 1 of the arguments is not NULL", func(t *testing.T) {
+			timeRange := backend.TimeRange{}
+
+			sql, err := engine.Interpolate(query, timeRange, "$__isNull(NULL,ewffrw,NULL)")
+
+			require.NoError(t, err)
+			require.Equal(t, "False", sql)
+		})
+
+		t.Run("more than 1 arguments are not NULL", func(t *testing.T) {
+			timeRange := backend.TimeRange{}
+
+			sql, err := engine.Interpolate(query, timeRange, "$__isNull(adfq,ewffrw,NULL,krtd)")
+
+			require.NoError(t, err)
+			require.Equal(t, "False", sql)
+		})
+	})
+
 }
 
 func TestMacroEngineConcurrency(t *testing.T) {
