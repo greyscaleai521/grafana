@@ -48,18 +48,20 @@ export const SubMenuItems: FunctionComponent<Props> = ({ variables, filtersExpan
     const updateQuery: any = {};
     const templateSrv = getTemplateSrv();
 
-    optionVariables.map((variable) => {
-      const variableName = `var-${variable.id}`;
-      let allValue = templateSrv.getAllValue(variable);
-      if (allValue === ALL_VARIABLE_TEXT) {
-        updateQuery[variableName] = allValue;
-      } else {
-        let variableAsText = variable as TextBoxVariableModel;
-        if (variableAsText) {
-          updateQuery[variableName] = variableAsText.originalQuery;
+    optionVariables
+      .filter((variable) => variable.hide !== VariableHide.hideVariable)
+      .map((variable) => {
+        const variableName = `var-${variable.id}`;
+        let allValue = templateSrv.getAllValue(variable);
+        if (allValue === ALL_VARIABLE_TEXT) {
+          updateQuery[variableName] = allValue;
+        } else {
+          let variableAsText = variable as TextBoxVariableModel;
+          if (variableAsText) {
+            updateQuery[variableName] = variableAsText.originalQuery;
+          }
         }
-      }
-    });
+      });
 
     getLocationSrv().update({
       query: updateQuery,
