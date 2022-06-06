@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
 import { StoreState } from '../../../../types';
 import { getSubMenuVariables } from '../../../variables/state/selectors';
-import { VariableModel } from '../../../variables/types';
+import { VariableHide, VariableModel } from '../../../variables/types';
 import { DashboardModel } from '../../state';
 import { DashboardLinks } from './DashboardLinks';
 import { Annotations } from './Annotations';
@@ -64,6 +64,9 @@ class SubMenuUnConnected extends PureComponent<Props, any> {
     if (!dashboard.isSubMenuVisible()) {
       return null;
     }
+    const showAdvFilters = variables.filter(
+      (variable) => variable.hide !== VariableHide.hideVariable && variable.id.toLowerCase().startsWith('advanced')
+    ).length;
 
     return (
       <>
@@ -84,11 +87,13 @@ class SubMenuUnConnected extends PureComponent<Props, any> {
           {dashboard && <DashboardLinks dashboard={dashboard} links={links} />}
           <div className="clearfix" />
         </div>
-        <div className="FiltersButton">
-          <Button className="clearall-btn MoreFilters" onClick={this.ExpandFilters} fill={'text'}>
-            {this.state.filtersExpanded ? 'Show Less Filters' : 'Show More Filters'}
-          </Button>
-        </div>
+        {showAdvFilters > 0 && (
+          <div className="FiltersButton">
+            <Button className="clearall-btn MoreFilters" onClick={this.ExpandFilters} fill={'text'}>
+              {this.state.filtersExpanded ? 'Show Less Filters' : 'Show More Filters'}
+            </Button>
+          </div>
+        )}
       </>
     );
   }
