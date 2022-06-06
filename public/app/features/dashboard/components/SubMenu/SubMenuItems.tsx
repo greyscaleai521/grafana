@@ -16,21 +16,24 @@ interface Props {
 }
 
 export const SubMenuItems: FunctionComponent<Props> = ({ variables, filtersExpanded, ExpandFilters, readOnly }) => {
-  const modelVariable = variables as VariableWithOptions[];
+  const optionVariables = variables as VariableWithOptions[];
   const [visibleVariables, setVisibleVariables] = useState<VariableModel[]>([]);
-  let advanceFilters = modelVariable.filter(
-    (vairable) => vairable.id.toLowerCase().startsWith('advanced') && !isDefault(vairable)
+  let advanceFilters = optionVariables.filter(
+    (variable) =>
+      variable.hide !== VariableHide.hideVariable &&
+      variable.id.toLowerCase().startsWith('advanced') &&
+      !isDefault(variable)
   ).length;
 
   useEffect(() => {
     setVisibleVariables(
-      modelVariable.filter(
+      optionVariables.filter(
         (state) =>
           state.hide !== VariableHide.hideVariable &&
           (filtersExpanded || !state.id.toLowerCase().startsWith('advanced'))
       )
     );
-  }, [modelVariable, filtersExpanded]);
+  }, [optionVariables, filtersExpanded]);
 
   function isDefault(filter: VariableWithOptions) {
     return filter.current.value.toString() === '' || filter.current.value.toString() === '$__all' ? true : false;
@@ -45,7 +48,7 @@ export const SubMenuItems: FunctionComponent<Props> = ({ variables, filtersExpan
     const updateQuery: any = {};
     const templateSrv = getTemplateSrv();
 
-    modelVariable.map((variable) => {
+    optionVariables.map((variable) => {
       const variableName = `var-${variable.id}`;
       let allValue = templateSrv.getAllValue(variable);
       if (allValue === ALL_VARIABLE_TEXT) {
