@@ -11,11 +11,11 @@ import { Button } from '@grafana/ui';
 interface Props {
   variables: VariableModel[];
   filtersExpanded: boolean;
-  ExpandFilters: Function;
+  onExpandFilters: Function;
   readOnly?: boolean;
 }
 
-export const SubMenuItems: FunctionComponent<Props> = ({ variables, filtersExpanded, ExpandFilters, readOnly }) => {
+export const SubMenuItems: FunctionComponent<Props> = ({ variables, filtersExpanded, onExpandFilters, readOnly }) => {
   const optionVariables = variables as VariableWithOptions[];
   const [visibleVariables, setVisibleVariables] = useState<VariableModel[]>([]);
   let advanceFilters = optionVariables.filter(
@@ -38,9 +38,9 @@ export const SubMenuItems: FunctionComponent<Props> = ({ variables, filtersExpan
   function isDefault(filter: VariableWithOptions) {
     return filter.current.value.toString() === '' || filter.current.value.toString() === '$__all' ? true : false;
   }
-  function ChildFilters() {
+  function onExpandFilterChild() {
     event?.preventDefault();
-    ExpandFilters();
+    onExpandFilters();
   }
   function onClearAllFilters(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
@@ -88,7 +88,7 @@ export const SubMenuItems: FunctionComponent<Props> = ({ variables, filtersExpan
         );
       })}
       {!filtersExpanded && advanceFilters > 0 && (
-        <Button className="FilterCounter" onClick={ChildFilters} fill={'text'}>
+        <Button className="FilterCounter" onClick={onExpandFilterChild} fill={'text'}>
           + {advanceFilters} Filters Applied
         </Button>
       )}
