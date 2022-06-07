@@ -45,7 +45,7 @@ class SubMenuUnConnected extends PureComponent<Props, any> {
     this.props.dashboard.startRefresh();
     this.forceUpdate();
   };
-  ExpandFilters = () => {
+  onExpandFilters = () => {
     event?.preventDefault();
     if (this.state.filtersExpanded) {
       this.setState({
@@ -75,7 +75,7 @@ class SubMenuUnConnected extends PureComponent<Props, any> {
             <SubMenuItems
               variables={variables}
               filtersExpanded={this.state.filtersExpanded}
-              ExpandFilters={this.ExpandFilters}
+              onExpandFilters={this.onExpandFilters}
             />
           </form>
           <Annotations
@@ -89,7 +89,7 @@ class SubMenuUnConnected extends PureComponent<Props, any> {
         </div>
         {showAdvFilters > 0 && (
           <div className="FiltersButton">
-            <Button className="clearall-btn MoreFilters" onClick={this.ExpandFilters} fill={'text'}>
+            <Button className="clearall-btn MoreFilters" onClick={this.onExpandFilters} fill={'text'}>
               {this.state.filtersExpanded ? 'Show Less Filters' : 'Show More Filters'}
             </Button>
           </div>
