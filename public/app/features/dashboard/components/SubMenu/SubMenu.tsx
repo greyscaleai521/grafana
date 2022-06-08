@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
 import { StoreState } from '../../../../types';
 import { getSubMenuVariables } from '../../../variables/state/selectors';
-import { VariableModel } from '../../../variables/types';
+import { VariableHide, VariableModel } from '../../../variables/types';
 import { DashboardModel } from '../../state';
 import { DashboardLinks } from './DashboardLinks';
 import { Annotations } from './Annotations';
@@ -10,6 +10,7 @@ import { SubMenuItems } from './SubMenuItems';
 import { DashboardLink } from '../../state/DashboardModel';
 import { AnnotationQuery } from '@grafana/data';
 import { css } from '@emotion/css';
+import { Button } from '@grafana/ui';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -25,7 +26,13 @@ interface DispatchProps {}
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
-class SubMenuUnConnected extends PureComponent<Props> {
+class SubMenuUnConnected extends PureComponent<Props, any> {
+  constructor(props: any) {
+    super(props);
+    this.state = {
+      filtersExpanded: false,
+    };
+  }
   onAnnotationStateChanged = (updatedAnnotation: any) => {
     // we're mutating dashboard state directly here until annotations are in Redux.
     for (let index = 0; index < this.props.dashboard.annotations.list.length; index++) {
@@ -38,6 +45,18 @@ class SubMenuUnConnected extends PureComponent<Props> {
     this.props.dashboard.startRefresh();
     this.forceUpdate();
   };
+  onExpandFilters = () => {
+    event?.preventDefault();
+    if (this.state.filtersExpanded) {
+      this.setState({
+        filtersExpanded: false,
+      });
+    } else {
+      this.setState({
+        filtersExpanded: true,
+      });
+    }
+  };
 
   render() {
     const { dashboard, variables, links, annotations } = this.props;
@@ -45,21 +64,37 @@ class SubMenuUnConnected extends PureComponent<Props> {
     if (!dashboard.isSubMenuVisible()) {
       return null;
     }
+    const showAdvFilters = variables.filter(
+      (variable) => variable.hide !== VariableHide.hideVariable && variable.id.toLowerCase().startsWith('advanced')
+    ).length;
 
     return (
-      <div className="submenu-controls">
-        <form aria-label="Template variables" className={styles}>
-          <SubMenuItems variables={variables} />
-        </form>
-        <Annotations
-          annotations={annotations}
-          onAnnotationChanged={this.onAnnotationStateChanged}
-          events={dashboard.events}
-        />
-        <div className="gf-form gf-form--grow" />
-        {dashboard && <DashboardLinks dashboard={dashboard} links={links} />}
-        <div className="clearfix" />
-      </div>
+      <>
+        <div className="submenu-controls">
+          <form aria-label="Template variables" className={styles}>
+            <SubMenuItems
+              variables={variables}
+              filtersExpanded={this.state.filtersExpanded}
+              onExpandFilters={this.onExpandFilters}
+            />
+          </form>
+          <Annotations
+            annotations={annotations}
+            onAnnotationChanged={this.onAnnotationStateChanged}
+            events={dashboard.events}
+          />
+          <div className="gf-form gf-form--grow" />
+          {dashboard && <DashboardLinks dashboard={dashboard} links={links} />}
+          <div className="clearfix" />
+        </div>
+        {showAdvFilters > 0 && (
+          <div className="FiltersButton">
+            <Button className="clearall-btn MoreFilters" onClick={this.onExpandFilters} fill={'text'}>
+              {this.state.filtersExpanded ? 'Show Less Filters' : 'Show More Filters'}
+            </Button>
+          </div>
+        )}
+      </>
     );
   }
 }
