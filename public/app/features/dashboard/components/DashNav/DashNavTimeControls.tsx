@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Unsubscribable } from 'rxjs';
 
-import { dateMath, TimeRange, TimeZone } from '@grafana/data';
+import { dateMath, TimeRange, TimeZone, RawTimeRange } from '@grafana/data';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { defaultIntervals, RefreshPicker } from '@grafana/ui';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
@@ -18,11 +18,21 @@ export interface Props {
   isOnCanvas?: boolean;
 }
 
-export class DashNavTimeControls extends Component<Props> {
+export class DashNavTimeControls extends Component<Props, any> {
+  constructor(props: Props) {
+    super(props);
+
+    this.state = {
+      timeRangeGreaterThanDay: false,
+    };
+  }
+
   private sub?: Unsubscribable;
 
   componentDidMount() {
     this.sub = this.props.dashboard.events.subscribe(TimeRangeUpdatedEvent, () => this.forceUpdate());
+    const timePickerValue = getTimeSrv().timeRange();
+    this.checkSelectedTimeRange(timePickerValue);
   }
 
   componentWillUnmount() {
@@ -58,9 +68,34 @@ export class DashNavTimeControls extends Component<Props> {
       from: adjustedFrom,
       to: hasDelay ? 'now-' + panel.nowDelay : adjustedTo,
     };
-
+    this.checkSelectedTimeRange(nextRange);
     getTimeSrv().setTime(nextRange);
   };
+
+  checkSelectedTimeRange(nextRange: RawTimeRange) {
+    // let from = nextRange.from as string;
+    let fr: any = dateMath.parse(nextRange.from);
+    let to: any = dateMath.parse(nextRange.to);
+    let greaterThanThirtyDay = false;
+    try {
+      if (fr && to) {
+        const timeDiff = (to - fr) as number;
+        greaterThanThirtyDay = Math.abs(timeDiff / 86400000) > 30 ? true : false;
+      }
+    } catch (error) {
+      console.log(error);
+    }
+    if (greaterThanThirtyDay) {
+      this.setState((prevState: any) => {
+        return { timeRangeGreaterThanDay: true };
+      });
+      this.onChangeRefreshInterval('');
+    } else {
+      this.setState((prevState: any) => {
+        return { timeRangeGreaterThanDay: false };
+      });
+    }
+  }
 
   onChangeTimeZone = (timeZone: TimeZone) => {
     this.props.dashboard.timezone = timeZone;
@@ -85,7 +120,10 @@ export class DashNavTimeControls extends Component<Props> {
     const timePickerValue = getTimeSrv().timeRange();
     const timeZone = dashboard.getTimezone();
     const fiscalYearStartMonth = dashboard.fiscalYearStartMonth;
-    const hideIntervalPicker = dashboard.panelInEdit?.isEditing;
+    const hideIntervalPicker = this.state.timeRangeGreaterThanDay || dashboard.panelInEdit?.isEditing;
+    const refreshTooltip = this.state.timeRangeGreaterThanDay
+      ? 'You can only refresh data for last 30 days'
+      : 'Refresh dashboard';
 
     return (
       <>
@@ -107,7 +145,7 @@ export class DashNavTimeControls extends Component<Props> {
           value={dashboard.refresh}
           intervals={intervals}
           isOnCanvas={isOnCanvas}
-          tooltip={t('dashboard.toolbar.refresh', 'Refresh dashboard')}
+          tooltip={refreshTooltip}
           noIntervalPicker={hideIntervalPicker}
         />
       </>
