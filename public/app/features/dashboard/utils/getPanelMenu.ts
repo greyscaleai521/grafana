@@ -39,13 +39,13 @@ export function getPanelMenu(
   panel: PanelModel,
   angularComponent?: AngularComponent | null
 ): PanelMenuItem[] {
-  const onViewPanel = (event: React.MouseEvent) => {
-    event.preventDefault();
-    locationService.partial({
-      viewPanel: panel.id,
-    });
-    DashboardInteractions.panelMenuItemClicked('view');
-  };
+  // const onViewPanel = (event: React.MouseEvent) => {
+  //   event.preventDefault();
+  //   locationService.partial({
+  //     viewPanel: panel.id,
+  //   });
+   // DashboardInteractions.panelMenuItemClicked('view');
+  // };
 
   const onEditPanel = (event: React.MouseEvent) => {
     event.preventDefault();
@@ -125,15 +125,6 @@ export function getPanelMenu(
   };
 
   const menu: PanelMenuItem[] = [];
-
-  if (!panel.isEditing) {
-    menu.push({
-      text: t('panel.header-menu.view', `View`),
-      iconClassName: 'eye',
-      onClick: onViewPanel,
-      shortcut: 'v',
-    });
-  }
 
   if (dashboard.canEditPanel(panel) && !panel.isEditing) {
     menu.push({
