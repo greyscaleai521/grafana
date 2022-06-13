@@ -22,12 +22,6 @@ describe('getPanelMenu', () => {
     expect(menuItems).toMatchInlineSnapshot(`
       Array [
         Object {
-          "iconClassName": "eye",
-          "onClick": [Function],
-          "shortcut": "v",
-          "text": "View",
-        },
-        Object {
           "iconClassName": "edit",
           "onClick": [Function],
           "shortcut": "e",
@@ -111,12 +105,6 @@ describe('getPanelMenu', () => {
       const menuItems = getPanelMenu(dashboard, panel, angularComponent);
       expect(menuItems).toMatchInlineSnapshot(`
         Array [
-          Object {
-            "iconClassName": "eye",
-            "onClick": [Function],
-            "shortcut": "v",
-            "text": "View",
-          },
           Object {
             "iconClassName": "edit",
             "onClick": [Function],
