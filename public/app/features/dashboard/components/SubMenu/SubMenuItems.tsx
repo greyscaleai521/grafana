@@ -89,7 +89,7 @@ export const SubMenuItems: FunctionComponent<Props> = ({ variables, filtersExpan
       })}
       {!filtersExpanded && advanceFilters > 0 && (
         <Button className="FilterCounter" onClick={onExpandFilterChild} fill={'text'}>
-          + {advanceFilters} Filters Applied
+          + {advanceFilters} {advanceFilters > 1 ? 'Filters' : 'Filter'} Applied
         </Button>
       )}
       <Button className="clearall-btn" onClick={onClearAllFilters} fill={'text'}>
