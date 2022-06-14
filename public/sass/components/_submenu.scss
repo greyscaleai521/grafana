@@ -8,9 +8,14 @@
     background: white;
     border-bottom-right-radius: 15px;
     border-bottom-left-radius: 15px;
+    &:hover {
+      color: #c23f00 !important;
+      background: none !important;
+    }
   }
   .FiltersButton {
     text-align: center;
+    padding-bottom: 5px;
   }
 }
 
@@ -35,6 +40,10 @@
   .clearall-btn {
     color: $red-orange;
     align-self: flex-end;
+    &:hover {
+      color: #c23f00 !important;
+      background: none !important;
+    }
   }
   .FilterCounter {
     background: transparent !important;
