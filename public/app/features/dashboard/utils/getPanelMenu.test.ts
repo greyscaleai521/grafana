@@ -28,12 +28,6 @@ describe('getPanelMenu', () => {
           "text": "Edit",
         },
         Object {
-          "iconClassName": "share-alt",
-          "onClick": [Function],
-          "shortcut": "p s",
-          "text": "Share",
-        },
-        Object {
           "iconClassName": "compass",
           "onClick": [Function],
           "shortcut": "x",
@@ -110,12 +104,6 @@ describe('getPanelMenu', () => {
             "onClick": [Function],
             "shortcut": "e",
             "text": "Edit",
-          },
-          Object {
-            "iconClassName": "share-alt",
-            "onClick": [Function],
-            "shortcut": "p s",
-            "text": "Share",
           },
           Object {
             "iconClassName": "compass",
