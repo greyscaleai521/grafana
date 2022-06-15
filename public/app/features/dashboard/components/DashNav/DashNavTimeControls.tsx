@@ -2,7 +2,7 @@ import { t } from '@lingui/macro';
 import React, { Component } from 'react';
 import { Unsubscribable } from 'rxjs';
 
-import { dateMath, TimeRange, TimeZone, RawTimeRange } from '@grafana/data';
+import { dateMath, TimeRange, TimeZone, RawTimeRange, dateTime } from '@grafana/data';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { defaultIntervals, RefreshPicker, ToolbarButtonRow } from '@grafana/ui';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
@@ -75,13 +75,12 @@ export class DashNavTimeControls extends Component<Props, any> {
   };
 
   checkSelectedTimeRange(nextRange: RawTimeRange) {
-    // let from = nextRange.from as string;
     let fr: any = dateMath.parse(nextRange.from);
-    let to: any = dateMath.parse(nextRange.to);
     let greaterThanThirtyDay = false;
+    let now: any = dateTime();
     try {
-      if (fr && to) {
-        const timeDiff = (to - fr) as number;
+      if (fr) {
+        const timeDiff = (now - fr) as number;
         greaterThanThirtyDay = Math.abs(timeDiff / 86400000) > 30 ? true : false;
       }
     } catch (error) {
