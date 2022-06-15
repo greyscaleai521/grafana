@@ -45,6 +45,9 @@ export class DashNavTimeControls extends Component<Props, any> {
   };
 
   onRefresh = () => {
+    if (this.state.timeRangeGreaterThanDay) {
+      return;
+    }
     getTimeSrv().refreshTimeModel();
     return Promise.resolve();
   };
