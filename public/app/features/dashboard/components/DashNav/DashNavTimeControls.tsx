@@ -124,7 +124,7 @@ export class DashNavTimeControls extends Component<Props, any> {
     const fiscalYearStartMonth = dashboard.fiscalYearStartMonth;
     const hideIntervalPicker = this.state.timeRangeGreaterThanDay || dashboard.panelInEdit?.isEditing;
     const refreshTooltip = this.state.timeRangeGreaterThanDay
-      ? 'You can only refresh data for last 30 days'
+      ? 'Refresh enabled for last 30 days'
       : 'Refresh dashboard';
 
     return (
