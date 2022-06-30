@@ -5,7 +5,7 @@ import { HorizontalGroup, useStyles, VerticalGroup } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { DashboardInitPhase } from 'app/types';
 
-import { LoadingSpinner } from './LoadingSpinner';
+import { LoadingSpinner } from 'app/core/components/Loaders/LoadingSpinner';
 export interface Props {
   initPhase: DashboardInitPhase;
 }
