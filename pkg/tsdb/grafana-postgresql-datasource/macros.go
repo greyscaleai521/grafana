@@ -208,6 +208,9 @@ func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *
 		for _, arg := range args {
 			argList := strings.Split(arg, ":")
 			macrosLogger.Info("splitting args", "argList", fmt.Sprintf("%v", argList))
+			if len(argList) != 2 {
+				return "", fmt.Errorf("error in parsing arguments: not wrapped in double quotes")
+			}
 			keyName := strings.TrimSpace(argList[0])
 			value := strings.TrimSpace(argList[1])
 			formattedArgList := fmt.Sprintf("%s in (%s)", keyName, value)
