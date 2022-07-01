@@ -38,7 +38,7 @@ export const DashboardLoading = ({ initPhase }: Props) => {
 export const getStyles = (theme: GrafanaTheme) => {
   return {
     dashboardLoading: css`
-      height: 60vh;
+      height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
