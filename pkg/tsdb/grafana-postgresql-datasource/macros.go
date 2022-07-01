@@ -56,8 +56,8 @@ func (m *postgresMacroEngine) Interpolate(query *backend.DataQuery, timeRange ba
 		args, err := m.extractArgsFromParams(params)
 		if err != nil && macroError == nil {
 			macroError = err
-			macrosLogger.Info("macroError", "args", fmt.Sprintf("%v", macroError))
-			macrosLogger.Info("groups[2]", "args", fmt.Sprintf("%v", params))
+			macrosLogger.Debug("macroError", "args", fmt.Sprintf("%v", macroError))
+			macrosLogger.Debug("groups[2]", "args", fmt.Sprintf("%v", params))
 			return "macro_error()"
 		}
 
@@ -93,7 +93,7 @@ func (m *postgresMacroEngine) extractArgsFromParams(params string) ([]string, er
 
 //nolint:gocyclo
 func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *backend.DataQuery, name string, args []string) (string, error) {
-	macrosLogger.Info("evaluating macros", "args", fmt.Sprintf("%v", args))
+	macrosLogger.Debug("evaluating macros", "args", fmt.Sprintf("%v", args))
 	switch name {
 	case "__time":
 		if len(args) == 0 {
@@ -207,7 +207,7 @@ func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *
 		var filtersList []string
 		for _, arg := range args {
 			argList := strings.Split(arg, ":")
-			macrosLogger.Info("splitting args", "argList", fmt.Sprintf("%v", argList))
+			macrosLogger.Debug("splitting args", "argList", fmt.Sprintf("%v", argList))
 			if len(argList) != 2 {
 				return "", fmt.Errorf("error in parsing arguments: not wrapped in double quotes")
 			}
