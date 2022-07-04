@@ -168,16 +168,16 @@ describe('DashboardPage', () => {
     });
   });
 
-  dashboardPageScenario('Given dashboard slow loading state', (ctx) => {
-    ctx.setup(() => {
-      ctx.mount();
-      ctx.rerender({ isInitSlow: true });
-    });
+  // dashboardPageScenario('Given dashboard slow loading state', (ctx) => {
+  //   ctx.setup(() => {
+  //     ctx.mount();
+  //     ctx.rerender({ isInitSlow: true });
+  //   });
 
-    it('Should show spinner', () => {
-      expect(screen.getByText('Cancel loading dashboard')).toBeInTheDocument();
-    });
-  });
+  //   it('Should show spinner', () => {
+  //     expect(screen.getByText('Cancel loading dashboard')).toBeInTheDocument();
+  //   });
+  // });
 
   dashboardPageScenario('Given a simple dashboard', (ctx) => {
     ctx.setup(() => {
