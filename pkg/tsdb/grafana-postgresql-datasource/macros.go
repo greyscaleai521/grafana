@@ -213,8 +213,9 @@ func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *
 			}
 			keyName := strings.TrimSpace(argList[0])
 			value := strings.TrimSpace(argList[1])
-			formattedArgList := fmt.Sprintf("%s in (%s)", keyName, value)
 			if value != "NULL" {
+				value = m.escapeSqlSingleQuotes(value)
+				formattedArgList := fmt.Sprintf("%s in (%s)", keyName, value)
 				filtersList = append(filtersList, formattedArgList)
 			}
 		}
@@ -225,4 +226,15 @@ func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *
 	default:
 		return "", fmt.Errorf("unknown macro %q", name)
 	}
+}
+
+func (m *postgresMacroEngine) escapeSqlSingleQuotes(value string) string {
+	values := strings.Split(value, ",")
+	for i := range values {
+		values[i] = strings.TrimSpace(values[i])
+		values[i] = strings.Trim(values[i], `'`)
+		values[i] = strings.ReplaceAll(values[i], `'`, `''`)
+		values[i] = fmt.Sprintf(`'%s'`, values[i])
+	}
+	return strings.Join(values, ",")
 }
