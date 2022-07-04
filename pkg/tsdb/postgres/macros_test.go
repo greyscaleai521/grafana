@@ -228,7 +228,7 @@ func TestMacroEngine(t *testing.T) {
 			sql, err := engine.Interpolate(query, timeRange, "$__isTimeFromOutsideThreshold(30)")
 
 			require.NoError(t, err)
-			require.Equal(t, "True", sql)
+			require.Equal(t, "true", sql)
 		})
 
 		t.Run("given the from-time lies within the threshold", func(t *testing.T) {
@@ -240,7 +240,7 @@ func TestMacroEngine(t *testing.T) {
 			sql, err := engine.Interpolate(query, timeRange, "$__isTimeFromOutsideThreshold(30)")
 
 			require.NoError(t, err)
-			require.Equal(t, "False", sql)
+			require.Equal(t, "false", sql)
 		})
 
 		t.Run("given the from-time equals to threshold", func(t *testing.T) {
@@ -252,7 +252,7 @@ func TestMacroEngine(t *testing.T) {
 			sql, err := engine.Interpolate(query, timeRange, "$__isTimeFromOutsideThreshold(30)")
 
 			require.NoError(t, err)
-			require.Equal(t, "False", sql)
+			require.Equal(t, "false", sql)
 		})
 
 		t.Run("if no arguments", func(t *testing.T) {
@@ -297,7 +297,7 @@ func TestMacroEngine(t *testing.T) {
 			sql, err := engine.Interpolate(query, timeRange, "$__isNull(NULL,NULL)")
 
 			require.NoError(t, err)
-			require.Equal(t, "True", sql)
+			require.Equal(t, "true", sql)
 		})
 
 		t.Run("if 1 of the arguments is not NULL", func(t *testing.T) {
@@ -306,7 +306,7 @@ func TestMacroEngine(t *testing.T) {
 			sql, err := engine.Interpolate(query, timeRange, "$__isNull(NULL,ewffrw,NULL)")
 
 			require.NoError(t, err)
-			require.Equal(t, "False", sql)
+			require.Equal(t, "false", sql)
 		})
 
 		t.Run("more than 1 arguments are not NULL", func(t *testing.T) {
@@ -315,7 +315,7 @@ func TestMacroEngine(t *testing.T) {
 			sql, err := engine.Interpolate(query, timeRange, "$__isNull(adfq,ewffrw,NULL,krtd)")
 
 			require.NoError(t, err)
-			require.Equal(t, "False", sql)
+			require.Equal(t, "false", sql)
 		})
 	})
 
