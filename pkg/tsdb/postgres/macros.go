@@ -189,17 +189,16 @@ func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *
 		}
 		durationInHours := time.Now().UTC().Sub(timeRange.From.UTC()).Hours()
 		if int(durationInHours) > (24 * thresholdInDays) {
-			return "True", nil
+			return "true", nil
 		}
-		return "False", nil
+		return "false", nil
 	case "__isNull":
 		for _, arg := range args {
 			if arg != "NULL" {
-				return "False", nil
+				return "false", nil
 			}
 		}
-		return "True", nil
-
+		return "true", nil
 	case "__constructPredicates":
 		if len(args) == 1 && args[0] == "" {
 			return "true", nil
