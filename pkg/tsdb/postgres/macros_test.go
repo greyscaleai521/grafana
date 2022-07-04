@@ -356,24 +356,34 @@ func TestMacroEngine(t *testing.T) {
 			require.Equal(t, `var1 in ('2/2" Z"Z')`, result)
 		})
 
+		t.Run("single param - should SQL escape single quotes", func(t *testing.T) {
+			result, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructPredicates("var1: '2/2' ZZ'")`)
+
+			require.NoError(t, err)
+			require.Equal(t, `var1 in ('2/2'' ZZ')`, result)
+		})
+
 		t.Run("multiple values - should add single param with multiple values in the constructed predicate", func(t *testing.T) {
 			result, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructPredicates("var1: '1/2" ZZ AAA','1/4' XX AAA','3/8'")`)
 
 			require.NoError(t, err)
-			require.Equal(t, `var1 in ('1/2" ZZ AAA','1/4' XX AAA','3/8')`, result)
+			require.Equal(t, `var1 in ('1/2" ZZ AAA','1/4'' XX AAA','3/8')`, result)
 		})
+
 		t.Run("multiple param - should add multiple params in the constructed predicate", func(t *testing.T) {
 			result, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructPredicates("var1: '2/2" Z"Z'", "var2: '3/4" Z"Z'")`)
 
 			require.NoError(t, err)
 			require.Equal(t, `var1 in ('2/2" Z"Z') and var2 in ('3/4" Z"Z')`, result)
 		})
+
 		t.Run("multiple param and multiple values - should add multiple params with multiple values in the constructed predicate", func(t *testing.T) {
 			result, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructPredicates("var1: '1/2" ZZ AAA','1/4' XX AAA','3/8'", "var2: '2/2" ZZ AAA','1/4 XX AAA','3/8'")`)
 
 			require.NoError(t, err)
-			require.Equal(t, `var1 in ('1/2" ZZ AAA','1/4' XX AAA','3/8') and var2 in ('2/2" ZZ AAA','1/4 XX AAA','3/8')`, result)
+			require.Equal(t, `var1 in ('1/2" ZZ AAA','1/4'' XX AAA','3/8') and var2 in ('2/2" ZZ AAA','1/4 XX AAA','3/8')`, result)
 		})
+
 		t.Run("without arguments wrapped in double quotes it should return error", func(t *testing.T) {
 			_, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructPredicates(var1: '1/2" ZZ AAA','1/4' XX AAA','3/8', "var2: '2/2" ZZ AAA','1/4 XX AAA','3/8'")`)
 
