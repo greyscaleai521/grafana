@@ -228,7 +228,7 @@ func TestMacroEngine(t *testing.T) {
 			sql, err := engine.Interpolate(query, timeRange, "$__isTimeFromOutsideThreshold(30)")
 
 			require.NoError(t, err)
-			require.Equal(t, "True", sql)
+			require.Equal(t, "true", sql)
 		})
 
 		t.Run("given the from-time lies within the threshold", func(t *testing.T) {
@@ -240,7 +240,7 @@ func TestMacroEngine(t *testing.T) {
 			sql, err := engine.Interpolate(query, timeRange, "$__isTimeFromOutsideThreshold(30)")
 
 			require.NoError(t, err)
-			require.Equal(t, "False", sql)
+			require.Equal(t, "false", sql)
 		})
 
 		t.Run("given the from-time equals to threshold", func(t *testing.T) {
@@ -252,7 +252,7 @@ func TestMacroEngine(t *testing.T) {
 			sql, err := engine.Interpolate(query, timeRange, "$__isTimeFromOutsideThreshold(30)")
 
 			require.NoError(t, err)
-			require.Equal(t, "False", sql)
+			require.Equal(t, "false", sql)
 		})
 
 		t.Run("if no arguments", func(t *testing.T) {
@@ -297,7 +297,7 @@ func TestMacroEngine(t *testing.T) {
 			sql, err := engine.Interpolate(query, timeRange, "$__isNull(NULL,NULL)")
 
 			require.NoError(t, err)
-			require.Equal(t, "True", sql)
+			require.Equal(t, "true", sql)
 		})
 
 		t.Run("if 1 of the arguments is not NULL", func(t *testing.T) {
@@ -306,7 +306,7 @@ func TestMacroEngine(t *testing.T) {
 			sql, err := engine.Interpolate(query, timeRange, "$__isNull(NULL,ewffrw,NULL)")
 
 			require.NoError(t, err)
-			require.Equal(t, "False", sql)
+			require.Equal(t, "false", sql)
 		})
 
 		t.Run("more than 1 arguments are not NULL", func(t *testing.T) {
@@ -315,7 +315,79 @@ func TestMacroEngine(t *testing.T) {
 			sql, err := engine.Interpolate(query, timeRange, "$__isNull(adfq,ewffrw,NULL,krtd)")
 
 			require.NoError(t, err)
-			require.Equal(t, "False", sql)
+			require.Equal(t, "false", sql)
+		})
+	})
+
+	t.Run("Macro: $__constructPredicates", func(t *testing.T) {
+
+		t.Run("without arguments should return True", func(t *testing.T) {
+			result, err := engine.Interpolate(query, backend.TimeRange{}, "$__constructPredicates()")
+
+			require.NoError(t, err)
+			require.Equal(t, "true", result)
+		})
+
+		t.Run("single param - NULL value should return true", func(t *testing.T) {
+			result, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructPredicates("var1:NULL")`)
+
+			require.NoError(t, err)
+			require.Equal(t, "true", result)
+		})
+
+		t.Run("single param - NULL value prepended with whitespaces should return true", func(t *testing.T) {
+			result, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructPredicates("var1:   NULL")`)
+
+			require.NoError(t, err)
+			require.Equal(t, "true", result)
+		})
+
+		t.Run("single param - should add var1 with corresponding value as the predicate", func(t *testing.T) {
+			result, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructPredicates("var1: 'abc'")`)
+
+			require.NoError(t, err)
+			require.Equal(t, `var1 in ('abc')`, result)
+		})
+
+		t.Run("single param - should add var1 with corresponding value as the predicate when value contains quotes", func(t *testing.T) {
+			result, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructPredicates("var1: '2/2" Z"Z'")`)
+
+			require.NoError(t, err)
+			require.Equal(t, `var1 in ('2/2" Z"Z')`, result)
+		})
+
+		t.Run("single param - should SQL escape single quotes", func(t *testing.T) {
+			result, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructPredicates("var1: '2/2' ZZ'")`)
+
+			require.NoError(t, err)
+			require.Equal(t, `var1 in ('2/2'' ZZ')`, result)
+		})
+
+		t.Run("multiple values - should add single param with multiple values in the constructed predicate", func(t *testing.T) {
+			result, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructPredicates("var1: '1/2" ZZ AAA','1/4' XX AAA','3/8'")`)
+
+			require.NoError(t, err)
+			require.Equal(t, `var1 in ('1/2" ZZ AAA','1/4'' XX AAA','3/8')`, result)
+		})
+
+		t.Run("multiple param - should add multiple params in the constructed predicate", func(t *testing.T) {
+			result, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructPredicates("var1: '2/2" Z"Z'", "var2: '3/4" Z"Z'")`)
+
+			require.NoError(t, err)
+			require.Equal(t, `var1 in ('2/2" Z"Z') and var2 in ('3/4" Z"Z')`, result)
+		})
+
+		t.Run("multiple param and multiple values - should add multiple params with multiple values in the constructed predicate", func(t *testing.T) {
+			result, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructPredicates("var1: '1/2" ZZ AAA','1/4' XX AAA','3/8'", "var2: '2/2" ZZ AAA','1/4 XX AAA','3/8'")`)
+
+			require.NoError(t, err)
+			require.Equal(t, `var1 in ('1/2" ZZ AAA','1/4'' XX AAA','3/8') and var2 in ('2/2" ZZ AAA','1/4 XX AAA','3/8')`, result)
+		})
+
+		t.Run("without arguments wrapped in double quotes it should return error", func(t *testing.T) {
+			_, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructPredicates(var1: '1/2" ZZ AAA','1/4' XX AAA','3/8', "var2: '2/2" ZZ AAA','1/4 XX AAA','3/8'")`)
+
+			require.EqualError(t, err, "error in parsing arguments: not wrapped in double quotes")
 		})
 	})
 
