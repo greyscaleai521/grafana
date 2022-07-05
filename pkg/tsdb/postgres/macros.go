@@ -212,7 +212,7 @@ func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *
 			}
 			keyName := strings.TrimSpace(argList[0])
 			value := strings.TrimSpace(argList[1])
-			if value != "NULL" {
+			if !m.isNullOrEmpty(value) {
 				value = m.escapeSqlSingleQuotes(value)
 				formattedArgList := fmt.Sprintf("%s in (%s)", keyName, value)
 				filtersList = append(filtersList, formattedArgList)
@@ -225,6 +225,10 @@ func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *
 	default:
 		return "", fmt.Errorf("unknown macro %q", name)
 	}
+}
+
+func (m *postgresMacroEngine) isNullOrEmpty(value string) bool {
+	return value == "NULL" || len(value) == 0
 }
 
 func (m *postgresMacroEngine) escapeSqlSingleQuotes(value string) string {
