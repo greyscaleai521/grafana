@@ -342,6 +342,18 @@ func TestMacroEngine(t *testing.T) {
 			require.Equal(t, "true", result)
 		})
 
+		t.Run("single param - no value should return True", func(t *testing.T) {
+			result, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructPredicates("var1:")`)
+
+			require.NoError(t, err)
+			require.Equal(t, "true", result)
+
+			result, err = engine.Interpolate(query, backend.TimeRange{}, `$__constructPredicates("var1:    ")`)
+
+			require.NoError(t, err)
+			require.Equal(t, "true", result)
+		})
+
 		t.Run("single param - should add var1 with corresponding value as the predicate", func(t *testing.T) {
 			result, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructPredicates("var1: 'abc'")`)
 
@@ -365,6 +377,13 @@ func TestMacroEngine(t *testing.T) {
 
 		t.Run("multiple values - should add single param with multiple values in the constructed predicate", func(t *testing.T) {
 			result, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructPredicates("var1: '1/2" ZZ AAA','1/4' XX AAA','3/8'")`)
+
+			require.NoError(t, err)
+			require.Equal(t, `var1 in ('1/2" ZZ AAA','1/4'' XX AAA','3/8')`, result)
+		})
+
+		t.Run("multiple values - should add multiple param with multiple values in the constructed predicate except for Non NULL and empty values", func(t *testing.T) {
+			result, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructPredicates("var1: '1/2" ZZ AAA','1/4' XX AAA','3/8'", "var2:NULL", "var3:")`)
 
 			require.NoError(t, err)
 			require.Equal(t, `var1 in ('1/2" ZZ AAA','1/4'' XX AAA','3/8')`, result)
