@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
+	"net/url"
 	"regexp"
 	"strings"
 	"time"
@@ -203,19 +204,39 @@ func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *
 		if len(args) == 1 && args[0] == "" {
 			return "true", nil
 		}
-		var filtersList []string
+		var excludedValues []string
+		type Pair struct {
+			Key   string
+			Query string
+		}
+		var macroArguments []Pair
 		for _, arg := range args {
 			argList := strings.Split(arg, ":")
 			macrosLogger.Debug("splitting args", "argList", fmt.Sprintf("%v", argList))
 			if len(argList) != 2 {
-				return "", fmt.Errorf("error in parsing arguments: not wrapped in double quotes")
+				return "", fmt.Errorf("error in parsing arguments: argument not in key value pair format")
 			}
 			keyName := strings.TrimSpace(argList[0])
-			value := strings.TrimSpace(argList[1])
-			if !m.isNullOrEmpty(value) {
-				value = m.escapeSqlSingleQuotes(value)
-				formattedArgList := fmt.Sprintf("%s in (%s)", keyName, value)
-				filtersList = append(filtersList, formattedArgList)
+			valuesString := strings.TrimSpace(argList[1])
+			if keyName == "exclude_values" {
+				excludedValues = strings.Split(valuesString, ",")
+			} else {
+				macroArguments = append(macroArguments, Pair{keyName, valuesString})
+			}
+		}
+		var filtersList []string
+		for _, macroArgument := range macroArguments {
+			values, err := url.ParseQuery(macroArgument.Query)
+			if err != nil {
+				return "", fmt.Errorf("error while parsing query params: %w", err)
+			}
+			for _, value := range values {
+				includeValues := m.removeFromSlice(value, excludedValues)
+				if len(includeValues) != 0 {
+					formattedValues := m.escapeSqlSingleQuotes(includeValues)
+					formattedArgList := fmt.Sprintf("%s in (%s)", macroArgument.Key, formattedValues)
+					filtersList = append(filtersList, formattedArgList)
+				}
 			}
 		}
 		if len(filtersList) == 0 {
@@ -227,12 +248,26 @@ func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *
 	}
 }
 
-func (m *postgresMacroEngine) isNullOrEmpty(value string) bool {
-	return value == "NULL" || len(value) == 0
+func (m *postgresMacroEngine) containsInSlice(value string, slice []string) bool {
+	for _, item := range slice {
+		if item == value {
+			return true
+		}
+	}
+	return false
 }
 
-func (m *postgresMacroEngine) escapeSqlSingleQuotes(value string) string {
-	values := strings.Split(value, ",")
+func (m *postgresMacroEngine) removeFromSlice(values []string, slice []string) []string {
+	var result []string
+	for _, item := range values {
+		if !m.containsInSlice(item, slice) {
+			result = append(result, item)
+		}
+	}
+	return result
+}
+
+func (m *postgresMacroEngine) escapeSqlSingleQuotes(values []string) string {
 	for i := range values {
 		values[i] = strings.TrimSpace(values[i])
 		values[i] = strings.Trim(values[i], `'`)
