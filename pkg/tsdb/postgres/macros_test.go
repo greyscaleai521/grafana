@@ -424,10 +424,21 @@ func TestMacroEngine(t *testing.T) {
 			require.Equal(t, `var1 in ('abc') and var6 in ('9090','333')`, result)
 		})
 
+		t.Run("multiple param - should add multiple param with multiple values in the constructed predicate even if args are separated by new line or have trailing spaces", func(t *testing.T) {
+			result, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructPredicates(
+			"exclude_values: NULL,All,",
+			"var1: var-var1=abc",
+			"    var6:   var-var6=9090&var-var6=333&var-var6=All"
+			)`)
+
+			require.NoError(t, err)
+			require.Equal(t, `var1 in ('abc') and var6 in ('9090','333')`, result)
+		})
+
 		t.Run("without arguments wrapped in key:value format it should return error", func(t *testing.T) {
 			_, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructPredicates(var-var1=123&var-var1=343)`)
 
-			require.EqualError(t, err, "error in parsing arguments: argument not in key value pair format")
+			require.EqualError(t, err, "error in parsing argument: var-var1=123&var-var1=343 not in key value pair format")
 		})
 
 		t.Run("without arguments value wrapped in proper encoding it should return error", func(t *testing.T) {
