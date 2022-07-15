@@ -73,6 +73,7 @@ func (m *postgresMacroEngine) Interpolate(query *backend.DataQuery, timeRange ba
 }
 
 func (m *postgresMacroEngine) extractArgsFromParams(params string) ([]string, error) {
+	params = strings.ReplaceAll(strings.TrimSpace(params), "\n", "")
 	if params == "" {
 		return []string{""}, nil
 	}
@@ -211,7 +212,7 @@ func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *
 			argList := strings.Split(arg, ":")
 			macrosLogger.Debug("splitting args", "argList", fmt.Sprintf("%v", argList))
 			if len(argList) != 2 {
-				return "", fmt.Errorf("error in parsing arguments: argument not in key value pair format")
+				return "", fmt.Errorf("error in parsing argument: %s not in key value pair format", arg)
 			}
 			keyName := strings.TrimSpace(argList[0])
 			valuesString := strings.TrimSpace(argList[1])
