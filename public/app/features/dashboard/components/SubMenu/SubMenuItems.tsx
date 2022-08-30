@@ -3,7 +3,7 @@ import { TextBoxVariableModel, VariableHide, VariableModel } from '../../../vari
 import { selectors } from '@grafana/e2e-selectors';
 
 import { PickerRenderer } from '../../../variables/pickers/PickerRenderer';
-import { ALL_VARIABLE_TEXT } from '../../../variables/state/types';
+import { ALL_VARIABLE_TEXT } from '../../../variables/constants';
 import { getLocationSrv } from '@grafana/runtime';
 import { getTemplateSrv } from '../../../templating/template_srv';
 import { Button } from '@grafana/ui';
