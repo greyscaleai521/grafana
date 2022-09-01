@@ -9,6 +9,14 @@
     <title>[[.AppTitle]]</title>
 
     <base href="[[.AppSubUrl]]/" />
+    <script>document.domain = "%%DOMAIN_NAME%%";</script>
+
+    <link
+      rel="preload"
+      href="[[.ContentDeliveryURL]]public/fonts/roboto/RxZJdnzeo3R5zSexge8UUVtXRa8TVwTICgirnJhmVJw.woff2"
+      as="font"
+      crossorigin
+    />
 
     <link rel="icon" type="image/png" href="[[.FavIcon]]" />
     <link rel="apple-touch-icon" sizes="180x180" href="[[.AppleTouchIcon]]" />
