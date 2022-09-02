@@ -64,7 +64,7 @@ export const SubMenuItems = ({ variables, readOnly }: Props) => {
         </div>
       ))}
 
-      <Button onClick={onClearAllFilters} fill={'text'}>
+      <Button className="clearall-btn" onClick={onClearAllFilters} fill={'text'}>
         Clear All
       </Button>
     </>
