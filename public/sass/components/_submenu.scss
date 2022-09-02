@@ -1,10 +1,15 @@
 .submenu {
   margin: 0px -20px 10px -20px;
+  position: sticky;
+  top: 0px;
+  z-index: 1;
 }
 
 .dashboard-title {
   margin-bottom: 10px;
   font-weight: bold;
+  font-size: 18px;
+  padding-top: 10px;
 }
 
 .submenu-controls {
@@ -13,8 +18,15 @@
   flex-wrap: wrap;
   align-content: flex-start;
   align-items: flex-start;
-  gap: $space-sm $space-md;
-  padding: 0 0 $space-sm 0;
+  background: $panel-bg;
+  padding: 14px 10px;
+  width: 100%;
+  row-gap: 16px;
+
+  .clearall-btn {
+    color: $orange-lambweston-brand-color;
+    align-self: flex-end;
+  }
 }
 
 .annotation-segment {
@@ -34,8 +46,37 @@
     padding-left: 8px;
   }
 
+  .variable-link-wrapper {
+    svg {
+      color: $orange-lambweston-brand-color;
+      width: 22px;
+      height: 22px;
+      margin-bottom: 0;
+    }
+  }
+
   .gf-form {
     margin-bottom: 0;
+  }
+
+  .gf-form-label {
+    color: #777777;
+    border: none;
+    font-weight: 400;
+  }
+  button {
+    span {
+      margin-right: 8px;
+    }
+  }
+  button,
+  input {
+    background-color: #f7f7f7;
+    border: none;
+    min-width: 60px;
+    justify-content: space-between;
+    padding-right: 6px;
+    padding-left: 10px;
   }
 }
 
