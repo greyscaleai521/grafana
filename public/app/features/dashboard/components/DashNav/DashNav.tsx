@@ -237,11 +237,11 @@ export const DashNav = React.memo<Props>((props) => {
     );
 
     if (isPlaylistRunning()) {
-      return [renderPlaylistControls(), renderTimeControls()];
+      return <>{[renderPlaylistControls(), renderTimeControls()]}</>;
     }
 
     if (kioskMode === KioskMode.TV) {
-      return [renderTimeControls()];
+      return <>{[renderTimeControls()]}</>;
     }
 
     if (canEdit && !isFullscreen) {
@@ -300,7 +300,7 @@ export const DashNav = React.memo<Props>((props) => {
 
     buttons.push(renderTimeControls());
     buttons.push(tvButton);
-    return buttons;
+    return <>{buttons}</>;
   };
 
   const gotoSnapshotOrigin = (snapshotUrl: string) => {

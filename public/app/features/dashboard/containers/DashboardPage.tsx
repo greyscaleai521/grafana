@@ -360,7 +360,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, initError, queryParams, isPublic, theme } = this.props;
+    const { dashboard, initError, queryParams, isPublic } = this.props;
     const { editPanel, viewPanel, updateScrollTop } = this.state;
     const kioskMode = !isPublic ? getKioskMode() : KioskMode.Full;
 
@@ -374,7 +374,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     const showSubMenu =
       !editPanel && (kioskMode === KioskMode.Off || kioskMode === KioskMode.TV) && !this.props.queryParams.editview;
     const toolbar = kioskMode !== KioskMode.Full && (
-      <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
+      <header data-testid={selectors.pages.Dashboard.DashNav.navV2} className={'dashboardHeader'}>
         <DashNav
           dashboard={dashboard}
           title={dashboard.title}
