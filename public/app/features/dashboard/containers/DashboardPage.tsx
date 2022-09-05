@@ -344,10 +344,10 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     }
 
     const inspectPanel = this.getInspectPanel();
-    const showSubMenu = !editPanel && !kioskMode && !this.props.queryParams.editview;
+    const showSubMenu = !editPanel && (!kioskMode || kioskMode === KioskMode.TV) && !this.props.queryParams.editview;
 
     const toolbar = kioskMode !== KioskMode.Full && !queryParams.editview && (
-      <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
+      <header data-testid={selectors.pages.Dashboard.DashNav.navV2} className={'dashboardHeader'}>
         <DashNav
           dashboard={dashboard}
           title={dashboard.title}

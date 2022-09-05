@@ -19,6 +19,17 @@
     background: #f4f5f5;
   }
 }
+.dashboardHeader {
+  -webkit-box-align: center;
+  align-items: center;
+  background: rgb(244, 245, 245);
+  display: flex;
+  flex-wrap: wrap;
+  -webkit-box-pack: end;
+  justify-content: flex-end;
+  padding: 12px 16px;
+  background: white;
+}
 
 .dashboard-title {
   margin-bottom: 10px;
