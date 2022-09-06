@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { getLocationSrv } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
 
 import { getTemplateSrv } from '../../../templating/template_srv';
@@ -64,11 +64,7 @@ export const SubMenuItems: FunctionComponent<Props> = ({ variables, filtersExpan
         }
       });
 
-    getLocationSrv().update({
-      query: updateQuery,
-      partial: true,
-      replace: true,
-    });
+    locationService.partial(updateQuery, true);
   }
 
   if (visibleVariables.length === 0) {

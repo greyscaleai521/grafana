@@ -227,6 +227,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     actionWrapper: css`
       padding: ${spacing(0.5, 0, 0.5, 1)};
+      display: flex;
     `,
     leftActionItem: css`
       display: none;
