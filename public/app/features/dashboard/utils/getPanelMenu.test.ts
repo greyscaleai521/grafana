@@ -22,22 +22,10 @@ describe('getPanelMenu', () => {
     expect(menuItems).toMatchInlineSnapshot(`
       Array [
         Object {
-          "iconClassName": "eye",
-          "onClick": [Function],
-          "shortcut": "v",
-          "text": "View",
-        },
-        Object {
           "iconClassName": "edit",
           "onClick": [Function],
           "shortcut": "e",
           "text": "Edit",
-        },
-        Object {
-          "iconClassName": "share-alt",
-          "onClick": [Function],
-          "shortcut": "p s",
-          "text": "Share",
         },
         Object {
           "iconClassName": "compass",
@@ -112,22 +100,10 @@ describe('getPanelMenu', () => {
       expect(menuItems).toMatchInlineSnapshot(`
         Array [
           Object {
-            "iconClassName": "eye",
-            "onClick": [Function],
-            "shortcut": "v",
-            "text": "View",
-          },
-          Object {
             "iconClassName": "edit",
             "onClick": [Function],
             "shortcut": "e",
             "text": "Edit",
-          },
-          Object {
-            "iconClassName": "share-alt",
-            "onClick": [Function],
-            "shortcut": "p s",
-            "text": "Share",
           },
           Object {
             "iconClassName": "compass",

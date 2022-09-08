@@ -371,9 +371,10 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     const inspectPanel = this.getInspectPanel();
     const containerClassNames = classnames({ 'panel-in-fullscreen': viewPanel });
 
-    const showSubMenu = !editPanel && kioskMode === KioskMode.Off && !this.props.queryParams.editview;
+    const showSubMenu =
+      !editPanel && (kioskMode === KioskMode.Off || kioskMode === KioskMode.TV) && !this.props.queryParams.editview;
     const toolbar = kioskMode !== KioskMode.Full && (
-      <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
+      <header data-testid={selectors.pages.Dashboard.DashNav.navV2} className={'dashboardHeader'}>
         <DashNav
           dashboard={dashboard}
           title={dashboard.title}
@@ -399,11 +400,11 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
         {initError && <DashboardFailed />}
         {showSubMenu && (
-          <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
+          <section aria-label={selectors.pages.Dashboard.SubMenu.submenu} className={'submenu'}>
             <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
           </section>
         )}
-
+        <div className={'dashboard-title'}>{dashboard.title}</div>
         <DashboardGrid dashboard={dashboard} viewPanel={viewPanel} editPanel={editPanel} />
 
         {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}

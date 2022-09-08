@@ -2,32 +2,34 @@ import { css, keyframes } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
-import { Button, HorizontalGroup, Spinner, useStyles, VerticalGroup } from '@grafana/ui';
+// import { locationService } from '@grafana/runtime';
+import { HorizontalGroup, useStyles, VerticalGroup } from '@grafana/ui';
 import { DashboardInitPhase } from 'app/types';
 
+import { LoadingSpinner } from 'app/core/components/Loaders/LoadingSpinner';
 export interface Props {
   initPhase: DashboardInitPhase;
 }
 
 export const DashboardLoading = ({ initPhase }: Props) => {
   const styles = useStyles(getStyles);
-  const cancelVariables = () => {
-    locationService.push('/');
-  };
+  // const cancelVariables = () => {
+  //   locationService.push('/');
+  // };
 
   return (
     <div className={styles.dashboardLoading}>
       <div className={styles.dashboardLoadingText}>
         <VerticalGroup spacing="md">
           <HorizontalGroup align="center" justify="center" spacing="xs">
-            <Spinner inline={true} /> {initPhase}
+            {/* <Spinner inline={true} /> {initPhase} */}
+            <LoadingSpinner />
           </HorizontalGroup>{' '}
-          <HorizontalGroup align="center" justify="center">
+          {/* <HorizontalGroup align="center" justify="center">
             <Button variant="secondary" size="md" icon="repeat" onClick={cancelVariables}>
               Cancel loading dashboard
             </Button>
-          </HorizontalGroup>
+          </HorizontalGroup> */}
         </VerticalGroup>
       </div>
     </div>
@@ -45,7 +47,7 @@ export const getStyles = (theme: GrafanaTheme) => {
 
   return {
     dashboardLoading: css`
-      height: 60vh;
+      height: 100vh;
       display: flex;
       opacity: 0%;
       align-items: center;

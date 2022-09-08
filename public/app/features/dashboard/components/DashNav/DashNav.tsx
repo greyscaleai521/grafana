@@ -237,11 +237,11 @@ export const DashNav = React.memo<Props>((props) => {
     );
 
     if (isPlaylistRunning()) {
-      return [renderPlaylistControls(), renderTimeControls()];
+      return <>{[renderPlaylistControls(), renderTimeControls()]}</>;
     }
 
     if (kioskMode === KioskMode.TV) {
-      return [renderTimeControls(), tvButton];
+      return <>{[renderTimeControls()]}</>;
     }
 
     if (canEdit && !isFullscreen) {
@@ -300,14 +300,14 @@ export const DashNav = React.memo<Props>((props) => {
 
     buttons.push(renderTimeControls());
     buttons.push(tvButton);
-    return buttons;
+    return <>{buttons}</>;
   };
 
   const gotoSnapshotOrigin = (snapshotUrl: string) => {
     window.location.href = textUtil.sanitizeUrl(snapshotUrl);
   };
 
-  const { isFullscreen, title, folderTitle } = props;
+  const { isFullscreen, title, folderTitle, kioskMode } = props;
   // this ensures the component rerenders when the location changes
   const location = useLocation();
   const titleHref = locationUtil.getUrlForPartial(location, { search: 'open' });
@@ -328,7 +328,9 @@ export const DashNav = React.memo<Props>((props) => {
       />
     );
   }
-
+  if (kioskMode === KioskMode.TV) {
+    return renderRightActions();
+  }
   return (
     <PageToolbar
       pageIcon={isFullscreen ? undefined : 'apps'}

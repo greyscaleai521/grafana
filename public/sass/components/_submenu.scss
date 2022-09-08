@@ -1,11 +1,70 @@
+.submenu {
+  margin: 0px -20px 10px -20px;
+  position: sticky;
+  top: 0px;
+  z-index: $zindex-dropdown - 2;
+  .MoreFilters {
+    color: $red-orange !important;
+    background: white;
+    border-bottom-right-radius: 15px;
+    border-bottom-left-radius: 15px;
+    &:hover {
+      color: #c23f00 !important;
+      background: white !important;
+    }
+  }
+  .FiltersButton {
+    text-align: center;
+    padding-bottom: 5px;
+    background: #f4f5f5;
+  }
+}
+.dashboardHeader {
+  -webkit-box-align: center;
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  background: white;
+  padding-right: 15px;
+  -webkit-box-pack: end;
+  justify-content: flex-end;
+}
+
+.dashboard-title {
+  margin-bottom: 10px;
+  font-weight: bold;
+  font-size: 18px;
+  padding-top: 10px;
+}
+
 .submenu-controls {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
   align-content: flex-start;
   align-items: flex-start;
-  gap: $space-sm $space-md;
-  padding: 0 0 $space-sm 0;
+  background: $panel-bg;
+  padding: 14px 10px;
+  width: 100%;
+  row-gap: 16px;
+
+  .clearall-btn {
+    color: $red-orange;
+    align-self: flex-end;
+    &:hover {
+      color: #c23f00 !important;
+      background: none !important;
+    }
+  }
+  .FilterCounter {
+    background: transparent !important;
+    border: 1px solid #ff5300;
+    color: #ff5300;
+    padding: 0 8px !important;
+    &:hover {
+      color: #ff5300 !important;
+    }
+  }
 }
 
 .annotation-segment {
@@ -25,8 +84,37 @@
     padding-left: 8px;
   }
 
+  .variable-link-wrapper {
+    svg {
+      color: $red-orange;
+      width: 22px;
+      height: 22px;
+      margin-bottom: 0;
+    }
+  }
+
   .gf-form {
     margin-bottom: 0;
+  }
+
+  .gf-form-label {
+    color: #777777;
+    border: none;
+    font-weight: 400;
+  }
+  button {
+    span {
+      margin-right: 8px;
+    }
+  }
+  button,
+  input {
+    background-color: #f7f7f7;
+    border: none;
+    min-width: 60px;
+    justify-content: space-between;
+    padding-right: 6px;
+    padding-left: 10px;
   }
 }
 

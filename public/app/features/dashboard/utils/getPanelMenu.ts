@@ -11,7 +11,6 @@ import {
   copyPanel,
   duplicatePanel,
   removePanel,
-  sharePanel,
   toggleLegend,
   unlinkLibraryPanel,
 } from 'app/features/dashboard/utils/panel';
@@ -28,12 +27,12 @@ export function getPanelMenu(
   panel: PanelModel,
   angularComponent?: AngularComponent | null
 ): PanelMenuItem[] {
-  const onViewPanel = (event: React.MouseEvent<any>) => {
-    event.preventDefault();
-    locationService.partial({
-      viewPanel: panel.id,
-    });
-  };
+  // const onViewPanel = (event: React.MouseEvent<any>) => {
+  //   event.preventDefault();
+  //   locationService.partial({
+  //     viewPanel: panel.id,
+  //   });
+  // };
 
   const onEditPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
@@ -42,10 +41,10 @@ export function getPanelMenu(
     });
   };
 
-  const onSharePanel = (event: React.MouseEvent<any>) => {
-    event.preventDefault();
-    sharePanel(dashboard, panel);
-  };
+  // const onSharePanel = (event: React.MouseEvent<any>) => {
+  //   event.preventDefault();
+  //   sharePanel(dashboard, panel);
+  // };
 
   const onToggleLegend = (event: React.MouseEvent<any>) => {
     event.preventDefault();
@@ -97,18 +96,18 @@ export function getPanelMenu(
 
   const menu: PanelMenuItem[] = [];
 
-  if (!panel.isEditing) {
-    const viewTextTranslation = t({
-      id: 'panel.header-menu.view',
-      message: `View`,
-    });
-    menu.push({
-      text: viewTextTranslation,
-      iconClassName: 'eye',
-      onClick: onViewPanel,
-      shortcut: 'v',
-    });
-  }
+  // if (!panel.isEditing) {
+  //   const viewTextTranslation = t({
+  //     id: 'panel.header-menu.view',
+  //     message: `View`,
+  //   });
+  //   menu.push({
+  //     text: viewTextTranslation,
+  //     iconClassName: 'eye',
+  //     onClick: onViewPanel,
+  //     shortcut: 'v',
+  //   });
+  // }
 
   if (dashboard.canEditPanel(panel) && !panel.isEditing) {
     menu.push({
@@ -119,17 +118,16 @@ export function getPanelMenu(
     });
   }
 
-  const shareTextTranslation = t({
-    id: 'panel.header-menu.share',
-    message: `Share`,
-  });
-
-  menu.push({
-    text: shareTextTranslation,
-    iconClassName: 'share-alt',
-    onClick: onSharePanel,
-    shortcut: 'p s',
-  });
+  // const shareTextTranslation = t({
+  //   id: 'panel.header-menu.share',
+  //   message: `Share`,
+  // });
+  // menu.push({
+  //   text: shareTextTranslation,
+  //   iconClassName: 'share-alt',
+  //   onClick: onSharePanel,
+  //   shortcut: 'p s',
+  // });
 
   if (contextSrv.hasAccessToExplore() && !(panel.plugin && panel.plugin.meta.skipDataQuery)) {
     menu.push({
