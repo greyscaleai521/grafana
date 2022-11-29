@@ -478,6 +478,12 @@ describe('datasource', () => {
   });
 
   describe('timezoneUTCOffset', () => {
+    beforeEach(() => {
+      jest.useFakeTimers().setSystemTime(new Date('2022-09-01'));
+    });
+    afterEach(() => {
+      jest.useFakeTimers().clearAllTimers();
+    });
     const testQuery = {
       id: '',
       refId: 'a',
@@ -500,7 +506,7 @@ describe('datasource', () => {
       ['Asia/Tokyo', '+0900'],
       ['UTC', '+0000'],
     ];
-    describe.each(testTable)('should use the right time zone offset', (ianaTimezone, expectedOffset) => {
+    test.each(testTable)('should use the right time zone offset', (ianaTimezone, expectedOffset) => {
       const { datasource, fetchMock } = setupMockedDataSource();
       datasource.handleMetricQueries([testQuery], {
         range: { from: dateTime(), to: dateTime() },
