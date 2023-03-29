@@ -65,7 +65,7 @@
         animation-iteration-count: infinite;
       }
 
-      .preloader__logo {
+      /* .preloader__logo {
         display: inline-block;
         animation-name: preloader-squash;
         animation-duration: 0.9s;
@@ -75,6 +75,22 @@
         background-repeat: no-repeat;
         background-size: contain;
         background-image: url('[[.LoadingLogo]]');
+      } */
+
+      .preloader__logo::before {
+        animation: 1.5s linear infinite spinner;
+        animation-play-state: inherit;
+        border: solid 5px #cfd0d1;
+        border-bottom-color: #ff5300;
+        border-radius: 50%;
+        content: "";
+        height: 50px;
+        width: 50px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transform: translate3d(-50%, -50%, 0);
+        will-change: transform;
       }
 
       .preloader__text {
@@ -97,6 +113,15 @@
         color: #d8d9da;
       }
 
+      @keyframes spinner {
+        0% {
+          transform: translate3d(-50%, -50%, 0) rotate(0deg);
+        }
+        100% {
+          transform: translate3d(-50%, -50%, 0) rotate(360deg);
+        }
+      }
+
       @keyframes preloader-fade-in {
         0% {
           opacity: 0;
@@ -115,7 +140,7 @@
           animation-timing-function: cubic-bezier(0.3, 0, 0.1, 1);
         }
         50% {
-          transform: translateY(-50px);
+          transform: translateY(0px);
           animation-timing-function: cubic-bezier(0.9, 0, 0.7, 1);
         }
       }
@@ -184,7 +209,7 @@
           <div class="preloader__logo"></div>
         </div>
       </div>
-      <div class="preloader__text">Loading Grafana</div>
+      <!-- <div class="preloader__text">Loading Grafana</div> -->
       <div class="preloader__text preloader__text--fail">
         <p>
           <strong>If you're seeing this Grafana has failed to load its application files</strong>
