@@ -3,6 +3,21 @@
   position: sticky;
   top: 0px;
   z-index: $zindex-dropdown - 2;
+  .MoreFilters {
+    color: $red-orange !important;
+    background: white;
+    border-bottom-right-radius: 15px;
+    border-bottom-left-radius: 15px;
+    &:hover {
+      color: #c23f00 !important;
+      background: white !important;
+    }
+  }
+  .FiltersButton {
+    text-align: center;
+    padding-bottom: 5px;
+    background: #f4f5f5;
+  }
 }
 
 .dashboard-title {
@@ -26,6 +41,19 @@
   .clearall-btn {
     color: $red-orange;
     align-self: flex-end;
+    &:hover {
+      color: #c23f00 !important;
+      background: none !important;
+    }
+  }
+  .FilterCounter {
+    background: transparent !important;
+    border: 1px solid #ff5300;
+    color: #ff5300;
+    padding: 0 8px !important;
+    &:hover {
+      color: #ff5300 !important;
+    }
   }
 }
 
