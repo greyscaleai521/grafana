@@ -8,11 +8,13 @@ import { stylesFactory, Themeable2, withTheme2 } from '@grafana/ui';
 
 import { StoreState } from '../../../../types';
 import { getSubMenuVariables, getVariablesState } from '../../../variables/state/selectors';
+import { VariableHide, VariableModel } from '../../../variables/types';
 import { DashboardModel } from '../../state';
 
 import { Annotations } from './Annotations';
 import { DashboardLinks } from './DashboardLinks';
 import { SubMenuItems } from './SubMenuItems';
+import { Button } from '@grafana/ui';
 
 interface OwnProps extends Themeable2 {
   dashboard: DashboardModel;
@@ -28,7 +30,13 @@ interface DispatchProps {}
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
-class SubMenuUnConnected extends PureComponent<Props> {
+class SubMenuUnConnected extends PureComponent<Props, any> {
+  constructor(props: any) {
+    super(props);
+    this.state = {
+      filtersExpanded: false,
+    };
+  }
   onAnnotationStateChanged = (updatedAnnotation: AnnotationQuery<DataQuery>) => {
     // we're mutating dashboard state directly here until annotations are in Redux.
     for (let index = 0; index < this.props.dashboard.annotations.list.length; index++) {
@@ -40,6 +48,18 @@ class SubMenuUnConnected extends PureComponent<Props> {
     }
     this.props.dashboard.startRefresh();
     this.forceUpdate();
+  };
+  onExpandFilters = () => {
+    event?.preventDefault();
+    if (this.state.filtersExpanded) {
+      this.setState({
+        filtersExpanded: false,
+      });
+    } else {
+      this.setState({
+        filtersExpanded: true,
+      });
+    }
   };
 
   disableSubmitOnEnter = (e: React.FormEvent<HTMLFormElement>) => {
@@ -54,22 +74,40 @@ class SubMenuUnConnected extends PureComponent<Props> {
     if (!dashboard.isSubMenuVisible()) {
       return null;
     }
+    const showAdvFilters = variables.filter(
+      (variable) => variable.hide !== VariableHide.hideVariable && variable.id.toLowerCase().startsWith('advanced')
+    ).length;
 
     const readOnlyVariables = dashboard.meta.isSnapshot ?? false;
 
     return (
-      <div className={styles.submenu}>
-        <form aria-label="Template variables" className={styles.formStyles} onSubmit={this.disableSubmitOnEnter}>
-          <SubMenuItems variables={variables} readOnly={readOnlyVariables} />
-        </form>
-        <Annotations
-          annotations={annotations}
-          onAnnotationChanged={this.onAnnotationStateChanged}
-          events={dashboard.events}
-        />
-        <div className={styles.spacer} />
-        {dashboard && <DashboardLinks dashboard={dashboard} links={links} />}
-      </div>
+      <>
+        <div className={styles.submenu}>
+          <form aria-label="Template variables" className={styles.formStyles} onSubmit={this.disableSubmitOnEnter}>
+            <SubMenuItems
+              variables={variables}
+              filtersExpanded={this.state.filtersExpanded}
+              onExpandFilters={this.onExpandFilters}
+              readOnly={readOnlyVariables}
+            />
+          </form>
+          <Annotations
+            annotations={annotations}
+            onAnnotationChanged={this.onAnnotationStateChanged}
+            events={dashboard.events}
+          />
+          <div className={styles.spacer} />
+          {dashboard && <DashboardLinks dashboard={dashboard} links={links} />}
+          <div className="clearfix" />
+        </div>
+        {showAdvFilters > 0 && (
+          <div className="FiltersButton">
+            <Button className="clearall-btn MoreFilters" onClick={this.onExpandFilters} fill={'text'}>
+              {this.state.filtersExpanded ? 'Show Less Filters' : 'Show More Filters'}
+            </Button>
+          </div>
+        )}
+      </>
     );
   }
 }

@@ -8,38 +8,62 @@ import { Button } from '@grafana/ui';
 import { getTemplateSrv } from '../../../templating/template_srv';
 import { ALL_VARIABLE_TEXT } from '../../../variables/constants';
 import { PickerRenderer } from '../../../variables/pickers/PickerRenderer';
-import { TextBoxVariableModel, VariableHide, VariableModel } from '../../../variables/types';
+import { TextBoxVariableModel, VariableHide, VariableModel, VariableWithOptions } from '../../../variables/types';
 
 interface Props {
   variables: TypedVariableModel[];
+  filtersExpanded: boolean;
+  onExpandFilters: Function;
   readOnly?: boolean;
 }
 
-export const SubMenuItems = ({ variables, readOnly }: Props) => {
+export const SubMenuItems = ({ variables, filtersExpanded, onExpandFilters, readOnly }: Props) => {
+  const optionVariables = variables as VariableWithOptions[];
   const [visibleVariables, setVisibleVariables] = useState<TypedVariableModel[]>([]);
+  let advanceFilters = optionVariables.filter(
+    (variable) =>
+      variable.hide !== VariableHide.hideVariable &&
+      variable.id.toLowerCase().startsWith('advanced') &&
+      !isDefault(variable)
+  ).length;
 
   useEffect(() => {
-    setVisibleVariables(variables.filter((state) => state.hide !== VariableHide.hideVariable));
-  }, [variables]);
+    setVisibleVariables(
+      optionVariables.filter(
+        (state) =>
+          state.hide !== VariableHide.hideVariable &&
+          (filtersExpanded || !state.id.toLowerCase().startsWith('advanced'))
+      )
+    );
+  }, [optionVariables, filtersExpanded]);
 
+  function isDefault(filter: VariableWithOptions) {
+    return filter.current.value.toString() === '' || filter.current.value.toString() === '$__all' ? true : false;
+  }
+  function onExpandFilterChild() {
+    event?.preventDefault();
+    onExpandFilters();
+  }
   function onClearAllFilters(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
 
     const updateQuery: any = {};
     const templateSrv = getTemplateSrv();
 
-    visibleVariables.map((variable) => {
-      const variableName = `var-${variable.id}`;
-      let allValue = templateSrv.getAllValue(variable);
-      if (allValue === ALL_VARIABLE_TEXT) {
-        updateQuery[variableName] = allValue;
-      } else {
-        let variableAsText = variable as TextBoxVariableModel;
-        if (variableAsText) {
-          updateQuery[variableName] = variableAsText.originalQuery;
+    optionVariables
+      .filter((variable) => variable.hide !== VariableHide.hideVariable)
+      .map((variable) => {
+        const variableName = `var-${variable.id}`;
+        let allValue = templateSrv.getAllValue(variable);
+        if (allValue === ALL_VARIABLE_TEXT) {
+          updateQuery[variableName] = allValue;
+        } else {
+          let variableAsText = variable as TextBoxVariableModel;
+          if (variableAsText) {
+            updateQuery[variableName] = variableAsText.originalQuery;
+          }
         }
-      }
-    });
+      });
 
     getLocationSrv().update({
       query: updateQuery,
@@ -63,7 +87,11 @@ export const SubMenuItems = ({ variables, readOnly }: Props) => {
           <PickerRenderer variable={variable} readOnly={readOnly} />
         </div>
       ))}
-
+      {!filtersExpanded && advanceFilters > 0 && (
+        <Button className="FilterCounter" onClick={onExpandFilterChild} fill={'text'}>
+          + {advanceFilters} {advanceFilters > 1 ? 'Filters' : 'Filter'} Applied
+        </Button>
+      )}
       <Button className="clearall-btn" onClick={onClearAllFilters} fill={'text'}>
         Clear All
       </Button>
