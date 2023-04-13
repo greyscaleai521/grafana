@@ -4,6 +4,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { TableCellHeight } from '@grafana/schema';
 
 export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCellHeight) {
+  const { colors } = theme;
+  const headerBg = theme.colors.background.secondary;
   const borderColor = theme.colors.border.weak;
   const resizerColor = theme.colors.primary.border;
   const cellPadding = 6;
