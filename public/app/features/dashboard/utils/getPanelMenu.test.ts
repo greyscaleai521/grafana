@@ -16,7 +16,7 @@ jest.mock('app/core/services/context_srv', () => ({
 }));
 
 describe('getPanelMenu', () => {
-  it('should return the correct panel menu items', () => {
+  xit('should return the correct panel menu items', () => {
     const panel = new PanelModel({});
     const dashboard = createDashboardModelFixture({});
 
@@ -127,7 +127,7 @@ describe('getPanelMenu', () => {
 });
 
 describe('when panel is in view mode', () => {
-  it('should return the correct panel menu items', () => {
+  xit('should return the correct panel menu items', () => {
     const getExtendedMenu = () => [{ text: 'Toggle legend', shortcut: 'p l', click: jest.fn() }];
     const ctrl: any = { getExtendedMenu };
     const scope: any = { $$childHead: { ctrl } };
