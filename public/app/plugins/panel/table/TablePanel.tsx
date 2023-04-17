@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { DataFrame, FieldMatcherID, getFrameDisplayName, PanelProps, SelectableValue } from '@grafana/data';
-import { PanelDataErrorView } from '@grafana/runtime';
 import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
 
@@ -27,7 +26,7 @@ export function TablePanel(props: Props) {
   let subData = subFrames;
 
   if (!count || !hasFields) {
-    return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
+    return <div className={tableStyles.noData}>No data</div>;
   }
 
   if (count > 1) {
