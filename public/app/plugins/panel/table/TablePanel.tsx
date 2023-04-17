@@ -34,7 +34,7 @@ export function TablePanel(props: Props) {
   let tableHeight = height;
 
   if (!count || !hasFields) {
-    return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
+    return <div className={tableStyles.noData}>No data</div>;
   }
 
   if (count > 1) {
