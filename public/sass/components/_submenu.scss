@@ -1,5 +1,5 @@
 .submenu {
-  margin: 0px -20px 10px -20px;
+  margin: 0px -20px 0px -20px;
   position: sticky;
   top: 0px;
   z-index: $zindex-dropdown - 2;
@@ -27,7 +27,7 @@
   flex-wrap: wrap;
   -webkit-box-pack: end;
   justify-content: flex-end;
-  padding: 12px 16px;
+  padding-right: 15px;
   background: white;
 }
 
@@ -35,7 +35,6 @@
   margin-bottom: 10px;
   font-weight: bold;
   font-size: 18px;
-  padding-top: 10px;
 }
 
 .submenu-controls {
