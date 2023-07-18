@@ -33,6 +33,8 @@ export {
   /** @deprecated Import from @grafana/data instead */
   TextBoxVariableModel,
   /** @deprecated Import from @grafana/data instead */
+  CustomRangeVariableModel,
+  /** @deprecated Import from @grafana/data instead */
   ConstantVariableModel,
   /** @deprecated Import from @grafana/data instead */
   VariableWithMultiSupport,
