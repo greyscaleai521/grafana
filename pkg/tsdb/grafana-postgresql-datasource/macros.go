@@ -3,6 +3,7 @@ package postgres
 import (
 	"encoding/csv"
 	"fmt"
+	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
@@ -244,6 +245,35 @@ func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *
 			return "true", nil
 		}
 		return strings.Join(filtersList, " and "), nil
+	case "__constructRangePredicate":
+		if len(args) != 2 {
+			return "", fmt.Errorf("expecting field name and value to be passed: passed arguments are %v", args)
+		}
+		var field string = strings.TrimSpace(args[0])
+		var value string = strings.TrimSpace(args[1])
+	
+		if value == "" {
+			return "true", nil
+		}
+	
+		var values []string = strings.Split(value, "-")
+		var values_casted []float64
+	
+		for _, item := range values {
+			if float_value, err := strconv.ParseFloat(strings.TrimSpace(item), 64); err == nil {
+				values_casted = append(values_casted, float_value)
+			} else {
+				return "", err
+			}
+		}
+	
+		if len(values_casted) == 2 {
+			return fmt.Sprintf("%v between %v and %v", field, values_casted[0], values_casted[1]), nil
+		} else if len(values_casted) == 1 {
+			return fmt.Sprintf("%v = %v", field, values_casted[0]), nil
+		}
+		return "", fmt.Errorf("expecting either float value or range: passed argument are %v", args[1])
+
 	default:
 		return "", fmt.Errorf("unknown macro %q", name)
 	}

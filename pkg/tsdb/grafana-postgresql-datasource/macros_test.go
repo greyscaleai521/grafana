@@ -318,6 +318,71 @@ func TestMacroEngine(t *testing.T) {
 			require.Equal(t, "false", sql)
 		})
 	})
+	t.Run("Macro: $__constructRangePredicate", func(t *testing.T) {
+
+		t.Run("without arguments it should return error", func(t *testing.T) {
+			_, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructRangePredicate()`)
+
+			require.EqualError(t, err, "expecting field name and value to be passed: passed arguments are []")
+		})
+
+		t.Run("if two arguments are not passed as input it should return error", func(t *testing.T) {
+			_, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructRangePredicate("field1", "1", "fsfsw")`)
+
+			require.EqualError(t, err, `expecting field name and value to be passed: passed arguments are [field1 1 fsfsw]`)
+		})
+
+		t.Run("if args are field name and empty string then it should return True", func(t *testing.T) {
+			result, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructRangePredicate("field1","")`)
+
+			require.NoError(t, err)
+			require.Equal(t, "true", result)
+		})
+
+		t.Run("if args are field name and float then it should return field equals float", func(t *testing.T) {
+			result, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructRangePredicate("field1","11.11")`)
+
+			require.NoError(t, err)
+			require.Equal(t, "field1 = 11.11", result)
+		})
+
+		t.Run("if args are field name and range then it should return field between range", func(t *testing.T) {
+			result, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructRangePredicate("field1","10 - 20")`)
+
+			require.NoError(t, err)
+			require.Equal(t, "field1 between 10 and 20", result)
+		})
+
+		t.Run("if args are field name and not float then it should return error", func(t *testing.T) {
+			_, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructRangePredicate("field1", "abc")`)
+
+			require.EqualError(t, err, "strconv.ParseFloat: parsing \"abc\": invalid syntax")
+		})
+
+		t.Run("if args are field name and not range then it should return error", func(t *testing.T) {
+			_, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructRangePredicate("field1", "1 - abc")`)
+
+			require.EqualError(t, err, "strconv.ParseFloat: parsing \"abc\": invalid syntax")
+		})
+
+		t.Run("if args are field name and not range or float then it should return error", func(t *testing.T) {
+			_, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructRangePredicate("field1", "1 and 123")`)
+
+			require.EqualError(t, err, "strconv.ParseFloat: parsing \"1 and 123\": invalid syntax")
+		})
+
+		t.Run("if args are field name and multiple ranges then it should return error", func(t *testing.T) {
+			_, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructRangePredicate("field1", "1 - 123 and 200 - 300")`)
+
+			require.EqualError(t, err, "strconv.ParseFloat: parsing \"123 and 200\": invalid syntax")
+		})
+
+		t.Run("if args are field name and more than 2 values in range then it should return error", func(t *testing.T) {
+			_, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructRangePredicate("field1", "1 - 123 - 200")`)
+
+			require.EqualError(t, err, "expecting either float value or range: passed argument are 1 - 123 - 200")
+		})
+	})
 
 	t.Run("Macro: $__constructPredicates", func(t *testing.T) {
 
