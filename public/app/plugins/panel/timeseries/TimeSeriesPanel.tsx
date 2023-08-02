@@ -85,6 +85,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
                 sortOrder={options.tooltip.sort}
                 sync={sync}
                 timeZone={timeZone}
+                fixedFields={options?.tooltip?.fixedFields?.split(',') ?? []}
               />
             )}
             {/* Renders annotation markers*/}

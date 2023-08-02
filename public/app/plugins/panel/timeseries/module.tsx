@@ -13,7 +13,7 @@ export const plugin = new PanelPlugin<TimeSeriesOptions, GraphFieldConfig>(TimeS
   .setPanelChangeHandler(graphPanelChangedHandler)
   .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
   .setPanelOptions((builder) => {
-    commonOptionsBuilder.addTooltipOptions(builder);
+    commonOptionsBuilder.addTooltipOptions(builder, false, true);
     commonOptionsBuilder.addLegendOptions(builder);
 
     builder.addCustomEditor({

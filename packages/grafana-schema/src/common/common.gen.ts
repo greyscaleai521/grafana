@@ -511,6 +511,7 @@ export enum TooltipDisplayMode {
   Multi = 'multi',
   None = 'none',
   Single = 'single',
+  Custom = 'custom',
 }
 
 /**
