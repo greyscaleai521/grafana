@@ -1,4 +1,4 @@
-import React, { FocusEvent, KeyboardEvent, ReactElement, useCallback, useEffect, useState } from 'react';
+import React, { ChangeEvent, FocusEvent, KeyboardEvent, ReactElement, useCallback, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { Input, stylesFactory, useTheme, GrafanaTheme, Tooltip } from '@grafana/ui';
@@ -26,15 +26,14 @@ export function CustomRangeVariablePicker({ variable, onVariableChange, readOnly
       console.error('Cannot update variable without rootStateKey');
       return;
     }
-
-    const isValid = /^\d+(\.\d+)?\s*-\s*\d+(\.\d+)?$/.test(updatedValue) || /^(?:\d+(\.\d*)?|\.\d+)(?:[eE]\d+)?$/.test(updatedValue);
-
+    setError(false);
+    console.log(updatedValue);
+    const isValid = /^\d+(\.\d+)?\s*-\s*\d+(\.\d+)?$/.test(updatedValue) || /^(?:\d+(\.\d*)?|\.\d+)(?:[eE]\d+)?$/.test(updatedValue) || updatedValue === '';
+    console.log(isValid);
     if (!isValid) {
       setError(true);
       return;
     }
-
-    setError(false);
 
     if (variable.current.value === updatedValue) {
       return;
@@ -60,13 +59,17 @@ export function CustomRangeVariablePicker({ variable, onVariableChange, readOnly
     variableAdapters.get(variable.type).updateOptions(variable);
   }, [variable, updatedValue, dispatch, onVariableChange]);
 
+  const onChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => setUpdatedValue(event.target.value),
+    [setUpdatedValue]
+  );
+
   const onBlur = useCallback(
     (e: FocusEvent<HTMLInputElement>) => {
       updateVariable();
     },
     [updateVariable]
   );
-
   const onKeyDown = useCallback(
     (event: KeyboardEvent<HTMLInputElement>) => {
       if (event.keyCode === 13) {
@@ -77,30 +80,21 @@ export function CustomRangeVariablePicker({ variable, onVariableChange, readOnly
     [updateVariable]
   );
 
-  const theme = useTheme();
-  const styles = getStyles(theme);
-
   return (
     <div>
       <Tooltip content={"Invalid format.Format should be number or number - number"} placement={'bottom'} show={error}>
-      <Input
-        type="text"
-        value={updatedValue}
-        onBlur={onBlur}
-        disabled={readOnly}
-        onKeyDown={onKeyDown}
-        placeholder="Enter in number or number - number format."
-        id={`var-${variable.id}`}
-        invalid={error}
-      />
+        <Input
+          type="text"
+          value={updatedValue}
+          onChange={onChange}
+          onBlur={onBlur}
+          disabled={readOnly}
+          onKeyDown={onKeyDown}
+          placeholder="number or number - number format"
+          id={`var-${variable.id}`}
+          invalid={error}
+        />
       </Tooltip>
     </div>
   );
 }
-
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
-  error: {
-    color: theme.palette.red,
-    marginTop: theme.spacing.xs,
-  },
-}));
