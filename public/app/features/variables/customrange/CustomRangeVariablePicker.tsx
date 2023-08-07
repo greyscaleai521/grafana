@@ -1,7 +1,7 @@
 import React, { FocusEvent, KeyboardEvent, ReactElement, useCallback, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
-import { Input, stylesFactory, useTheme, GrafanaTheme } from '@grafana/ui';
+import { Input, stylesFactory, useTheme, GrafanaTheme, Tooltip } from '@grafana/ui';
 
 import { variableAdapters } from '../adapters';
 import { VariablePickerProps } from '../pickers/types';
@@ -15,7 +15,7 @@ interface Props extends VariablePickerProps<CustomRangeVariableModel> {}
 export function CustomRangeVariablePicker({ variable, onVariableChange, readOnly }: Props): ReactElement {
   const dispatch = useDispatch();
   const [updatedValue, setUpdatedValue] = useState(variable.current.value);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     setUpdatedValue(variable.current.value);
@@ -27,14 +27,14 @@ export function CustomRangeVariablePicker({ variable, onVariableChange, readOnly
       return;
     }
 
-    const isValid = /^-?\d*\.?\d+\s*-\s*-?\d*\.?\d+$/.test(updatedValue);
+    const isValid = /^\d+(\.\d+)?\s*-\s*\d+(\.\d+)?$/.test(updatedValue) || /^(?:\d+(\.\d*)?|\.\d+)(?:[eE]\d+)?$/.test(updatedValue);
 
     if (!isValid) {
-      setError('Invalid format. Please use number - number format.');
+      setError(true);
       return;
     }
 
-    setError('');
+    setError(false);
 
     if (variable.current.value === updatedValue) {
       return;
@@ -82,16 +82,18 @@ export function CustomRangeVariablePicker({ variable, onVariableChange, readOnly
 
   return (
     <div>
+      <Tooltip content={"Invalid format.Format should be number or number - number"} placement={'bottom'} show={error}>
       <Input
         type="text"
         value={updatedValue}
         onBlur={onBlur}
         disabled={readOnly}
         onKeyDown={onKeyDown}
-        placeholder="Enter variable value"
+        placeholder="Enter in number or number - number format."
         id={`var-${variable.id}`}
+        invalid={error}
       />
-      {error && <div className={styles.error}>{error}</div>}
+      </Tooltip>
     </div>
   );
 }

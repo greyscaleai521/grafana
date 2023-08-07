@@ -15,7 +15,7 @@ export const createCustomRangeVariableAdapter = (): VariableAdapter<CustomRangeV
   return {
     id: 'customrange',
     description: 'Define a customrange variable, where users can enter any arbitrary string',
-    name: 'Text box',
+    name: 'Custom Validation Variable',
     initialState: initialCustomRangeVariableModelState,
     reducer: customRangeVariableReducer,
     picker: CustomRangeVariablePicker,
