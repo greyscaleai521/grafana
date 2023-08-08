@@ -10,21 +10,24 @@ import { changeVariableProp } from '../state/sharedReducer';
 import { CustomRangeVariableModel } from '../types';
 import { toVariablePayload } from '../utils';
 
-interface Props extends VariablePickerProps<CustomRangeVariableModel> { }
+interface Props extends VariablePickerProps<CustomRangeVariableModel> {}
 
 export function CustomRangeVariablePicker({ variable, onVariableChange, readOnly }: Props): ReactElement {
   const dispatch = useDispatch();
   const [updatedValue, setUpdatedValue] = useState<string>(variable.current.value);
-  let error: boolean | undefined = undefined;
+  const [error, setError] = useState<boolean>(false);
 
   useEffect(() => {
     setUpdatedValue(variable.current.value);
   }, [variable]);
 
   const validateInput = useCallback((input: string): boolean => {
-    return /^\d+(\.\d+)?\s*-\s*\d+(\.\d+)?$/.test(input) ||
+    return (
+      /^\d+(\.\d+)?\s*-\s*\d+(\.\d+)?$/.test(input) ||
       /^(?:\d+(\.\d+)?|\.\d+)(?:[eE]\d+)?$/.test(input) ||
-      input === '' || input === undefined;
+      input === '' ||
+      input === undefined
+    );
   }, []);
 
   const updateVariable = useCallback(() => {
@@ -34,7 +37,7 @@ export function CustomRangeVariablePicker({ variable, onVariableChange, readOnly
     }
 
     const isValid = validateInput(updatedValue);
-    error = !isValid;
+    setError(!isValid);
 
     if (!isValid) {
       return;
@@ -48,9 +51,9 @@ export function CustomRangeVariablePicker({ variable, onVariableChange, readOnly
       toKeyedAction(
         variable.rootStateKey,
         changeVariableProp(
-          toVariablePayload({ id: variable.id, type: variable.type }, { propName: 'query', propValue: updatedValue })
-        )
-      )
+          toVariablePayload({ id: variable.id, type: variable.type }, { propName: 'query', propValue: updatedValue }),
+        ),
+      ),
     );
 
     if (onVariableChange) {
@@ -67,9 +70,12 @@ export function CustomRangeVariablePicker({ variable, onVariableChange, readOnly
     setUpdatedValue(event.target.value);
   }, []);
 
-  const onBlur = useCallback((e: FocusEvent<HTMLInputElement>) => {
-    updateVariable();
-  }, [updateVariable]);
+  const onBlur = useCallback(
+    (e: FocusEvent<HTMLInputElement>) => {
+      updateVariable();
+    },
+    [updateVariable],
+  );
 
   const onKeyDown = useCallback(
     (event: KeyboardEvent<HTMLInputElement>) => {
@@ -78,12 +84,26 @@ export function CustomRangeVariablePicker({ variable, onVariableChange, readOnly
         updateVariable();
       }
     },
-    [updateVariable]
+    [updateVariable],
   );
 
   return (
     <div>
-      <Tooltip content={error ? 'Invalid format. Format should be number or number - number' : ''} placement={'bottom'} show={error}>
+      {error ? (
+        <Tooltip content={'Invalid format. Format should be number or number - number'} placement={'bottom'}>
+          <Input
+            type="text"
+            value={updatedValue}
+            onChange={onChange}
+            onBlur={onBlur}
+            disabled={readOnly}
+            onKeyDown={onKeyDown}
+            placeholder="e.g. 1.2 or 1.2-100.4"
+            id={`var-${variable.id}`}
+            invalid={error}
+          />
+        </Tooltip>
+      ) : (
         <Input
           type="text"
           value={updatedValue}
@@ -93,9 +113,8 @@ export function CustomRangeVariablePicker({ variable, onVariableChange, readOnly
           onKeyDown={onKeyDown}
           placeholder="e.g. 1.2 or 1.2-100.4"
           id={`var-${variable.id}`}
-          invalid={error}
         />
-      </Tooltip>
+      )}
     </div>
   );
 }
