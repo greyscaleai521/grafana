@@ -1,7 +1,7 @@
 import React, { ChangeEvent, FocusEvent, KeyboardEvent, ReactElement, useCallback, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
-import { Input, stylesFactory, useTheme, GrafanaTheme, Tooltip } from '@grafana/ui';
+import { Input, Tooltip } from '@grafana/ui';
 
 import { variableAdapters } from '../adapters';
 import { VariablePickerProps } from '../pickers/types';
@@ -10,28 +10,33 @@ import { changeVariableProp } from '../state/sharedReducer';
 import { CustomRangeVariableModel } from '../types';
 import { toVariablePayload } from '../utils';
 
-interface Props extends VariablePickerProps<CustomRangeVariableModel> {}
+interface Props extends VariablePickerProps<CustomRangeVariableModel> { }
 
 export function CustomRangeVariablePicker({ variable, onVariableChange, readOnly }: Props): ReactElement {
   const dispatch = useDispatch();
-  const [updatedValue, setUpdatedValue] = useState(variable.current.value);
-  const [error, setError] = useState(false);
+  const [updatedValue, setUpdatedValue] = useState<string>(variable.current.value);
+  let error: boolean | undefined = undefined;
 
   useEffect(() => {
     setUpdatedValue(variable.current.value);
   }, [variable]);
+
+  const validateInput = useCallback((input: string): boolean => {
+    return /^\d+(\.\d+)?\s*-\s*\d+(\.\d+)?$/.test(input) ||
+      /^(?:\d+(\.\d+)?|\.\d+)(?:[eE]\d+)?$/.test(input) ||
+      input === '' || input === undefined;
+  }, []);
 
   const updateVariable = useCallback(() => {
     if (!variable.rootStateKey) {
       console.error('Cannot update variable without rootStateKey');
       return;
     }
-    setError(false);
-    console.log(updatedValue);
-    const isValid = /^\d+(\.\d+)?\s*-\s*\d+(\.\d+)?$/.test(updatedValue) || /^(?:\d+(\.\d*)?|\.\d+)(?:[eE]\d+)?$/.test(updatedValue) || updatedValue === '';
-    console.log(isValid);
+
+    const isValid = validateInput(updatedValue);
+    error = !isValid;
+
     if (!isValid) {
-      setError(true);
       return;
     }
 
@@ -53,23 +58,19 @@ export function CustomRangeVariablePicker({ variable, onVariableChange, readOnly
         ...variable,
         current: { ...variable.current, value: updatedValue },
       });
-      return;
+    } else {
+      variableAdapters.get(variable.type).updateOptions(variable);
     }
+  }, [variable, updatedValue, dispatch, onVariableChange, validateInput]);
 
-    variableAdapters.get(variable.type).updateOptions(variable);
-  }, [variable, updatedValue, dispatch, onVariableChange]);
+  const onChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    setUpdatedValue(event.target.value);
+  }, []);
 
-  const onChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => setUpdatedValue(event.target.value),
-    [setUpdatedValue]
-  );
+  const onBlur = useCallback((e: FocusEvent<HTMLInputElement>) => {
+    updateVariable();
+  }, [updateVariable]);
 
-  const onBlur = useCallback(
-    (e: FocusEvent<HTMLInputElement>) => {
-      updateVariable();
-    },
-    [updateVariable]
-  );
   const onKeyDown = useCallback(
     (event: KeyboardEvent<HTMLInputElement>) => {
       if (event.keyCode === 13) {
@@ -82,7 +83,7 @@ export function CustomRangeVariablePicker({ variable, onVariableChange, readOnly
 
   return (
     <div>
-      <Tooltip content={"Invalid format.Format should be number or number - number"} placement={'bottom'} show={error}>
+      <Tooltip content={error ? 'Invalid format. Format should be number or number - number' : ''} placement={'bottom'} show={error}>
         <Input
           type="text"
           value={updatedValue}
@@ -90,7 +91,7 @@ export function CustomRangeVariablePicker({ variable, onVariableChange, readOnly
           onBlur={onBlur}
           disabled={readOnly}
           onKeyDown={onKeyDown}
-          placeholder="number or number - number format"
+          placeholder="e.g. 1.2 or 1.2-100.4"
           id={`var-${variable.id}`}
           invalid={error}
         />
