@@ -27,7 +27,7 @@ export const sharedInputStyle = (theme: GrafanaTheme2, invalid = false) => {
       lineHeight: theme.typography.body.lineHeight,
       fontSize: theme.typography.size.md,
       color: textColor,
-      border: `1px solid ${borderColor}`,
+      border: `1px solid ${borderColor} ${invalid ? '!important' : ''}`,
 
       '&:-webkit-autofill, &:-webkit-autofill:hover': {
         /* Welcome to 2005. This is a HACK to get rid od Chromes default autofill styling */

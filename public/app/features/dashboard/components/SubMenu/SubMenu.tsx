@@ -5,6 +5,7 @@ import { connect, MapStateToProps } from 'react-redux';
 import { AnnotationQuery, DataQuery, TypedVariableModel, GrafanaTheme2 } from '@grafana/data';
 import { DashboardLink } from '@grafana/schema';
 import { stylesFactory, Themeable2, withTheme2 } from '@grafana/ui';
+import { Button } from '@grafana/ui';
 
 import { StoreState } from '../../../../types';
 import { getSubMenuVariables, getVariablesState } from '../../../variables/state/selectors';
@@ -14,7 +15,6 @@ import { DashboardModel } from '../../state';
 import { Annotations } from './Annotations';
 import { DashboardLinks } from './DashboardLinks';
 import { SubMenuItems } from './SubMenuItems';
-import { Button } from '@grafana/ui';
 
 interface OwnProps extends Themeable2 {
   dashboard: DashboardModel;
