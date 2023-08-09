@@ -164,7 +164,7 @@ export type DashboardLinkType = ('link' | 'dashboards');
  * TODO docs
  * TODO this implies some wider pattern/discriminated union, probably?
  */
-export type VariableType = ('query' | 'adhoc' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom' | 'system');
+export type VariableType = ('query' | 'adhoc' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom' | 'system' | 'customrange');
 
 /**
  * TODO docs

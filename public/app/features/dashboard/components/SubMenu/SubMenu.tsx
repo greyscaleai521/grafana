@@ -3,6 +3,7 @@ import React, { PureComponent } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
 
 import { AnnotationQuery, DataQuery } from '@grafana/data';
+import { Button } from '@grafana/ui';
 
 import { StoreState } from '../../../../types';
 import { getSubMenuVariables, getVariablesState } from '../../../variables/state/selectors';
@@ -13,7 +14,6 @@ import { DashboardLink } from '../../state/DashboardModel';
 import { Annotations } from './Annotations';
 import { DashboardLinks } from './DashboardLinks';
 import { SubMenuItems } from './SubMenuItems';
-import { Button } from '@grafana/ui';
 
 interface OwnProps {
   dashboard: DashboardModel;

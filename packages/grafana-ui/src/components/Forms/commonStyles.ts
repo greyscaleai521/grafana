@@ -28,7 +28,7 @@ export const sharedInputStyle = (theme: GrafanaTheme2, invalid = false) => {
       line-height: ${theme.typography.body.lineHeight};
       font-size: ${theme.typography.size.md};
       color: ${textColor};
-      border: 1px solid ${borderColor};
+      border: 1px solid ${borderColor} ${invalid ? '!important' : ''};
 
       &:-webkit-autofill,
       &:-webkit-autofill:hover {

@@ -156,6 +156,8 @@ const (
 	VariableTypeSystem VariableType = "system"
 
 	VariableTypeTextbox VariableType = "textbox"
+
+	VariableTypeCustomRange VariableType = "customrange"
 )
 
 // TODO docs
