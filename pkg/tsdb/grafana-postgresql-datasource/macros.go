@@ -246,31 +246,38 @@ func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *
 		}
 		return strings.Join(filtersList, " and "), nil
 	case "__constructRangePredicate":
-		if len(args) != 2 {
-			return "", fmt.Errorf("expecting field name and value to be passed: passed arguments are %v", args)
+		if len(args) != 3 {
+			return "", fmt.Errorf("expecting field name, value and conversion factor to be passed: passed arguments are %v", args)
 		}
 		var field string = strings.TrimSpace(args[0])
 		var value string = strings.TrimSpace(args[1])
+		var convFactor string = strings.TrimSpace(args[2])
 	
 		if value == "" {
 			return "true", nil
 		}
 	
 		var values []string = strings.Split(value, "-")
-		var values_casted []float64
+		var valuesCasted []float64
+		var convFactorCasted float64
+
+		convFactorCasted, err := strconv.ParseFloat(strings.TrimSpace(convFactor), 64)
+		if err != nil {
+			return "", err
+		}
 	
 		for _, item := range values {
-			if float_value, err := strconv.ParseFloat(strings.TrimSpace(item), 64); err == nil {
-				values_casted = append(values_casted, float_value)
+			if floatValue, err := strconv.ParseFloat(strings.TrimSpace(item), 64); err == nil {
+				valuesCasted = append(valuesCasted, floatValue)
 			} else {
 				return "", err
 			}
 		}
 	
-		if len(values_casted) == 2 {
-			return fmt.Sprintf("%v between %v and %v", field, values_casted[0], values_casted[1]), nil
-		} else if len(values_casted) == 1 {
-			return fmt.Sprintf("%v = %v", field, values_casted[0]), nil
+		if len(valuesCasted) == 2 {
+			return fmt.Sprintf("%v between %v and %v", field, valuesCasted[0]*convFactorCasted, valuesCasted[1]*convFactorCasted), nil
+		} else if len(valuesCasted) == 1 {
+			return fmt.Sprintf("%v = %v", field, valuesCasted[0]*convFactorCasted), nil
 		}
 		return "", fmt.Errorf("expecting either float value or range: passed argument are %v", args[1])
 
