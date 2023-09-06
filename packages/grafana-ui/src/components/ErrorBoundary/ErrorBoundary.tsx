@@ -38,7 +38,8 @@ export class ErrorBoundary extends PureComponent<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     captureException(error, { contexts: { react: { componentStack: errorInfo.componentStack } } });
     this.setState({ error, errorInfo });
-
+    const parentWindow = window.parent || window;
+    parentWindow.postMessage({ type: 'error', error: error.toString(), stack: errorInfo.componentStack }, '*');
     if (this.props.onError) {
       this.props.onError(error);
     }
