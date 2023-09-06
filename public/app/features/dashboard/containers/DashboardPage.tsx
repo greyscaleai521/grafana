@@ -165,6 +165,10 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     if (prevProps.location.search !== this.props.location.search) {
       const prevUrlParams = prevProps.queryParams;
       const urlParams = this.props.queryParams;
+      if (this.props.location.search) {
+        const parentWindow = window.parent || window;
+        parentWindow.postMessage({ key: 'filterChanged', value: this.props.location.search }, '*');
+      }
 
       if (urlParams?.from !== prevUrlParams?.from || urlParams?.to !== prevUrlParams?.to) {
         getTimeSrv().updateTimeRangeFromUrl();
@@ -385,7 +389,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
               <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
             </section>
           )}
-        <div className={'dashboard-title'}>{dashboard.title}</div>
+          <div className={'dashboard-title'}>{dashboard.title}</div>
           <DashboardGrid
             dashboard={dashboard}
             isEditable={!!dashboard.meta.canEdit}
