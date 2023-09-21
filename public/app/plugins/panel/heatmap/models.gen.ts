@@ -25,6 +25,7 @@ export interface HeatmapColorOptions {
   scale: HeatmapColorScale; // for opacity mode
   exponent: number; // when scale== sqrt
   steps: number; // 2-128
+  startStep: number; // 0-127
 
   reverse: boolean;
 
@@ -99,6 +100,7 @@ export const defaultPanelOptions: PanelOptions = {
     reverse: false,
     exponent: 0.5,
     steps: 64,
+    startStep: 0,
   },
   rowsFrame: {
     layout: HeatmapCellLayout.auto,
