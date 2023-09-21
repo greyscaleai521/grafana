@@ -265,6 +265,18 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
         },
       });
 
+    builder.addNumberInput({
+      path: 'color.startStep',
+      name: 'Start at step',
+      defaultValue: defaultPanelOptions.color.startStep,
+      settings: {
+        placeholder: '0 - Steps',
+        min: 0,
+        max: 127,
+      },
+      category,
+    });
+
     builder
       .addNumberInput({
         path: 'color.min',
