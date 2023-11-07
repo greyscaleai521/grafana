@@ -19,6 +19,18 @@
     background: #f4f5f5;
   }
 }
+.FilterCategory {
+  color: $red-orange !important;
+  background: white !important;
+  text-transform: capitalize;
+  &:hover {
+    color: #c23f00 !important;
+    background: white !important;
+  }
+}
+.FilterCategoryActive {
+  border-bottom: $red-orange 2px solid !important;
+}
 .dashboardHeader {
   -webkit-box-align: center;
   align-items: center;
