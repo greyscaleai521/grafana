@@ -16,7 +16,7 @@ interface Props {
   categories?: any;
 }
 
-export const SubMenuItems: FunctionComponent<Props> = ({ variables, readOnly, selectedCategory, categories }) => {
+export const SubMenuItems: FunctionComponent<Props> = ({ variables, readOnly, selectedCategory, categories = [] }) => {
   const optionVariables = variables as VariableWithOptions[];
   const [visibleVariables, setVisibleVariables] = useState<VariableModel[]>([]);
 
