@@ -2,10 +2,9 @@ import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
 
-import { AnnotationQuery, DataQuery, TypedVariableModel, GrafanaTheme2 } from '@grafana/data';
+import { AnnotationQuery, DataQuery, TypedVariableModel, GrafanaTheme2, VariableWithOptions } from '@grafana/data';
 import { DashboardLink } from '@grafana/schema';
 import { stylesFactory, Themeable2, withTheme2 } from '@grafana/ui';
-import { Button } from '@grafana/ui';
 
 import { StoreState } from '../../../../types';
 import { getSubMenuVariables, getVariablesState } from '../../../variables/state/selectors';
@@ -13,6 +12,7 @@ import { VariableHide, VariableModel } from '../../../variables/types';
 import { DashboardModel } from '../../state';
 
 import { Annotations } from './Annotations';
+import { CategoryBar } from './CategoryBar';
 import { DashboardLinks } from './DashboardLinks';
 import { SubMenuItems } from './SubMenuItems';
 
@@ -30,11 +30,17 @@ interface DispatchProps {}
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
+function isDefault(filter: VariableWithOptions) {
+  return filter.current.value.toString() === '' || filter.current.value.toString() === '$__all' ? true : false;
+}
+
 class SubMenuUnConnected extends PureComponent<Props, any> {
   constructor(props: any) {
     super(props);
     this.state = {
-      filtersExpanded: false,
+      selectedCategory: 0,
+      uniqueCategories: [],
+      categoryFilterCounter: {},
     };
   }
   onAnnotationStateChanged = (updatedAnnotation: AnnotationQuery<DataQuery>) => {
@@ -49,18 +55,54 @@ class SubMenuUnConnected extends PureComponent<Props, any> {
     this.props.dashboard.startRefresh();
     this.forceUpdate();
   };
-  onExpandFilters = () => {
-    event?.preventDefault();
-    if (this.state.filtersExpanded) {
+
+  onCategoryChange = (index: number) => {
+    this.setState({
+      selectedCategory: index,
+    });
+  };
+
+  onFilterCounterChange = (counter: Record<string, number>) => {
+    this.setState({
+      categoryFilterCounter: counter,
+    });
+  };
+
+  componentDidUpdate(prevProps: Props, prevState: any) {
+    const { variables } = this.props;
+    let counter: Record<string, number> = {};
+
+    variables.forEach((variable) => {
+      if (variable.category !== undefined && variable.category !== '' && variable.category !== null) {
+        if (variable.hide !== VariableHide.hideVariable && !isDefault(variable as VariableWithOptions)) {
+          if (Object.keys(counter).includes(variable.category)) {
+            counter[variable.category] += 1;
+          } else {
+            counter[variable.category] = 1;
+          }
+        }
+      }
+    });
+    if (JSON.stringify(counter) !== JSON.stringify(prevState.categoryFilterCounter)) {
       this.setState({
-        filtersExpanded: false,
-      });
-    } else {
-      this.setState({
-        filtersExpanded: true,
+        categoryFilterCounter: counter,
       });
     }
-  };
+  }
+
+  componentDidMount() {
+    const { variables } = this.props;
+    const uniqueCategories = new Set();
+    variables.forEach((variable) => {
+      if (variable.category !== undefined && variable.category !== '' && variable.category !== null) {
+        uniqueCategories.add(variable.category);
+      }
+    });
+
+    this.setState({
+      uniqueCategories: Array.from(uniqueCategories),
+    });
+  }
 
   disableSubmitOnEnter = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -74,21 +116,24 @@ class SubMenuUnConnected extends PureComponent<Props, any> {
     if (!dashboard.isSubMenuVisible()) {
       return null;
     }
-    const showAdvFilters = variables.filter(
-      (variable) => variable.hide !== VariableHide.hideVariable && variable.id.toLowerCase().startsWith('advanced')
-    ).length;
 
     const readOnlyVariables = dashboard.meta.isSnapshot ?? false;
 
     return (
       <>
+        <CategoryBar
+          categories={this.state.uniqueCategories}
+          onCategoryChange={this.onCategoryChange}
+          selecedCategory={this.state.selectedCategory}
+          categoryFilterCounter={this.state.categoryFilterCounter}
+        />
         <div className={styles.submenu}>
           <form aria-label="Template variables" className={styles.formStyles} onSubmit={this.disableSubmitOnEnter}>
             <SubMenuItems
               variables={variables}
-              filtersExpanded={this.state.filtersExpanded}
-              onExpandFilters={this.onExpandFilters}
               readOnly={readOnlyVariables}
+              selectedCategory={this.state.selectedCategory}
+              categories={Array.from(this.state.uniqueCategories)}
             />
           </form>
           <Annotations
@@ -100,13 +145,6 @@ class SubMenuUnConnected extends PureComponent<Props, any> {
           {dashboard && <DashboardLinks dashboard={dashboard} links={links} />}
           <div className="clearfix" />
         </div>
-        {showAdvFilters > 0 && (
-          <div className="FiltersButton">
-            <Button className="clearall-btn MoreFilters" onClick={this.onExpandFilters} fill={'text'}>
-              {this.state.filtersExpanded ? 'Show Less Filters' : 'Show More Filters'}
-            </Button>
-          </div>
-        )}
       </>
     );
   }

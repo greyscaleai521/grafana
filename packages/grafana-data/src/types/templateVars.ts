@@ -170,4 +170,5 @@ export interface BaseVariableModel {
   state: LoadingState;
   error: any | null;
   description: string | null;
+  category?: string | null;
 }

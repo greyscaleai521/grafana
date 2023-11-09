@@ -19,7 +19,7 @@ import { Options } from './panelcfg.gen';
 interface Props extends PanelProps<Options> {}
 
 export function TablePanel(props: Props) {
-  const { data, height, width, options, fieldConfig, id, timeRange } = props;
+  const { data, height, width, options, timeRange } = props;
 
   const theme = useTheme2();
   const panelContext = usePanelContext();

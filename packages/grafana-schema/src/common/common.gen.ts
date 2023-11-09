@@ -669,6 +669,7 @@ export enum BarGaugeSizing {
 export interface VizTooltipOptions {
   mode: TooltipDisplayMode;
   sort: SortOrder;
+  fixedFields?: string;
 }
 
 export interface Labels {}
