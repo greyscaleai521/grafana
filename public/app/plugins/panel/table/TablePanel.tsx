@@ -10,7 +10,7 @@ import { PanelOptions } from './models.gen';
 interface Props extends PanelProps<PanelOptions> {}
 
 export function TablePanel(props: Props) {
-  const { data, height, width, options, fieldConfig, id } = props;
+  const { data, height, width, options } = props;
 
   const theme = useTheme2();
   const panelContext = usePanelContext();

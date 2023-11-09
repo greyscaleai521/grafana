@@ -11,38 +11,27 @@ import { TextBoxVariableModel, VariableHide, VariableModel, VariableWithOptions 
 
 interface Props {
   variables: VariableModel[];
-  filtersExpanded: boolean;
-  onExpandFilters: Function;
   readOnly?: boolean;
+  selectedCategory?: number;
+  categories?: any;
 }
 
-export const SubMenuItems: FunctionComponent<Props> = ({ variables, filtersExpanded, onExpandFilters, readOnly }) => {
+export const SubMenuItems: FunctionComponent<Props> = ({ variables, readOnly, selectedCategory, categories = [] }) => {
   const optionVariables = variables as VariableWithOptions[];
   const [visibleVariables, setVisibleVariables] = useState<VariableModel[]>([]);
-  let advanceFilters = optionVariables.filter(
-    (variable) =>
-      variable.hide !== VariableHide.hideVariable &&
-      variable.id.toLowerCase().startsWith('advanced') &&
-      !isDefault(variable)
-  ).length;
 
   useEffect(() => {
-    setVisibleVariables(
-      optionVariables.filter(
-        (state) =>
-          state.hide !== VariableHide.hideVariable &&
-          (filtersExpanded || !state.id.toLowerCase().startsWith('advanced'))
-      )
-    );
-  }, [optionVariables, filtersExpanded]);
+    let visibleVariables = [];
+    if (categories.length && selectedCategory !== undefined) {
+      visibleVariables = optionVariables.filter(
+        (state) => state.hide !== VariableHide.hideVariable && state.category === categories[selectedCategory]
+      );
+    } else {
+      visibleVariables = optionVariables.filter((state) => state.hide !== VariableHide.hideVariable);
+    }
+    setVisibleVariables(visibleVariables);
+  }, [optionVariables, selectedCategory, categories]);
 
-  function isDefault(filter: VariableWithOptions) {
-    return filter.current.value.toString() === '' || filter.current.value.toString() === '$__all' ? true : false;
-  }
-  function onExpandFilterChild() {
-    event?.preventDefault();
-    onExpandFilters();
-  }
   function onClearAllFilters(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
 
@@ -88,11 +77,6 @@ export const SubMenuItems: FunctionComponent<Props> = ({ variables, filtersExpan
           </div>
         );
       })}
-      {!filtersExpanded && advanceFilters > 0 && (
-        <Button className="FilterCounter" onClick={onExpandFilterChild} fill={'text'}>
-          + {advanceFilters} {advanceFilters > 1 ? 'Filters' : 'Filter'} Applied
-        </Button>
-      )}
       <Button className="clearall-btn" onClick={onClearAllFilters} fill={'text'}>
         Clear All
       </Button>

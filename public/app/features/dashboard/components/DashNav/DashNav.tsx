@@ -79,7 +79,7 @@ export function addCustomRightAction(content: DashNavButtonModel) {
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
-export const DashNav = React.memo<Props>((props) => {
+export const DashNav = React.memo<any>((props: any) => {
   const forceUpdate = useForceUpdate();
   const { chrome } = useGrafana();
   const { showModal, hideModal } = useContext(ModalsContext);

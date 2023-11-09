@@ -1,7 +1,7 @@
 import React, { ChangeEvent, FocusEvent, KeyboardEvent, ReactElement, useCallback, useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
 
 import { Input, Tooltip } from '@grafana/ui';
+import { useDispatch } from 'app/types';
 
 import { variableAdapters } from '../adapters';
 import { VariablePickerProps } from '../pickers/types';
@@ -14,12 +14,10 @@ interface Props extends VariablePickerProps<CustomRangeVariableModel> {}
 
 export function CustomRangeVariablePicker({ variable, onVariableChange, readOnly }: Props): ReactElement {
   const dispatch = useDispatch();
-  const [updatedValue, setUpdatedValue] = useState<string>(variable.current.value);
+  const [updatedValue, setUpdatedValue] = useState<string>(variable.current.value.toString());
   const [error, setError] = useState<boolean>(false);
 
-  useEffect(() => {
-    setUpdatedValue(variable.current.value);
-  }, [variable]);
+  useEffect(() => setUpdatedValue(variable.current.value.toString()), [variable]);
 
   const validateInput = useCallback((input: string): boolean => {
     return (
@@ -51,9 +49,9 @@ export function CustomRangeVariablePicker({ variable, onVariableChange, readOnly
       toKeyedAction(
         variable.rootStateKey,
         changeVariableProp(
-          toVariablePayload({ id: variable.id, type: variable.type }, { propName: 'query', propValue: updatedValue }),
-        ),
-      ),
+          toVariablePayload({ id: variable.id, type: variable.type }, { propName: 'query', propValue: updatedValue })
+        )
+      )
     );
 
     if (onVariableChange) {
@@ -74,7 +72,7 @@ export function CustomRangeVariablePicker({ variable, onVariableChange, readOnly
     (e: FocusEvent<HTMLInputElement>) => {
       updateVariable();
     },
-    [updateVariable],
+    [updateVariable]
   );
 
   const onKeyDown = useCallback(
@@ -84,7 +82,7 @@ export function CustomRangeVariablePicker({ variable, onVariableChange, readOnly
         updateVariable();
       }
     },
-    [updateVariable],
+    [updateVariable]
   );
 
   return (

@@ -3,6 +3,7 @@
   position: sticky;
   top: 0px;
   z-index: $zindex-dropdown - 2;
+  background: white;
   .MoreFilters {
     color: $red-orange !important;
     background: white;
@@ -19,6 +20,18 @@
     background: #f4f5f5;
   }
 }
+.FilterCategory {
+  color: $red-orange !important;
+  background: white !important;
+  text-transform: capitalize;
+  &:hover {
+    color: #c23f00 !important;
+    background: white !important;
+  }
+}
+.FilterCategoryActive {
+  border-bottom: $red-orange 2px solid !important;
+}
 .dashboardHeader {
   -webkit-box-align: center;
   align-items: center;
@@ -29,6 +42,9 @@
   justify-content: flex-end;
   padding-right: 15px;
   background: white;
+  position: absolute;
+  right: 0;
+  z-index: 999999;
 }
 
 .dashboard-title {

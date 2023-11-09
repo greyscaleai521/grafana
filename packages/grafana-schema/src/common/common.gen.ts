@@ -568,6 +568,7 @@ export enum BarGaugeDisplayMode {
 export interface VizTooltipOptions {
   mode: TooltipDisplayMode;
   sort: SortOrder;
+  fixedFields?: string;
 }
 
 /**
