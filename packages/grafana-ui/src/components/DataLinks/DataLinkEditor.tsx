@@ -45,6 +45,10 @@ export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
       onChange(index, { ...value, targetBlank: !value.targetBlank });
     };
 
+    const openInParentChanged = () => {
+      onChange(index, { ...value, targetTop: !value.targetTop });
+    };
+
     return (
       <div className={styles.listItem}>
         <Field label="Title">
@@ -61,6 +65,10 @@ export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
 
         <Field label="Open in new tab">
           <Switch value={value.targetBlank || false} onChange={onOpenInNewTabChanged} />
+        </Field>
+
+        <Field label="Navigate Parent">
+          <Switch value={value.targetTop || false} onChange={openInParentChanged} />
         </Field>
 
         {isLast && (
