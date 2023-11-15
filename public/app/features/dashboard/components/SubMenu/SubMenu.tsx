@@ -30,7 +30,12 @@ interface DispatchProps {}
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 function isDefault(filter: VariableWithOptions) {
-  return filter.current.value.toString() === '' || filter.current.value.toString() === '$__all' ? true : false;
+  return filter.current.value.toString() === '' ||
+    filter.current.value.toString() === '$__all' ||
+    filter.current.value.toString() === 'Production' ||
+    filter.current.value.toString() === 'Max Resolution'
+    ? true
+    : false;
 }
 
 class SubMenuUnConnected extends PureComponent<Props, any> {
@@ -119,6 +124,7 @@ class SubMenuUnConnected extends PureComponent<Props, any> {
           onCategoryChange={this.onCategoryChange}
           selecedCategory={this.state.selectedCategory}
           categoryFilterCounter={this.state.categoryFilterCounter}
+          variables={variables}
         />
         <div className="submenu-controls">
           <form aria-label="Template variables" className={styles}>

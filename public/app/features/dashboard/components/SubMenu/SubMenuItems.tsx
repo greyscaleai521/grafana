@@ -32,14 +32,20 @@ export const SubMenuItems: FunctionComponent<Props> = ({ variables, readOnly, se
     setVisibleVariables(visibleVariables);
   }, [optionVariables, selectedCategory, categories]);
 
-  function onClearAllFilters(event: React.MouseEvent<HTMLButtonElement>) {
+  function onClearCategoryFilters(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
 
     const updateQuery: any = {};
     const templateSrv = getTemplateSrv();
 
     optionVariables
-      .filter((variable) => variable.hide !== VariableHide.hideVariable)
+      .filter((variable) => {
+        if (categories.length && selectedCategory !== undefined) {
+          return variable.hide !== VariableHide.hideVariable && variable.category === categories[selectedCategory];
+        } else {
+          return variable.hide !== VariableHide.hideVariable;
+        }
+      })
       .map((variable) => {
         const variableName = `var-${variable.id}`;
         let allValue = templateSrv.getAllValue(variable);
@@ -77,8 +83,8 @@ export const SubMenuItems: FunctionComponent<Props> = ({ variables, readOnly, se
           </div>
         );
       })}
-      <Button className="clearall-btn" onClick={onClearAllFilters} fill={'text'}>
-        Clear All
+      <Button className="clearall-btn" onClick={onClearCategoryFilters} fill={'text'}>
+        Clear
       </Button>
     </>
   );

@@ -32,6 +32,17 @@
 .FilterCategoryActive {
   border-bottom: $red-orange 2px solid !important;
 }
+
+.clearall-btn {
+  color: $red-orange !important;
+  align-self: flex-end;
+  border: 1px solid $red-orange !important;
+  &:hover {
+    color: #c23f00 !important;
+    background: rgba(198, 198, 198, 0.178) !important;
+  }
+}
+
 .dashboardHeader {
   -webkit-box-align: center;
   align-items: center;
@@ -64,14 +75,6 @@
   width: 100%;
   row-gap: 16px;
 
-  .clearall-btn {
-    color: $red-orange;
-    align-self: flex-end;
-    &:hover {
-      color: #c23f00 !important;
-      background: none !important;
-    }
-  }
   .FilterCounter {
     background: transparent !important;
     border: 1px solid #ff5300;
