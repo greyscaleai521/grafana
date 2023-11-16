@@ -58,6 +58,8 @@ export interface BarChartOptionsEX extends PanelOptions {
   getColor?: (seriesIdx: number, valueIdx: number, value: any) => string | null;
   timeZone?: TimeZone;
   fillOpacity?: number;
+  xValueMappedVariable?: string;
+  yValueMappedVariable?: string;
 }
 
 export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
@@ -80,6 +82,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
   legend,
   timeZone,
   fullHighlight,
+  xValueMappedVariable,
+  yValueMappedVariable,
 }) => {
   const builder = new UPlotConfigBuilder();
 
@@ -120,13 +124,16 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     xTimeAuto: frame.fields[0]?.type === FieldType.time && !frame.fields[0].config.unit?.startsWith('time:'),
     negY: frame.fields.map((f) => f.config.custom?.transform === GraphTransform.NegativeY),
     fullHighlight,
+    xValueMappedVariable,
+    yValueMappedVariable,
   };
 
-  const config = getConfig(opts, theme);
+  const config = getConfig(opts, theme, frame);
 
   builder.setCursor(config.cursor);
 
   builder.addHook('init', config.init);
+  builder.addHook('destroy', config.destroy);
   builder.addHook('drawClear', config.drawClear);
   builder.addHook('draw', config.draw);
 
