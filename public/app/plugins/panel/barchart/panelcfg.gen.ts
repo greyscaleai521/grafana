@@ -63,6 +63,16 @@ export interface PanelOptions extends common.OptionsWithLegend, common.OptionsWi
    * negative values indicate backwards skipping behavior
    */
   xTickLabelSpacing?: number;
+
+  /**
+   * Manually select which field from the dataset to represent the y field.
+   */
+  xValueMappedVariable?: string;
+  
+  /**
+   * Manually select which field from the dataset to represent the x field.
+   */
+  yValueMappedVariable?: string;
 }
 
 export const defaultPanelOptions: Partial<PanelOptions> = {

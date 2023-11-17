@@ -97,10 +97,13 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
   };
 
   const onUPlotClick = () => {
-    isToolTipOpen.current = !isToolTipOpen.current;
+    const { xValueMappedVariable, yValueMappedVariable } = options;
+    if (!(xValueMappedVariable && yValueMappedVariable)) {
+      isToolTipOpen.current = !isToolTipOpen.current;
 
-    // Linking into useState required to re-render tooltip
-    setShouldDisplayCloseButton(isToolTipOpen.current);
+      // Linking into useState required to re-render tooltip
+      setShouldDisplayCloseButton(isToolTipOpen.current);
+    }
   };
 
   const frame0Ref = useRef<DataFrame>();
@@ -287,6 +290,8 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
       xTickLabelRotation,
       xTickLabelSpacing,
       fullHighlight,
+      xValueMappedVariable,
+      yValueMappedVariable,
     } = options;
 
     return preparePlotConfigBuilder({
@@ -313,6 +318,8 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
       fillOpacity,
       allFrames: info.viz,
       fullHighlight,
+      xValueMappedVariable,
+      yValueMappedVariable,
     });
   };
 

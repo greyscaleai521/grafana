@@ -153,7 +153,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       }
     `,
     highlight: css`
-      background: ${theme.colors.action.hover};
+      background: ${theme.colors.action.hover} !important;
     `,
   };
 };
