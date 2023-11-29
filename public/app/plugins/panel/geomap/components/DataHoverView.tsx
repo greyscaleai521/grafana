@@ -62,24 +62,46 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
     displayValues.sort((a, b) => arrayUtils.sortValues(sortOrder)(a[1], b[1]));
   }
 
+  const sendToParent = (link: LinkModel<Field>) => {
+    window.parent.postMessage(
+      {
+        key: 'navigateUrl',
+        value: link.href,
+      },
+      '*'
+    );
+  }
+
   const renderLinks = () =>
     links.length > 0 && (
       <tr>
         <td colSpan={2}>
           <VerticalGroup>
-            {links.map((link, i) => (
-              <LinkButton
-                key={i}
-                icon={'external-link-alt'}
-                target={link.target}
-                href={link.href}
-                onClick={link.onClick}
-                fill="text"
-                style={{ width: '100%' }}
-              >
-                {link.title}
-              </LinkButton>
-            ))}
+            {links.map((link, i) =>
+              link.target !== '_top' ? (
+                <LinkButton
+                  key={i}
+                  icon={'external-link-alt'}
+                  target={link.target}
+                  href={link.href}
+                  onClick={link.onClick}
+                  fill="text"
+                  style={{ width: '100%' }}
+                >
+                  {link.title}
+                </LinkButton>
+              ) : (
+                <LinkButton
+                  key={i}
+                  icon={'external-link-alt'}
+                  onClick={() => sendToParent(link)}
+                  fill="text"
+                  style={{ width: '100%' }}
+                >
+                  {link.title}
+                </LinkButton>
+              )
+            )}
           </VerticalGroup>
         </td>
       </tr>
