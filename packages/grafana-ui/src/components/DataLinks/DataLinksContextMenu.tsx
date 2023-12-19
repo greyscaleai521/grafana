@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { CSSProperties } from 'react';
 
-import { LinkModel } from '@grafana/data';
+import { LinkModel, Field } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { linkModelToContextMenuItems } from '../../utils/dataLinks';
@@ -56,17 +56,37 @@ export const DataLinksContextMenu = ({ children, links, style }: DataLinksContex
     );
   } else {
     const linkModel = links()[0];
+    const sendToParent = (link: LinkModel<Field>) => {
+      window.parent.postMessage(
+        {
+          key: 'navigateUrl',
+          value: link,
+        },
+        '*'
+      );
+    }
     return (
-      <a
-        href={linkModel.href}
-        onClick={linkModel.onClick}
-        target={linkModel.target}
-        title={linkModel.title}
-        style={{ ...style, overflow: 'hidden', display: 'flex' }}
-        data-testid={selectors.components.DataLinksContextMenu.singleLink}
-      >
-        {children({})}
-      </a>
+      linkModel.target === '_top' ? (
+        <a
+          onClick={() => sendToParent(linkModel.href)}
+          title={linkModel.title}
+          style={{ ...style, overflow: 'hidden', display: 'flex' }}
+          aria-label={selectors.components.DataLinksContextMenu.singleLink}
+        >
+          {children({})}
+        </a>
+      ) : (
+        <a
+          href={linkModel.href}
+          onClick={linkModel.onClick}
+          target={linkModel.target}
+          title={linkModel.title}
+          style={{ ...style, overflow: 'hidden', display: 'flex' }}
+          data-testid={selectors.components.DataLinksContextMenu.singleLink}
+        >
+          {children({})}
+        </a>
+      )
     );
   }
 };
