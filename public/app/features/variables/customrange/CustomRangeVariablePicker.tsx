@@ -1,5 +1,6 @@
 import React, { ChangeEvent, FocusEvent, KeyboardEvent, ReactElement, useCallback, useEffect, useState } from 'react';
 
+import { isEmptyObject } from '@grafana/data';
 import { Input, Tooltip } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
@@ -57,46 +58,48 @@ export function CustomRangeVariablePicker({ variable, onVariableChange, readOnly
     if (onVariableChange) {
       onVariableChange({
         ...variable,
-        current: { ...variable.current, value: updatedValue },
+        current: isEmptyObject(variable.current) ? {} : { ...variable.current, value: updatedValue },
       });
-    } else {
-      variableAdapters.get(variable.type).updateOptions(variable);
+      return;
     }
+
+    variableAdapters.get(variable.type).updateOptions(variable);
   }, [variable, updatedValue, dispatch, onVariableChange, validateInput]);
 
-  const onChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
-    setUpdatedValue(event.target.value);
-  }, []);
+  const onChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => setUpdatedValue(event.target.value),
+    [setUpdatedValue]
+  );
 
   const onBlur = useCallback(
     (e: FocusEvent<HTMLInputElement>) => {
       updateVariable();
-    },
+  },
     [updateVariable]
   );
 
   const onKeyDown = useCallback(
     (event: KeyboardEvent<HTMLInputElement>) => {
-      if (event.keyCode === 13) {
-        event.preventDefault();
-        updateVariable();
-      }
-    },
+    if (event.keyCode === 13) {
+      event.preventDefault();
+      updateVariable();
+    }
+  },
     [updateVariable]
   );
 
   return (
-    <div>
+<div>
       {error ? (
         <Tooltip content={'Invalid format. Format should be number or number - number'} placement={'bottom'}>
-          <Input
-            type="text"
-            value={updatedValue}
-            onChange={onChange}
-            onBlur={onBlur}
-            disabled={readOnly}
-            onKeyDown={onKeyDown}
-            placeholder="e.g. 1.2 or 1.2-100.4"
+    <Input
+      type="text"
+      value={updatedValue}
+      onChange={onChange}
+      onBlur={onBlur}
+      disabled={readOnly}
+      onKeyDown={onKeyDown}
+      placeholder="e.g. 1.2 or 1.2-100.4"
             id={`var-${variable.id}`}
             invalid={error}
           />
@@ -110,9 +113,9 @@ export function CustomRangeVariablePicker({ variable, onVariableChange, readOnly
           disabled={readOnly}
           onKeyDown={onKeyDown}
           placeholder="e.g. 1.2 or 1.2-100.4"
-          id={`var-${variable.id}`}
-        />
-      )}
+      id={`var-${variable.id}`}
+    />
+)}
     </div>
   );
 }

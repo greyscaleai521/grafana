@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import React, { ReactNode } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
 import { textUtil } from '@grafana/data';
@@ -69,8 +69,6 @@ export function addCustomLeftAction(content: DynamicDashNavButtonModel) {
 export function addCustomRightAction(content: DynamicDashNavButtonModel) {
   registerDynamicDashNavAction('right', content);
 }
-
-type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export const DashNav = React.memo<any>((props: any) => {
   // this ensures the component rerenders when the location changes

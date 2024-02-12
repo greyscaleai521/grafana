@@ -8,7 +8,7 @@ import { stylesFactory, Themeable2, withTheme2 } from '@grafana/ui';
 
 import { StoreState } from '../../../../types';
 import { getSubMenuVariables, getVariablesState } from '../../../variables/state/selectors';
-import { VariableHide, VariableModel } from '../../../variables/types';
+import { VariableHide } from '../../../variables/types';
 import { DashboardModel } from '../../state';
 
 import { Annotations } from './Annotations';

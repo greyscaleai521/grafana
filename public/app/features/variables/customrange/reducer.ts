@@ -2,13 +2,13 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { getInstanceState } from '../state/selectors';
 import { initialVariablesState, VariablePayload, VariablesState } from '../state/types';
-import { initialVariableModelState, CustomRangeVariableModel, VariableOption } from '../types';
+import { initialVariableModelState, CustomRangeVariableModel } from '../types';
 
 export const initialCustomRangeVariableModelState: CustomRangeVariableModel = {
   ...initialVariableModelState,
   type: 'customrange',
   query: '',
-  current: {} as VariableOption,
+  current: {},
   options: [],
   originalQuery: null,
 };

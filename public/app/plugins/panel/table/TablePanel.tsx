@@ -9,7 +9,7 @@ import {
   PanelProps,
   SelectableValue,
 } from '@grafana/data';
-import { config, PanelDataErrorView } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
 
@@ -141,6 +141,13 @@ const tableStyles = {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    height: 100%;
+  `,
+  noData: css`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     height: 100%;
   `,
   selectWrapper: css`

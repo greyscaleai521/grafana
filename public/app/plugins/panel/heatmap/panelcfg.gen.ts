@@ -66,6 +66,10 @@ export interface HeatmapColorOptions {
    * Controls the number of color steps
    */
   steps: number;
+  /** 
+   * Controls the start step of color schema
+   */
+  startStep: number;
 }
 
 /**
@@ -251,6 +255,7 @@ export const defaultOptions: Partial<Options> = {
     reverse: false,
     exponent: 0.5,
     steps: 64,
+    startStep: 0,
   },
   exemplars: {
     color: 'rgba(255,0,255,0.7)',

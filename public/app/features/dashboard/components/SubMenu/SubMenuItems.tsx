@@ -8,7 +8,7 @@ import { Button } from '@grafana/ui';
 import { getTemplateSrv } from '../../../templating/template_srv';
 import { ALL_VARIABLE_TEXT } from '../../../variables/constants';
 import { PickerRenderer } from '../../../variables/pickers/PickerRenderer';
-import { TextBoxVariableModel, VariableHide, VariableModel, VariableWithOptions } from '../../../variables/types';
+import { TextBoxVariableModel } from '../../../variables/types';
 
 interface Props {
   variables: TypedVariableModel[];
@@ -18,7 +18,7 @@ interface Props {
 }
 
 export const SubMenuItems = ({ variables, readOnly, selectedCategory, categories = [] }: Props) => {
-  const optionVariables = variables as VariableWithOptions[];
+  const optionVariables = variables as TypedVariableModel[];
   const [visibleVariables, setVisibleVariables] = useState<TypedVariableModel[]>([]);
 
   useEffect(() => {
