@@ -42,6 +42,24 @@ export function buildParams({
   return searchParams;
 }
 
+export function buildParamsforShare({
+  useCurrentTimeRange,
+  search = window.location.search,
+  range = getTimeSrv().timeRange(),
+  orgId = config.bootData.user.orgId,
+}: BuildParamsArgs): URLSearchParams {
+  const searchParams = new URLSearchParams(search);
+
+  searchParams.set('from', String(range.from.valueOf()));
+  searchParams.set('to', String(range.to.valueOf()));
+  if (!useCurrentTimeRange) {
+    searchParams.set('from', String(range.raw.from));
+    searchParams.set('to', String(range.raw.to));
+  }
+
+  return searchParams;
+}
+
 export function buildBaseUrl() {
   let baseUrl = window.location.href;
   const queryStart = baseUrl.indexOf('?');

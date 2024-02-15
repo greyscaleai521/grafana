@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { CSSProperties } from 'react';
 
-import { LinkModel, Field } from '@grafana/data';
+import { LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { linkModelToContextMenuItems } from '../../utils/dataLinks';
@@ -56,7 +56,7 @@ export const DataLinksContextMenu = ({ children, links, style }: DataLinksContex
     );
   } else {
     const linkModel = links()[0];
-    const sendToParent = (link: LinkModel<Field>) => {
+    const sendToParent = (link: string) => {
       window.parent.postMessage(
         {
           key: 'navigateUrl',
@@ -67,6 +67,7 @@ export const DataLinksContextMenu = ({ children, links, style }: DataLinksContex
     }
     return (
       linkModel.target === '_top' ? (
+        // eslint-disable-next-line jsx-a11y/anchor-is-valid
         <a
           onClick={() => sendToParent(linkModel.href)}
           title={linkModel.title}

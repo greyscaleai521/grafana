@@ -24,6 +24,7 @@
   color: $red-orange !important;
   background: white !important;
   text-transform: capitalize;
+  margin: 10px;
   &:hover {
     color: #c23f00 !important;
     background: white !important;
@@ -56,12 +57,18 @@
   position: absolute;
   right: 0;
   z-index: 999999;
+  top:'12px';
 }
 
 .dashboard-title {
   margin-bottom: 10px;
   font-weight: bold;
   font-size: 18px;
+}
+
+.submenu-controls-top {
+  display: flex;
+  align-items: center;
 }
 
 .submenu-controls {
