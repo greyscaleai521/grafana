@@ -76,11 +76,8 @@ export class ShareModalCustom extends React.Component<Props, State> {
   }
 
   renderTitle() {
-    const { panel } = this.props;
     const { activeTab } = this.state;
-    const title = panel
-      ? t('share-modal-custom.panel.title', 'Share Panel')
-      : t('share-modal-custom.dashboard.title', 'Share');
+    const title = '';
     const tabs = getTabs(this.props.panel, this.state.activeTab).tabs;
 
     return (

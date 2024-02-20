@@ -44,11 +44,9 @@ export function buildParams({
 
 export function buildParamsforShare({
   useCurrentTimeRange,
-  search = window.location.search,
   range = getTimeSrv().timeRange(),
-  orgId = config.bootData.user.orgId,
 }: BuildParamsArgs): URLSearchParams {
-  const searchParams = new URLSearchParams(search);
+  const searchParams = new URLSearchParams();
 
   searchParams.set('from', String(range.from.valueOf()));
   searchParams.set('to', String(range.to.valueOf()));
