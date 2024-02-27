@@ -50,7 +50,7 @@ export function buildParamsforShare({
 
   searchParams.set('from', String(range.from.valueOf()));
   searchParams.set('to', String(range.to.valueOf()));
-  if (!useCurrentTimeRange) {
+  if (useCurrentTimeRange) {
     searchParams.set('from', String(range.raw.from));
     searchParams.set('to', String(range.raw.to));
   }

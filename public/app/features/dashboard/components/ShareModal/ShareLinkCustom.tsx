@@ -64,7 +64,7 @@ export class ShareLinkCustom extends PureComponent<Props, State> {
     const { useCurrentTimeRange } = this.state;
     this.setState({ isLoading: true });
     const params = buildParamsforShare({ useCurrentTimeRange });
-    this.sendToParent(params.toString());
+        this.sendToParent(params.toString());
   };
 
   onUseCurrentTimeRangeChange = () => {
@@ -84,11 +84,11 @@ export class ShareLinkCustom extends PureComponent<Props, State> {
     const isRelativeTime = dashboard ? dashboard.time.to === 'now' : false;
     const { useCurrentTimeRange, shareUrl } = this.state;
 
-    const timeRangeLabelTranslation = t('share-modal-custom.link.time-range-label', `Lock time range`);
+    const timeRangeLabelTranslation = t('share-modal-custom.link.time-range-label', `Use Relative Time Range`);
 
     const timeRangeDescriptionTranslation = t(
       'share-modal-custom.link.time-range-description',
-      `Transforms the current relative time range to an absolute time range`
+      `Turn off the toggle to convert relative time range to an absolute time range`
     );
 
     const linkURLTranslation = t('share-modal-custom.link.link-url', `Link URL`);
@@ -98,13 +98,13 @@ export class ShareLinkCustom extends PureComponent<Props, State> {
           <Trans i18nKey="share-modal-custom.link.info-text">Share this dashboard.</Trans>
         </p>
         <FieldSet>
-          <Field label={timeRangeLabelTranslation} description={isRelativeTime ? timeRangeDescriptionTranslation : ''}>
+          {isRelativeTime && <Field label={timeRangeLabelTranslation} description={timeRangeDescriptionTranslation}>
             <Switch
               id="share-current-time-range"
               value={useCurrentTimeRange}
               onChange={this.onUseCurrentTimeRangeChange}
             />
-          </Field>
+          </Field>}
 
           <Field label={linkURLTranslation}>
             <Input

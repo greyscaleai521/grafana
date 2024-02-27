@@ -79,12 +79,12 @@ export class BookmarkLinkCustom extends PureComponent<Props, State> {
     const { dashboard, onDismiss } = this.props;
     const isRelativeTime = dashboard ? dashboard.time.to === 'now' : false;
     const { useCurrentTimeRange, isLoading, filterName } = this.state;
-    const snapshotNameTranslation = t('bookmark-modal.snapshot.name', `Filter name`);
-    const timeRangeLabelTranslation = t('bookmark-modal-custom.link.time-range-label', `Lock time range`);
+    const snapshotNameTranslation = t('bookmark-modal.snapshot.name', `Filter name*`);
+    const timeRangeLabelTranslation = t('bookmark-modal-custom.link.time-range-label', `Use Relative Time Range`);
 
     const timeRangeDescriptionTranslation = t(
       'bookmark-modal-custom.link.time-range-description',
-      `Transforms the current relative time range to an absolute time range`
+      `Turn off the toggle to convert relative time range to an absolute time range`
     );
 
     return (
@@ -93,21 +93,21 @@ export class BookmarkLinkCustom extends PureComponent<Props, State> {
           <Trans i18nKey="bookmark-modal-custom.link.info-text">Bookmark this dashboard.</Trans>
         </p>
         <Field label={snapshotNameTranslation}>
-          <Input id="snapshot-name-input" width={30} value={filterName} onChange={this.onFilterNameChange} />
+          <Input id="snapshot-name-input" width={30} value={filterName} onChange={this.onFilterNameChange}/>
         </Field>
         <FieldSet>
-          <Field label={timeRangeLabelTranslation} description={isRelativeTime ? timeRangeDescriptionTranslation : ''}>
+          {isRelativeTime && <Field label={timeRangeLabelTranslation} description={timeRangeDescriptionTranslation}>
             <Switch
               id="bookmark-current-time-range"
               value={useCurrentTimeRange}
               onChange={this.onUseCurrentTimeRangeChange}
             />
-          </Field>
+          </Field>}
           <Modal.ButtonRow>
             <Button variant="secondary" onClick={onDismiss} fill="outline">
               <Trans i18nKey="bookmark-modal.cancel-button">Cancel</Trans>
             </Button>
-            <Button variant="primary" disabled={isLoading} onClick={this.bookmarkDashboard} style={{width: '13rem', justifyContent: 'center'}}>
+            <Button variant="primary" disabled={isLoading || !filterName} onClick={this.bookmarkDashboard} style={{width: '13rem', justifyContent: 'center'}}>
               {this.state.isLoading ? <Spinner /> : <Trans i18nKey="bookmark-modal.local-button">Bookmark Dashboard</Trans>}
             </Button>
           </Modal.ButtonRow>

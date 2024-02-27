@@ -13,7 +13,6 @@ import { DashboardLink } from '../../state/DashboardModel';
 import { Annotations } from './Annotations';
 import { CategoryBar } from './CategoryBar';
 import { DashboardLinks } from './DashboardLinks';
-import { ShareDashboard } from './ShareDashboard';
 import { SubMenuItems } from './SubMenuItems';
 
 interface OwnProps {
@@ -129,7 +128,6 @@ class SubMenuUnConnected extends PureComponent<Props, any> {
             categoryFilterCounter={this.state.categoryFilterCounter}
             variables={variables}
           />
-          <ShareDashboard dashboard={dashboard} variables={variables} />
         </div>
         <div className="submenu-controls">
           <form aria-label="Template variables" className={styles}>
