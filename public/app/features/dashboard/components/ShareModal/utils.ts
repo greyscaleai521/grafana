@@ -10,6 +10,7 @@ export interface BuildParamsArgs {
   search?: string;
   range?: TimeRange;
   orgId?: number;
+  isRelativeTime?: boolean;
 }
 
 export function buildParams({
@@ -44,13 +45,14 @@ export function buildParams({
 
 export function buildParamsforShare({
   useCurrentTimeRange,
+  isRelativeTime,
   range = getTimeSrv().timeRange(),
 }: BuildParamsArgs): URLSearchParams {
   const searchParams = new URLSearchParams();
 
   searchParams.set('from', String(range.from.valueOf()));
   searchParams.set('to', String(range.to.valueOf()));
-  if (useCurrentTimeRange) {
+  if (isRelativeTime && useCurrentTimeRange) {
     searchParams.set('from', String(range.raw.from));
     searchParams.set('to', String(range.raw.to));
   }

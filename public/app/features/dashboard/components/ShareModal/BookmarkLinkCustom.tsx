@@ -56,10 +56,10 @@ export class BookmarkLinkCustom extends PureComponent<Props, State> {
     }
   };
 
-  bookmarkDashboard = async () => {
+  bookmarkDashboard = async (isRelativeTime) => {
     const { useCurrentTimeRange } = this.state;
     this.setState({ isLoading: true });
-    const params = buildParamsforShare({ useCurrentTimeRange });
+    const params = buildParamsforShare({ useCurrentTimeRange, isRelativeTime });
     this.sendToParent(params.toString(), this.state.filterName);
   };
 
@@ -79,7 +79,7 @@ export class BookmarkLinkCustom extends PureComponent<Props, State> {
     const { dashboard, onDismiss } = this.props;
     const isRelativeTime = dashboard ? dashboard.time.to === 'now' : false;
     const { useCurrentTimeRange, isLoading, filterName } = this.state;
-    const snapshotNameTranslation = t('bookmark-modal.snapshot.name', `Filter name*`);
+    const snapshotNameTranslation = t('bookmark-modal.snapshot.name', `Name*`);
     const timeRangeLabelTranslation = t('bookmark-modal-custom.link.time-range-label', `Use Relative Time Range`);
 
     const timeRangeDescriptionTranslation = t(
@@ -107,8 +107,8 @@ export class BookmarkLinkCustom extends PureComponent<Props, State> {
             <Button variant="secondary" onClick={onDismiss} fill="outline">
               <Trans i18nKey="bookmark-modal.cancel-button">Cancel</Trans>
             </Button>
-            <Button variant="primary" disabled={isLoading || !filterName} onClick={this.bookmarkDashboard} style={{width: '13rem', justifyContent: 'center'}}>
-              {this.state.isLoading ? <Spinner /> : <Trans i18nKey="bookmark-modal.local-button">Bookmark Dashboard</Trans>}
+            <Button variant="primary" disabled={isLoading || !filterName} onClick={() => this.bookmarkDashboard(isRelativeTime)} style={{width: '13rem', justifyContent: 'center'}}>
+              {this.state.isLoading ? <Spinner /> : <Trans i18nKey="bookmark-modal.local-button">Bookmark</Trans>}
             </Button>
           </Modal.ButtonRow>
         </FieldSet>

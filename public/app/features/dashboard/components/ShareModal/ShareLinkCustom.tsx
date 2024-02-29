@@ -62,8 +62,10 @@ export class ShareLinkCustom extends PureComponent<Props, State> {
 
   generateShareURL = async () => {
     const { useCurrentTimeRange } = this.state;
+    const { dashboard } = this.props;
+    const isRelativeTime = dashboard ? dashboard.time.to === 'now' : false;
     this.setState({ isLoading: true });
-    const params = buildParamsforShare({ useCurrentTimeRange });
+    const params = buildParamsforShare({ useCurrentTimeRange, isRelativeTime });
         this.sendToParent(params.toString());
   };
 
