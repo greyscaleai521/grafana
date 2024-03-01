@@ -10,6 +10,7 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { ShiftTimeEvent, ShiftTimeEventDirection, ZoomOutEvent } from '../../../../types/events';
 import { DashboardModel } from '../../state';
+import { ShareDashboard } from '../SubMenu/ShareDashboard';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -149,6 +150,7 @@ export class DashNavTimeControls extends Component<Props, any> {
           tooltip={refreshTooltip}
           noIntervalPicker={hideIntervalPicker}
         />
+        <ShareDashboard dashboard={dashboard} />
       </>
     );
   }

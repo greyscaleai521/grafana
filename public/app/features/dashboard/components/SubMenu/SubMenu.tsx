@@ -120,13 +120,15 @@ class SubMenuUnConnected extends PureComponent<Props, any> {
 
     return (
       <>
-        <CategoryBar
-          categories={this.state.uniqueCategories}
-          onCategoryChange={this.onCategoryChange}
-          selecedCategory={this.state.selectedCategory}
-          categoryFilterCounter={this.state.categoryFilterCounter}
-          variables={variables}
-        />
+        <div className="submenu-controls-top">
+          <CategoryBar
+            categories={this.state.uniqueCategories}
+            onCategoryChange={this.onCategoryChange}
+            selecedCategory={this.state.selectedCategory}
+            categoryFilterCounter={this.state.categoryFilterCounter}
+            variables={variables}
+          />
+        </div>
         <div className="submenu-controls">
           <form aria-label="Template variables" className={styles}>
             <SubMenuItems
