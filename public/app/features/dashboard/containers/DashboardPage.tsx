@@ -302,7 +302,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     }
 
     const inspectPanel = this.getInspectPanel();
-    const showSubMenu = !editPanel && !kioskMode && !this.props.queryParams.editview;
+    const showSubMenu = !editPanel && (!kioskMode || kioskMode === KioskMode.TV) && !this.props.queryParams.editview;
 
     const showToolbar = kioskMode !== KioskMode.Full && !queryParams.editview;
 
@@ -330,7 +330,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           scrollTop={updateScrollTop}
         >
           {showToolbar && (
-            <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
+            <header data-testid={selectors.pages.Dashboard.DashNav.navV2} className={'dashboardHeader'}>
               <DashNav
                 dashboard={dashboard}
                 title={dashboard.title}
