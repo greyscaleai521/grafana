@@ -9,7 +9,7 @@ import {
   PanelProps,
   SelectableValue,
 } from '@grafana/data';
-import { config, PanelDataErrorView } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
 
@@ -19,7 +19,7 @@ import { Options } from './panelcfg.gen';
 interface Props extends PanelProps<Options> {}
 
 export function TablePanel(props: Props) {
-  const { data, height, width, options, fieldConfig, id, timeRange } = props;
+  const { data, height, width, options, timeRange } = props;
 
   const theme = useTheme2();
   const panelContext = usePanelContext();
@@ -34,7 +34,7 @@ export function TablePanel(props: Props) {
   let tableHeight = height;
 
   if (!count || !hasFields) {
-    return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
+    return <div className={tableStyles.noData}>No data</div>;
   }
 
   if (count > 1) {
@@ -145,5 +145,12 @@ const tableStyles = {
   `,
   selectWrapper: css`
     padding: 8px 8px 0px 8px;
+  `,
+  noData: css`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
   `,
 };
