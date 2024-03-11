@@ -178,4 +178,5 @@ export interface BaseVariableModel {
   error: any | null;
   description: string | null;
   usedInRepeat?: boolean;
+  category?: string | null;
 }

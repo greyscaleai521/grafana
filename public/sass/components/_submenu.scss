@@ -3,7 +3,46 @@
   position: sticky;
   top: 0px;
   z-index: $zindex-dropdown - 2;
+  background: white;
+  .MoreFilters {
+    color: $red-orange !important;
+    background: white;
+    border-bottom-right-radius: 15px;
+    border-bottom-left-radius: 15px;
+    &:hover {
+      color: #c23f00 !important;
+      background: white !important;
+    }
+  }
+  .FiltersButton {
+    text-align: center;
+    padding-bottom: 5px;
+    background: #f4f5f5;
+  }
 }
+.FilterCategory {
+  color: $red-orange !important;
+  background: white !important;
+  text-transform: capitalize;
+  &:hover {
+    color: #c23f00 !important;
+    background: white !important;
+  }
+}
+.FilterCategoryActive {
+  border-bottom: $red-orange 2px solid !important;
+}
+
+.clearall-btn {
+  color: $red-orange !important;
+  align-self: flex-end;
+  border: 1px solid $red-orange !important;
+  &:hover {
+    color: #c23f00 !important;
+    background: rgba(198, 198, 198, 0.178) !important;
+  }
+}
+
 .dashboardHeader {
   -webkit-box-align: center;
   align-items: center;
@@ -14,6 +53,9 @@
   justify-content: flex-end;
   padding-right: 15px;
   background: white;
+  position: absolute;
+  right: 0;
+  z-index: 999999;
 }
 
 .dashboard-title {
@@ -33,9 +75,14 @@
   width: 100%;
   row-gap: 16px;
 
-  .clearall-btn {
-    color: $red-orange;
-    align-self: flex-end;
+  .FilterCounter {
+    background: transparent !important;
+    border: 1px solid #ff5300;
+    color: #ff5300;
+    padding: 0 8px !important;
+    &:hover {
+      color: #ff5300 !important;
+    }
   }
 }
 

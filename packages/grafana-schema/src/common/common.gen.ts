@@ -671,6 +671,7 @@ export interface VizTooltipOptions {
   maxWidth?: number;
   mode: TooltipDisplayMode;
   sort: SortOrder;
+  fixedFields?: string;
 }
 
 export interface Labels {}
