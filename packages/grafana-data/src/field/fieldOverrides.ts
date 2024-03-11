@@ -472,7 +472,7 @@ export const getLinksSupplier =
         linkModel = {
           href: link.url,
           title: replaceVariables(link.title || '', dataLinkScopedVars),
-          target: link.targetBlank ? '_blank' : undefined,
+          target: link.targetTop ? '_top' : link.targetBlank ? '_blank' : undefined,
           onClick: (evt: MouseEvent, origin: Field) => {
             link.onClick!({
               origin: origin ?? field,
@@ -499,7 +499,7 @@ export const getLinksSupplier =
         linkModel = {
           href,
           title: replaceVariables(link.title || '', dataLinkScopedVars),
-          target: link.targetBlank ? '_blank' : undefined,
+          target: link.targetTop ? '_top' : link.targetBlank ? '_blank' : undefined,
           origin: field,
         };
       }
