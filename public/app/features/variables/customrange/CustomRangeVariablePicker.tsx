@@ -9,6 +9,7 @@ import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { changeVariableProp } from '../state/sharedReducer';
 import { CustomRangeVariableModel } from '../types';
 import { toVariablePayload } from '../utils';
+import { getTemplateSrv } from 'app/features/templating/template_srv';
 
 interface Props extends VariablePickerProps<CustomRangeVariableModel> {}
 
@@ -64,6 +65,19 @@ export function CustomRangeVariablePicker({ variable, onVariableChange, readOnly
     }
   }, [variable, updatedValue, dispatch, onVariableChange, validateInput]);
 
+  const isDisable = () => {
+    const template_srv = getTemplateSrv();
+    const variables = template_srv.getVariables();
+   for (const variable of variables) {
+      if (variable.name === 'var-WeightUnit') {
+        setUpdatedValue('');
+        updateVariable();
+        return variable.current.text.toString() === 'All';
+      }
+    }
+    return false;
+  };
+
   const onChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
     setUpdatedValue(event.target.value);
   }, []);
@@ -94,7 +108,7 @@ export function CustomRangeVariablePicker({ variable, onVariableChange, readOnly
             value={updatedValue}
             onChange={onChange}
             onBlur={onBlur}
-            disabled={readOnly}
+            disabled={readOnly || isDisable()}
             onKeyDown={onKeyDown}
             placeholder="e.g. 1.2 or 1.2-100.4"
             id={`var-${variable.id}`}
@@ -107,7 +121,7 @@ export function CustomRangeVariablePicker({ variable, onVariableChange, readOnly
           value={updatedValue}
           onChange={onChange}
           onBlur={onBlur}
-          disabled={readOnly}
+          disabled={readOnly || isDisable()}
           onKeyDown={onKeyDown}
           placeholder="e.g. 1.2 or 1.2-100.4"
           id={`var-${variable.id}`}
