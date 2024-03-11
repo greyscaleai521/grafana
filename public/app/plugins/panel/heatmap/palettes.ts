@@ -69,6 +69,7 @@ export function quantizeScheme(opts: HeatmapColorOptions, theme: GrafanaTheme2):
   const options = { ...defaultOptions.color, ...opts };
   const palette = [];
   const steps = (options.steps ?? 128) - 1;
+  const startStep = options.startStep && options.startStep < steps - 1 ? options.startStep : 0;
 
   if (opts.mode === HeatmapColorMode.Opacity) {
     const fill = tinycolor(theme.visualization.getColorByName(opts.fill)).toPercentageRgb();
@@ -78,7 +79,7 @@ export function quantizeScheme(opts: HeatmapColorOptions, theme: GrafanaTheme2):
         ? d3.scalePow().exponent(options.exponent).domain([0, 1]).range([0, 1])
         : d3.scaleLinear().domain([0, 1]).range([0, 1]);
 
-    for (let i = 0; i <= steps; i++) {
+    for (let i = startStep; i <= steps; i++) {
       fill.a = scale(i / steps);
       palette.push(tinycolor(fill).toString('hex8'));
     }
@@ -87,7 +88,7 @@ export function quantizeScheme(opts: HeatmapColorOptions, theme: GrafanaTheme2):
     let fnName = 'interpolate' + (scheme.name2 ?? scheme.name);
     const interpolate: Interpolator = (d3ScaleChromatic as any)[fnName];
 
-    for (let i = 0; i <= steps; i++) {
+    for (let i = startStep; i <= steps; i++) {
       let rgbStr = interpolate(i / steps);
       let rgb =
         rgbStr.indexOf('rgb') === 0
