@@ -31,6 +31,7 @@ interface TooltipPluginProps {
   config: UPlotConfigBuilder;
   mode?: TooltipDisplayMode;
   sortOrder?: SortOrder;
+  fixedFields?: string[];
   sync?: () => DashboardCursorSync;
   // Allows custom tooltip content rendering. Exposes aligned data frame with relevant indexes for data inspection
   // Use field.state.origin indexes from alignedData frame field to get access to original data frame and field index.
@@ -49,6 +50,7 @@ export const TooltipPlugin = ({
   timeZone,
   config,
   renderTooltip,
+  fixedFields,
   ...otherProps
 }: TooltipPluginProps) => {
   const plotInstance = useRef<uPlot>();
@@ -224,6 +226,40 @@ export const TooltipPlugin = ({
           timestamp={xVal}
         />
       );
+    }
+
+    // when interacting with a point in custom mode
+    if (mode === TooltipDisplayMode.Custom && focusedSeriesIdx !== null) {
+      let series: SeriesTableRowProps[] = [];
+      const frame = otherProps.data;
+      const fields = frame.fields;
+
+      for (let i = 0; i < fields.length; i++) {
+        const field = frame.fields[i];
+        if (
+          !field ||
+          field === xField ||
+          field.type === FieldType.time ||
+          field.type !== FieldType.number ||
+          field.config.custom?.hideFrom?.tooltip ||
+          field.config.custom?.hideFrom?.viz
+        ) {
+          continue;
+        }
+
+        const v = otherProps.data.fields[i].values.get(focusedPointIdxs[i]!);
+        const display = field.display!(v);
+        if (focusedSeriesIdx === i || fixedFields?.includes(field.name)) {
+          series.push({
+            color: display.color || FALLBACK_COLOR,
+            label: getFieldDisplayName(field, frame, otherProps.frames),
+            value: display && focusedSeriesIdx !== i ? formattedValueToString(display) : null,
+            isActive: focusedSeriesIdx === i,
+          });
+        }
+      }
+
+      tooltip = <SeriesTable series={series} timestamp={xVal} />;
     }
 
     if (mode === TooltipDisplayMode.Multi) {

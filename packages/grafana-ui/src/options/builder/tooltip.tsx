@@ -5,13 +5,21 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
   builder: PanelOptionsEditorBuilder<T>,
   singleOnly = false,
   setProximity = false,
-  defaultOptions?: Partial<OptionsWithTooltip>
+  defaultOptions?: Partial<OptionsWithTooltip>,
+  showCustom = false
 ) {
   const category = ['Tooltip'];
   const modeOptions = singleOnly
     ? [
         { value: TooltipDisplayMode.Single, label: 'Single' },
         { value: TooltipDisplayMode.None, label: 'Hidden' },
+      ]
+    : showCustom
+    ? [
+        { value: TooltipDisplayMode.Single, label: 'Single' },
+        { value: TooltipDisplayMode.Multi, label: 'All' },
+        { value: TooltipDisplayMode.None, label: 'Hidden' },
+        { value: TooltipDisplayMode.Custom, label: 'Custom' },
       ]
     : [
         { value: TooltipDisplayMode.Single, label: 'Single' },
@@ -76,5 +84,14 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
         integer: true,
       },
       showIf: (options: T) => options.tooltip?.mode !== TooltipDisplayMode.None,
+    })
+    .addTextInput({
+      path: 'tooltip.fixedFields',
+      name: 'Fixed Fields to Show',
+      description: 'Fixed Fileds which will be shown in the tooltip',
+      settings: {
+        placeholder: 'Enter comma separated field names',
+      },
+      showIf: (options: T) => options.tooltip.mode === TooltipDisplayMode.Custom,
     });
 }
