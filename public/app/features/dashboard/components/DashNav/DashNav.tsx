@@ -91,7 +91,7 @@ export function addCustomRightAction(content: DynamicDashNavButtonModel) {
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
-export const DashNav = React.memo<Props>((props) => {
+export const DashNav = React.memo<any>((props: any) => {
   // this ensures the component rerenders when the location changes
   useLocation();
   const forceUpdate = useForceUpdate();

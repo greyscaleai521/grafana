@@ -12,33 +12,52 @@ import { PickerRenderer } from '../../../variables/pickers/PickerRenderer';
 interface Props {
   variables: TypedVariableModel[];
   readOnly?: boolean;
+  selectedCategory?: number;
+  categories?: any;
 }
 
-export const SubMenuItems = ({ variables, readOnly }: Props) => {
+export const SubMenuItems = ({ variables, readOnly, selectedCategory, categories = [] }: Props) => {
+  const optionVariables = variables as TypedVariableModel[];
   const [visibleVariables, setVisibleVariables] = useState<TypedVariableModel[]>([]);
 
   useEffect(() => {
-    setVisibleVariables(variables.filter((state) => state.hide !== VariableHide.hideVariable));
-  }, [variables]);
+    let visibleVariables = [];
+    if (categories.length && selectedCategory !== undefined) {
+      visibleVariables = optionVariables.filter(
+        (state) => state.hide !== VariableHide.hideVariable && state.category === categories[selectedCategory]
+      );
+    } else {
+      visibleVariables = optionVariables.filter((state) => state.hide !== VariableHide.hideVariable);
+    }
+    setVisibleVariables(visibleVariables);
+  }, [optionVariables, selectedCategory, categories]);
 
-  function onClearAllFilters(event: React.MouseEvent<HTMLButtonElement>) {
+  function onClearCategoryFilters(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
 
     const updateQuery: any = {};
     const templateSrv = getTemplateSrv();
 
-    visibleVariables.map((variable) => {
-      const variableName = `var-${variable.id}`;
-      let allValue = templateSrv.getAllValue(variable);
-      if (allValue === ALL_VARIABLE_TEXT) {
-        updateQuery[variableName] = allValue;
-      } else {
-        let variableAsText = variable as TextBoxVariableModel;
-        if (variableAsText) {
-          updateQuery[variableName] = variableAsText.originalQuery;
+    optionVariables
+      .filter((variable) => {
+        if (categories.length && selectedCategory !== undefined) {
+          return variable.hide !== VariableHide.hideVariable && variable.category === categories[selectedCategory];
+        } else {
+          return variable.hide !== VariableHide.hideVariable;
         }
-      }
-    });
+      })
+      .map((variable) => {
+        const variableName = `var-${variable.id}`;
+        let allValue = templateSrv.getAllValue(variable);
+        if (allValue === ALL_VARIABLE_TEXT) {
+          updateQuery[variableName] = allValue;
+        } else {
+          let variableAsText = variable as TextBoxVariableModel;
+          if (variableAsText) {
+            updateQuery[variableName] = variableAsText.originalQuery;
+          }
+        }
+      });
 
     getLocationSrv().update({
       query: updateQuery,
@@ -62,9 +81,8 @@ export const SubMenuItems = ({ variables, readOnly }: Props) => {
           <PickerRenderer variable={variable} readOnly={readOnly} />
         </div>
       ))}
-
-      <Button className="clearall-btn" onClick={onClearAllFilters} fill={'text'}>
-        Clear All
+      <Button className="clearall-btn" onClick={onClearCategoryFilters} fill={'text'}>
+        Clear
       </Button>
     </>
   );
