@@ -24,6 +24,8 @@
   color: $red-orange !important;
   background: white !important;
   text-transform: capitalize;
+  margin: 5px;
+  padding: 0 10px !important;
   &:hover {
     color: #c23f00 !important;
     background: white !important;
@@ -37,6 +39,7 @@
   color: $red-orange !important;
   align-self: flex-end;
   border: 1px solid $red-orange !important;
+  margin-left: 10px !important;
   &:hover {
     color: #c23f00 !important;
     background: rgba(198, 198, 198, 0.178) !important;
@@ -56,12 +59,18 @@
   position: absolute;
   right: 0;
   z-index: 999999;
+  top: 12px;
 }
 
 .dashboard-title {
   margin-bottom: 10px;
   font-weight: bold;
   font-size: 18px;
+}
+
+.submenu-controls-top {
+  display: flex;
+  align-items: center;
 }
 
 .submenu-controls {

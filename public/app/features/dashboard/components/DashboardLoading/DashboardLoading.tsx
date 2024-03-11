@@ -3,9 +3,9 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { HorizontalGroup, useStyles2, VerticalGroup } from '@grafana/ui';
+import { LoadingSpinner } from 'app/core/components/Loaders/LoadingSpinner';
 import { DashboardInitPhase } from 'app/types';
 
-import { LoadingSpinner } from 'app/core/components/Loaders/LoadingSpinner';
 export interface Props {
   initPhase: DashboardInitPhase;
 }
