@@ -25,6 +25,7 @@ $red-shade: ${theme.colors.error.shade};
 $green-base: ${theme.colors.success.main};
 $green-shade: ${theme.colors.success.shade};
 $orange-dark: ${theme.v1.palette.orangeDark};
+$red-orange: ${theme.v1.palette.redOrange};
 
 $gray98: ${theme.v1.palette.gray98};
 $gray95: ${theme.v1.palette.gray95};
