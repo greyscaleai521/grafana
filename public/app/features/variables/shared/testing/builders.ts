@@ -1,12 +1,14 @@
 import { initialAdHocVariableModelState } from '../../adhoc/reducer';
 import { initialConstantVariableModelState } from '../../constant/reducer';
 import { initialCustomVariableModelState } from '../../custom/reducer';
+import { initialCustomRangeVariableModelState } from '../../customrange/reducer';
 import { initialDataSourceVariableModelState } from '../../datasource/reducer';
 import { initialIntervalVariableModelState } from '../../interval/reducer';
 import { initialQueryVariableModelState } from '../../query/reducer';
 import { initialTextBoxVariableModelState } from '../../textbox/reducer';
 
 import { AdHocVariableBuilder } from './adHocVariableBuilder';
+import { CustomRangeVariableBuilder } from './customrangeVariableBuilder';
 import { DatasourceVariableBuilder } from './datasourceVariableBuilder';
 import { IntervalVariableBuilder } from './intervalVariableBuilder';
 import { MultiVariableBuilder } from './multiVariableBuilder';
@@ -21,3 +23,4 @@ export const queryBuilder = () => new QueryVariableBuilder(initialQueryVariableM
 export const textboxBuilder = () => new TextBoxVariableBuilder(initialTextBoxVariableModelState);
 export const customBuilder = () => new MultiVariableBuilder(initialCustomVariableModelState);
 export const constantBuilder = () => new OptionsVariableBuilder(initialConstantVariableModelState);
+export const customRangeBuilder = () => new CustomRangeVariableBuilder(initialCustomRangeVariableModelState);
