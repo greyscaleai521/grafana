@@ -1,7 +1,8 @@
-import React from 'react';
 import { css, keyframes } from '@emotion/css';
-import { useStyles } from '@grafana/ui';
+import React from 'react';
+
 import { GrafanaTheme } from '@grafana/data';
+import { useStyles } from '@grafana/ui';
 
 const spinner = keyframes`
   0% {

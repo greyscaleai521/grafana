@@ -57,7 +57,7 @@ export const CategoryBar: FC<Props> = ({
     });
   }
   return (
-    <>
+    <div>
       {categories.map((category: string, index: number) => {
         return (
           <Button
@@ -74,6 +74,6 @@ export const CategoryBar: FC<Props> = ({
       <Button className="clearall-btn" onClick={onClearAllFilters} fill={'text'}>
         Clear All
       </Button>
-    </>
+    </div>
   );
 };

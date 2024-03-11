@@ -67,29 +67,28 @@ export const DataLinksContextMenu = ({ children, links, style }: DataLinksContex
         },
         '*'
       );
-    }
-    return (
-      linkModel.target === '_top' ? (
-        <a
-          onClick={() => sendToParent(linkModel.href)}
-          title={linkModel.title}
-          style={{ ...style, overflow: 'hidden', display: 'flex' }}
-          aria-label={selectors.components.DataLinksContextMenu.singleLink}
-        >
-          {children({})}
-        </a>
-      ) : (
-        <a
-          href={linkModel.href}
-          onClick={linkModel.onClick}
-          target={linkModel.target}
-          title={linkModel.title}
-          style={{ ...style, overflow: 'hidden', display: 'flex' }}
-          data-testid={selectors.components.DataLinksContextMenu.singleLink}
-        >
-          {children({})}
-        </a>
-      )
+    };
+    return linkModel.target === '_top' ? (
+      // eslint-disable-next-line jsx-a11y/anchor-is-valid
+      <a
+        onClick={() => sendToParent(linkModel.href)}
+        title={linkModel.title}
+        style={{ ...style, overflow: 'hidden', display: 'flex' }}
+        aria-label={selectors.components.DataLinksContextMenu.singleLink}
+      >
+        {children({})}
+      </a>
+    ) : (
+      <a
+        href={linkModel.href}
+        onClick={linkModel.onClick}
+        target={linkModel.target}
+        title={linkModel.title}
+        style={{ ...style, overflow: 'hidden', display: 'flex' }}
+        data-testid={selectors.components.DataLinksContextMenu.singleLink}
+      >
+        {children({})}
+      </a>
     );
   }
 };
