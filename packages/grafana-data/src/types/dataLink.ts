@@ -32,6 +32,7 @@ export enum DataLinkConfigOrigin {
 export interface DataLink<T extends DataQuery = any> {
   title: string;
   targetBlank?: boolean;
+  targetTop?: boolean;
 
   // 3: The URL if others did not set it first
   url: string;
@@ -85,7 +86,7 @@ export interface InternalDataLink<T extends DataQuery = any> {
   range?: TimeRange;
 }
 
-export type LinkTarget = '_blank' | '_self' | undefined;
+export type LinkTarget = '_blank' | '_self' | '_top' | undefined;
 
 /**
  * Processed Link Model. The values are ready to use
