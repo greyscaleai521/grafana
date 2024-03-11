@@ -18,6 +18,7 @@ export type TypedVariableModel =
   | DataSourceVariableModel
   | IntervalVariableModel
   | TextBoxVariableModel
+  | CustomRangeVariableModel
   | CustomVariableModel
   | UserVariableModel
   | OrgVariableModel
@@ -109,6 +110,11 @@ export interface QueryVariableModel extends VariableWithMultiSupport {
 
 export interface TextBoxVariableModel extends VariableWithOptions {
   type: 'textbox';
+  originalQuery: string | null;
+}
+
+export interface CustomRangeVariableModel extends VariableWithOptions {
+  type: 'customrange';
   originalQuery: string | null;
 }
 
