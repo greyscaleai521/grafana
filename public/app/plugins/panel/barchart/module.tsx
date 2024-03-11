@@ -6,9 +6,10 @@ import {
   getFieldDisplayName,
   identityOverrideProcessor,
   PanelPlugin,
+  VariableModel,
   VizOrientation,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, getTemplateSrv } from '@grafana/runtime';
 import { GraphTransform, GraphTresholdsStyleMode, StackingMode, VisibilityMode } from '@grafana/schema';
 import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
 
@@ -225,6 +226,30 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         path: 'fullHighlight',
         name: 'Highlight full area on hover',
         defaultValue: defaultOptions.fullHighlight,
+      })
+      .addSelect({
+        path: 'xValueMappedVariable',
+        name: 'Variable name for x values',
+        description: 'Select x variable to update on click',
+        settings: {
+          options: getVariablesList(),
+        },
+        category: ['Variable mapping'],
+      })
+      .addSelect({
+        path: 'yValueMappedVariable',
+        name: 'Variable name for y values',
+        description: 'Select y variable to update on click',
+        settings: {
+          options: getVariablesList(),
+        },
+        category: ['Variable mapping'],
+        showIf: (c, data) => {
+          if (c.stacking && c.stacking !== StackingMode.None) {
+            return true;
+          }
+          return false;
+        },
       });
 
     builder.addFieldNamePicker({
@@ -254,4 +279,16 @@ function countNumberFields(data?: DataFrame[]): number {
     }
   }
   return count;
+}
+
+function getVariablesList(): any[] {
+  const variableList: VariableModel[] = getTemplateSrv().getVariables();
+  const res: any[] = [];
+  variableList.forEach((variable) => {
+    res.push({
+      value: variable.name,
+      label: variable.label ? variable.label : variable.name,
+    });
+  });
+  return res;
 }
