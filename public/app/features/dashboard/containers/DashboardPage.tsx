@@ -369,13 +369,14 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           <DashboardPrompt dashboard={dashboard} />
           {initError && <DashboardFailed />}
           {showSubMenu && (
-            <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
+            <section aria-label={selectors.pages.Dashboard.SubMenu.submenu} className={'submenu'}>
               <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
             </section>
           )}
           {config.featureToggles.angularDeprecationUI && dashboard.hasAngularPlugins() && dashboard.uid !== null && (
             <AngularDeprecationNotice dashboardUid={dashboard.uid} />
-          )}
+          )}        
+          <div className={'dashboard-title'}>{dashboard.title}</div>
           <DashboardGrid
             dashboard={dashboard}
             isEditable={!!dashboard.meta.canEdit}
