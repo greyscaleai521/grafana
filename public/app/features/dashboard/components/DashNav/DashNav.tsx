@@ -358,6 +358,12 @@ export const DashNav = React.memo<Props>((props) => {
     return buttons;
   };
 
+  const { kioskMode } = props;
+
+  if (kioskMode === KioskMode.TV) {
+    return renderRightActions();
+  }
+
   return (
     <AppChromeUpdate
       actions={
