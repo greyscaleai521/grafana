@@ -91,7 +91,7 @@ export function addCustomRightAction(content: DynamicDashNavButtonModel) {
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
-export const DashNav = React.memo<any>((props: any) => {
+export const DashNav = React.memo<Props>((props: Props) => {
   // this ensures the component rerenders when the location changes
   useLocation();
   const forceUpdate = useForceUpdate();
@@ -286,7 +286,7 @@ export const DashNav = React.memo<any>((props: any) => {
       return [renderPlaylistControls(), renderTimeControls()];
     }
 
-    if (kioskMode === KioskMode.TV) {
+    if (kioskMode === KioskMode.Full) {
       return [renderTimeControls()];
     }
 
@@ -360,11 +360,11 @@ export const DashNav = React.memo<any>((props: any) => {
 
   const { kioskMode } = props;
 
-  if (kioskMode === KioskMode.TV) {
+  if (kioskMode === KioskMode.Full) {
     return renderRightActions();
   }
 
-  return (
+  return (  
     <AppChromeUpdate
       actions={
         <DashNavModalContextProvider>

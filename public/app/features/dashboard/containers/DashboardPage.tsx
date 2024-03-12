@@ -18,7 +18,7 @@ import { PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { AngularDeprecationNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationNotice';
 import { getPageNavFromSlug, getRootContentNavModel } from 'app/features/storage/StorageFolderPage';
-import { DashboardRoutes, KioskMode, StoreState } from 'app/types';
+import { DashboardRoutes, StoreState } from 'app/types';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 
 import { cancelVariables, templateVarsChangedInUrl } from '../../variables/state/actions';
@@ -306,9 +306,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     }
 
     const inspectPanel = this.getInspectPanel();
-    const showSubMenu = !editPanel && (!kioskMode || kioskMode === KioskMode.TV) && !this.props.queryParams.editview;
+    const showSubMenu = !editPanel && !this.props.queryParams.editview;
 
-    const showToolbar = kioskMode !== KioskMode.Full && !queryParams.editview;
+    const showToolbar = !queryParams.editview;
 
     const pageClassName = cx({
       'panel-in-fullscreen': Boolean(viewPanel),
@@ -354,7 +354,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           )}
           {config.featureToggles.angularDeprecationUI && dashboard.hasAngularPlugins() && dashboard.uid !== null && (
             <AngularDeprecationNotice dashboardUid={dashboard.uid} />
-          )}        
+          )}
           <div className={'dashboard-title'}>{dashboard.title}</div>
           <DashboardGrid
             dashboard={dashboard}
