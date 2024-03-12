@@ -211,7 +211,7 @@ describe('getVariableScene', () => {
     const initialState = { name: 'MyVariable' };
     const sceneVariable = getVariableScene(type as EditableVariableType, initialState);
     expect(sceneVariable).toBeInstanceOf(instanceType);
-    expect(sceneVariable.state.name).toBe(initialState.name);
+    expect(sceneVariable?.state.name).toBe(initialState.name);
   });
 });
 

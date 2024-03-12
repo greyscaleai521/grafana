@@ -66,6 +66,10 @@ export interface HeatmapColorOptions {
    * Controls the number of color steps
    */
   steps: number;
+  /**
+   * Sets the start step for the color scale
+   */
+  startStep?: number;
 }
 
 /**

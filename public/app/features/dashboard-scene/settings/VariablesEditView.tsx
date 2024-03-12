@@ -162,7 +162,7 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
 
     const { name, label } = variable.state;
     const newVariable = getVariableScene(type, { name, label });
-    this.replaceEditVariable(newVariable);
+    this.replaceEditVariable(newVariable as any);
   };
 
   public onGoBack = () => {

@@ -21,6 +21,7 @@ import { getIntervalsQueryFromNewIntervalModel } from '../../utils/utils';
 
 import { AdHocFiltersVariableEditor } from './editors/AdHocFiltersVariableEditor';
 import { ConstantVariableEditor } from './editors/ConstantVariableEditor';
+import { CustomRangeVariable, CustomRangeVariableEditor } from './editors/CustomRangeVariableEditor';
 import { CustomVariableEditor } from './editors/CustomVariableEditor';
 import { DataSourceVariableEditor } from './editors/DataSourceVariableEditor';
 import { GroupByVariableEditor } from './editors/GroupByVariableEditor';
@@ -81,6 +82,11 @@ export const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableCo
     description: 'Define a textbox variable, where users can enter any arbitrary string',
     editor: TextBoxVariableEditor,
   },
+  customrange: {
+    name: 'Custom range',
+    description: 'Define a custom range',
+    editor: CustomRangeVariableEditor,
+  },
 };
 
 export const EDITABLE_VARIABLES_SELECT_ORDER: EditableVariableType[] = [
@@ -136,6 +142,8 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
       return new GroupByVariable(initialState);
     case 'textbox':
       return new TextBoxVariable(initialState);
+    case 'customrange':
+      return new CustomRangeVariable(initialState);
   }
 }
 
