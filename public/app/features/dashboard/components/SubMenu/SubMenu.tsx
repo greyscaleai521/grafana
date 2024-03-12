@@ -37,11 +37,11 @@ interface DispatchProps {}
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 function isDefault(filter: VariableWithOptions) {
-  return filter.current.value.toString() === '' ||
-    filter.current.value.toString() === 'All' ||
-    filter.current.value.toString() === '$__all' ||
-    filter.current.value.toString() === 'Production' ||
-    filter.current.value.toString() === 'Max Resolution'
+  return filter?.current?.value.toString() === '' ||
+    filter?.current?.value.toString() === 'All' ||
+    filter?.current?.value.toString() === '$__all' ||
+    filter?.current?.value.toString() === 'Production' ||
+    filter?.current?.value.toString() === 'Max Resolution'
     ? true
     : false;
 }

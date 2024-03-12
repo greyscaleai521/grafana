@@ -129,7 +129,6 @@ export function getPanelMenu(
     menu.push({
       text: t('panel.header-menu.view', `View`),
       iconClassName: 'eye',
-      onClick: onViewPanel,
       shortcut: 'v',
     });
   }
