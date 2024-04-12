@@ -34,7 +34,8 @@ function isDefault(filter: VariableWithOptions) {
     filter.current.value.toString() === 'All' ||
     filter.current.value.toString() === '$__all' ||
     filter.current.value.toString() === 'Production' ||
-    filter.current.value.toString() === 'Max Resolution'
+    filter.current.value.toString() === 'Max Resolution' ||
+    filter.current.value.toString() === 'lb'
     ? true
     : false;
 }
