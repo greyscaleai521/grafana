@@ -584,6 +584,7 @@ export enum TooltipDisplayMode {
   Multi = 'multi',
   None = 'none',
   Single = 'single',
+  Custom = 'custom',
 }
 
 /**
@@ -668,6 +669,7 @@ export interface VizTooltipOptions {
   maxWidth?: number;
   mode: TooltipDisplayMode;
   sort: SortOrder;
+  fixedFields?: string;
 }
 
 export interface Labels {}
