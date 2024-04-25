@@ -178,7 +178,8 @@ export const TimeSeriesPanel = ({
                       sortOrder={options.tooltip.sort}
                       sync={sync}
                       timeZone={timeZone}
-                    />
+                      fixedFields={options?.tooltip?.fixedFields?.split(',') ?? []}
+              />
                   </>
                 )}
               </>
