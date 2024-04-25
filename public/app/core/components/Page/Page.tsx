@@ -97,7 +97,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     pageInner: css({
       label: 'page-inner',
-      padding: theme.spacing(2),
+      padding: '0px 0px 0px 0px',
       borderBottom: 'none',
       background: theme.colors.background.primary,
       display: 'flex',
@@ -113,7 +113,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'canvas-content',
       display: 'flex',
       flexDirection: 'column',
-      padding: theme.spacing(2),
+      padding: `0 ${theme.spacing(2)} ${theme.spacing(2)} ${theme.spacing(2)}`,
       flexBasis: '100%',
       flexGrow: 1,
     }),
