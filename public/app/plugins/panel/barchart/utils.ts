@@ -64,6 +64,8 @@ export interface BarChartOptionsEX extends Options {
   timeZone?: TimeZone;
   fillOpacity?: number;
   hoverMulti?: boolean;
+  xValueMappedVariable?: string;
+  yValueMappedVariable?: string;
 }
 
 export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
@@ -87,6 +89,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
   timeZone,
   fullHighlight,
   hoverMulti,
+  xValueMappedVariable,
+  yValueMappedVariable,
 }) => {
   const builder = new UPlotConfigBuilder();
 
@@ -128,13 +132,16 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     negY: frame.fields.map((f) => f.config.custom?.transform === GraphTransform.NegativeY),
     fullHighlight,
     hoverMulti,
+    xValueMappedVariable,
+    yValueMappedVariable,
   };
 
-  const config = getConfig(opts, theme);
+  const config = getConfig(opts, theme, frame);
 
   builder.setCursor(config.cursor);
 
   builder.addHook('init', config.init);
+  builder.addHook('destroy', config.destroy);
   builder.addHook('drawClear', config.drawClear);
   builder.addHook('draw', config.draw);
 

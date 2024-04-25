@@ -61,6 +61,16 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
    * negative values indicate backwards skipping behavior
    */
   xTickLabelSpacing?: number;
+
+  /**
+   * Manually select which field from the dataset to represent the y field.
+   */
+  xValueMappedVariable?: string;
+  
+  /**
+   * Manually select which field from the dataset to represent the x field.
+   */
+  yValueMappedVariable?: string;
 }
 
 export const defaultOptions: Partial<Options> = {

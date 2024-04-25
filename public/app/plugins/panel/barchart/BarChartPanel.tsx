@@ -90,10 +90,13 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
   };
 
   const onUPlotClick = () => {
-    isToolTipOpen.current = !isToolTipOpen.current;
+    const { xValueMappedVariable, yValueMappedVariable } = options;
+    if (!(xValueMappedVariable && yValueMappedVariable)) {
+      isToolTipOpen.current = !isToolTipOpen.current;
 
-    // Linking into useState required to re-render tooltip
-    setShouldDisplayCloseButton(isToolTipOpen.current);
+      // Linking into useState required to re-render tooltip
+      setShouldDisplayCloseButton(isToolTipOpen.current);
+    }
   };
 
   const frame0Ref = useRef<DataFrame>();
@@ -280,6 +283,8 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
       xTickLabelRotation,
       xTickLabelSpacing,
       fullHighlight,
+      xValueMappedVariable,
+      yValueMappedVariable,
     } = options;
 
     return preparePlotConfigBuilder({
@@ -306,6 +311,8 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
       allFrames: info.viz,
       fullHighlight,
       hoverMulti: tooltip.mode === TooltipDisplayMode.Multi,
+      xValueMappedVariable,
+      yValueMappedVariable,
     });
   };
 

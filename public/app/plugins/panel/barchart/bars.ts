@@ -1,7 +1,8 @@
 import uPlot, { Axis, AlignedData, Scale } from 'uplot';
 
-import { DataFrame, dateTimeFormat, GrafanaTheme2, systemDateFormats, TimeZone } from '@grafana/data';
+import { DataFrame, dateTimeFormat, GrafanaTheme2, systemDateFormats, TimeZone, VariableModel } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
+import { getLocationSrv, getTemplateSrv } from '@grafana/runtime';
 import {
   StackingMode,
   VisibilityMode,
@@ -64,6 +65,8 @@ export interface BarsOptions {
   xTimeAuto?: boolean;
   negY?: boolean[];
   fullHighlight?: boolean;
+  xValueMappedVariable?: string;
+  yValueMappedVariable?: string;
 }
 
 /**
@@ -120,7 +123,7 @@ function calculateFontSizeWithMetrics(
 /**
  * @internal
  */
-export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
+export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, frame?: DataFrame) {
   const {
     xOri,
     xDir: dir,
@@ -451,8 +454,43 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       }
     },
   });
+  let plotInstance: uPlot | undefined = undefined;
+  const handleClick = (event: MouseEvent) => {
+    let u = plotInstance;
+    let found: Rect | undefined;
+    let cx = u!.cursor.left! * devicePixelRatio;
+    let cy = u!.cursor.top! * devicePixelRatio;
+    qt.get(cx, cy, 1, 1, (o) => {
+      if (!found && pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
+        found = o;
+      }
+    });
+
+    if (found) {
+      const variableList: VariableModel[] = getTemplateSrv().getVariables();
+      const updateQuery: any = {};
+      if (variableList.some((variable) => variable.name === opts.xValueMappedVariable)) {
+        const xVariableName = `var-${opts.xValueMappedVariable}`;
+        updateQuery[xVariableName] = u!.data[0][found!.didx];
+      }
+      if (isStacked && variableList.some((variable) => variable.name === opts.yValueMappedVariable)) {
+        const yVariableName = `var-${opts.yValueMappedVariable}`;
+        const field = frame!.fields[found!.sidx];
+        updateQuery[yVariableName] = field!.config!.displayName ? field!.config!.displayName : field!.name;
+      }
+      if (!(Object.keys(updateQuery).length === 0 && updateQuery.constructor === Object)) {
+        getLocationSrv().update({
+          query: updateQuery,
+          partial: true,
+          replace: true,
+        });
+      }
+    }
+  };
 
   const init = (u: uPlot) => {
+    plotInstance = u;
+    over.addEventListener('click', handleClick);
     u.root.querySelectorAll<HTMLDivElement>('.u-cursor-pt').forEach((el) => {
       el.style.borderRadius = '0';
 
@@ -460,6 +498,10 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         el.style.zIndex = '-1';
       }
     });
+  };
+
+  const destroy = (u: uPlot) => {
+    u.over.removeEventListener('click', handleClick);
   };
 
   const cursor: uPlot.Cursor = {
@@ -675,5 +717,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     draw,
     interpolateTooltip,
     prepData,
+    destroy,
   };
 }
