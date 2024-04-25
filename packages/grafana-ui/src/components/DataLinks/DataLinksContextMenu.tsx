@@ -1,3 +1,6 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+/* eslint-disable jsx-a11y/anchor-is-valid */
 import { css } from '@emotion/css';
 import React, { CSSProperties } from 'react';
 
@@ -56,7 +59,26 @@ export const DataLinksContextMenu = ({ children, links, style }: DataLinksContex
     );
   } else {
     const linkModel = links()[0];
-    return (
+    const sendToParent = (link: string) => {
+      window.parent.postMessage(
+        {
+          key: 'navigateUrl',
+          value: link,
+        },
+        '*'
+      );
+    };
+    return linkModel.target === '_top' ? (
+      // eslint-disable-next-line jsx-a11y/anchor-is-valid
+      <a
+        onClick={() => sendToParent(linkModel.href)}
+        title={linkModel.title}
+        style={{ ...style, overflow: 'hidden', display: 'flex' }}
+        aria-label={selectors.components.DataLinksContextMenu.singleLink}
+      >
+        {children({})}
+      </a>
+    ) : (
       <a
         href={linkModel.href}
         onClick={linkModel.onClick}

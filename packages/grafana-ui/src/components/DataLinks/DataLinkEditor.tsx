@@ -44,6 +44,10 @@ export const DataLinkEditor = React.memo(({ index, value, onChange, suggestions,
     onChange(index, { ...value, targetBlank: !value.targetBlank });
   };
 
+    const openInParentChanged = () => {
+      onChange(index, { ...value, targetTop: !value.targetTop });
+    };
+
   return (
     <div className={styles.listItem}>
       <Field label="Title">
@@ -61,6 +65,10 @@ export const DataLinkEditor = React.memo(({ index, value, onChange, suggestions,
       <Field label="Open in new tab">
         <Switch value={value.targetBlank || false} onChange={onOpenInNewTabChanged} />
       </Field>
+
+        <Field label="Navigate Parent">
+          <Switch value={value.targetTop || false} onChange={openInParentChanged} />
+        </Field>
 
       {isLast && (
         <div className={styles.infoText}>
