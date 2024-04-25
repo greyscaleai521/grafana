@@ -171,6 +171,7 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     purple: string;
     orange: string;
     orangeDark: string;
+    redOrange: string;
     queryRed: string;
     queryGreen: string;
     queryPurple: string;
