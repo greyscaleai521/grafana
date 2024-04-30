@@ -173,6 +173,41 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           (cfg.footer?.show && !cfg.footer?.countRows) ||
           (cfg.footer?.reducer?.length === 1 && cfg.footer?.reducer[0] !== ReducerID.count),
       })
+      .addBooleanSwitch({
+        path: 'showRowSelection',
+        name: 'Show Row Selection',
+        description: "To display table's row selection or not to display",
+        defaultValue: defaultOptions.showRowSelection,
+        category: ['Row Selection'],
+      })
+      .addTextInput({
+        path: 'tableName',
+        name: 'Table name',
+        description: 'Display name for selected rows',
+        category: ['Row Selection'],
+        showIf: (cfg) => cfg.showRowSelection,
+      })
+      .addTextInput({
+        path: 'actionLinkText',
+        name: 'Action Link Text',
+        description: 'Display name for link text',
+        category: ['Row Selection'],
+        showIf: (cfg) => cfg.showRowSelection,
+      })
+      .addTextInput({
+        path: 'exportDataText',
+        name: 'Export Data Text',
+        description: 'Display name for Export Data button text',
+        category: ['Row Selection'],
+        showIf: (cfg) => cfg.showRowSelection,
+      })
+      .addTextInput({
+        path: 'windowURL',
+        name: 'Parent Window URL',
+        description: 'Specify URL of parent window to listen action event',
+        category: ['Row Selection'],
+        showIf: (cfg) => cfg.showRowSelection,
+      })
       .addCustomEditor({
         id: 'footer.enablePagination',
         path: 'footer.enablePagination',

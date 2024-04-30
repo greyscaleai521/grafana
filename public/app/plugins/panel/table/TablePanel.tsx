@@ -63,6 +63,11 @@ export function TablePanel(props: Props) {
       cellHeight={options.cellHeight}
       timeRange={timeRange}
       enableSharedCrosshair={config.featureToggles.tableSharedCrosshair && enableSharedCrosshair}
+      showRowSelection={options.showRowSelection}
+      itemName={options.tableName}
+      actionText={options.actionLinkText}
+      exportDataText={options.exportDataText}
+      windowURL={options.windowURL}
     />
   );
 

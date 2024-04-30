@@ -566,3 +566,66 @@ export function calculateAroundPointThreshold(timeField: Field): number {
 
   return (max - min) / timeField.values.length;
 }
+
+function getAllColumns(fields: any[]): Record<string, string> {
+  return fields.reduce((accum: any, field: any, index: number) => {
+    accum[index] = field.name;
+    return accum;
+  }, {});
+}
+
+function getVisibleColumns(selectedRows: any = []) {
+  return Object.keys(selectedRows[0].values).reduce((accum: Set<number | string>, columnIndex: number | string) => {
+    accum.add(columnIndex);
+    return accum;
+  }, new Set());
+}
+
+function getHiddenColumn(allColumn: Record<string, string>, visibleColumn: Set<number | string>) {
+  let hiddenColumnPresent = false;
+  let hiddenColumn: Record<string, string> = {};
+  for (let columnIndex in allColumn) {
+    if (!visibleColumn.has(columnIndex)) {
+      hiddenColumnPresent = true;
+      hiddenColumn[columnIndex] = allColumn[columnIndex];
+    }
+  }
+
+  return {
+    hiddenColumnPresent,
+    hiddenColumn,
+  };
+}
+
+function getColumnData(fields: any[], columnIndex: any, rowIndex: number) {
+  return fields[columnIndex].values.buffer[rowIndex];
+}
+
+export function getValuesFromSelectedRows(selectedRows: any = [], fields: any[]) {
+  const allColumns = getAllColumns(fields);
+  const visibleColumn = getVisibleColumns(selectedRows);
+  const { hiddenColumnPresent, hiddenColumn } = getHiddenColumn(allColumns, visibleColumn);
+
+  return selectedRows.map((row: any) => {
+    let rowData: Record<any, any> = {};
+    const { index, values }: { index: number; values: Record<number, any> } = row;
+
+    // visible column data
+    for (let columnIndex in values) {
+      rowData[allColumns[columnIndex]] = values[columnIndex];
+    }
+
+    // hidden column data
+    if (hiddenColumnPresent) {
+      for (let columnIndex in hiddenColumn) {
+        rowData[allColumns[columnIndex]] = getColumnData(fields, columnIndex as any, index);
+      }
+    }
+
+    return rowData;
+  });
+}
+
+export const numberWithComas = (num: string | number) => {
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+};

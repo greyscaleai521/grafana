@@ -34,7 +34,27 @@ export interface Options {
   /**
    * Used to control row sorting
    */
-  sortBy?: Array<ui.TableSortByFieldState>;
+  sortBy?: ui.TableSortByFieldState[];
+  /**
+   * Controls whether the panel should show row selection checkboxes
+   */
+  showRowSelection?: boolean;
+  /**
+   * Represents the name of the table
+   */
+  tableName?: string;
+  /**
+   * Represents the text for the action link
+   */
+  actionLinkText?: string;
+  /**
+   * Represents the text for the export data button
+   */
+  exportDataText?: string;
+  /**
+   * Represents the URL of the parent window
+   */
+  windowURL?: string;
 }
 
 export const defaultOptions: Partial<Options> = {
@@ -57,6 +77,10 @@ export const defaultOptions: Partial<Options> = {
   showHeader: true,
   showTypeIcons: false,
   sortBy: [],
+  showRowSelection: true,
+  tableName: '',
+  actionLinkText: 'View Images',
+  exportDataText: 'Export Data',
 };
 
 export interface FieldConfig extends ui.TableFieldOptions {}

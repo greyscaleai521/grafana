@@ -13,10 +13,11 @@ export interface HeaderRowProps {
   headerGroups: HeaderGroup[];
   showTypeIcons?: boolean;
   tableStyles: TableStyles;
+  showRowSelection?: boolean;
 }
 
 export const HeaderRow = (props: HeaderRowProps) => {
-  const { headerGroups, showTypeIcons, tableStyles } = props;
+  const { headerGroups, showTypeIcons, tableStyles, showRowSelection } = props;
   const e2eSelectorsTable = selectors.components.Panels.Visualization.Table;
 
   return (
@@ -31,8 +32,9 @@ export const HeaderRow = (props: HeaderRowProps) => {
             aria-label={e2eSelectorsTable.header}
             role="row"
           >
-            {headerGroup.headers.map((column: Column, index: number) =>
-              renderHeaderCell(column, tableStyles, showTypeIcons)
+            {headerGroup.headers.map(
+              (column: Column, index: number) =>
+                (showRowSelection || index > 0) && renderHeaderCell(column, tableStyles, showTypeIcons)
             )}
           </div>
         );
