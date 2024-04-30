@@ -5,6 +5,7 @@ import {
   useFilters,
   usePagination,
   useResizeColumns,
+  useRowSelect,
   useSortBy,
   useTable,
 } from 'react-table';
@@ -19,8 +20,10 @@ import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Pagination } from '../Pagination/Pagination';
 
 import { FooterRow } from './FooterRow';
+import { HeaderActionRow } from './HeaderActionRow';
 import { HeaderRow } from './HeaderRow';
 import { RowsList } from './RowsList';
+import { SelectionHook } from './SelectionHook';
 import { useFixScrollbarContainer, useResetVariableListSizeCache } from './hooks';
 import { getInitialState, useTableStateReducer } from './reducer';
 import { useTableStyles } from './styles';
@@ -51,6 +54,11 @@ export const Table = memo((props: Props) => {
     enableSharedCrosshair = false,
     initialRowIndex = undefined,
     fieldConfig,
+    showRowSelection,
+    itemName,
+    actionText,
+    exportDataText,
+    windowURL,
   } = props;
 
   const listRef = useRef<VariableSizeList>(null);
@@ -59,6 +67,7 @@ export const Table = memo((props: Props) => {
   const theme = useTheme2();
   const tableStyles = useTableStyles(theme, cellHeight);
   const headerHeight = noHeader ? 0 : tableStyles.rowHeight;
+  const selectedRowCountHeight = showRowSelection ? 38 : 0;
   const [footerItems, setFooterItems] = useState<FooterItem[] | undefined>(footerValues);
   const noValuesDisplayText = fieldConfig?.defaults?.noValue ?? NO_DATA_TEXT;
 
@@ -173,13 +182,27 @@ export const Table = memo((props: Props) => {
     rows,
     prepareRow,
     totalColumnsWidth,
+    selectedFlatRows,
+    selectedRowIds,
     page,
     state,
     gotoPage,
     setPageSize,
     pageOptions,
     toggleAllRowsExpanded,
-  } = useTable(options, useFilters, useSortBy, useAbsoluteLayout, useResizeColumns, useExpanded, usePagination);
+  } = useTable(
+    options,
+    useFilters,
+    useSortBy,
+    useAbsoluteLayout,
+    useResizeColumns,
+    useExpanded,
+    usePagination,
+    useRowSelect,
+    (e) => SelectionHook(e, showRowSelection)
+  );
+
+  const { fields } = data;
 
   const extendedState = state as GrafanaTableState;
   toggleAllRowsExpandedRef.current = toggleAllRowsExpanded;
@@ -224,7 +247,7 @@ export const Table = memo((props: Props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [footerOptions, theme, state.filters, data]);
 
-  let listHeight = height - (headerHeight + footerHeight);
+  let listHeight = height - (headerHeight + footerHeight) - selectedRowCountHeight;
 
   if (enablePagination) {
     listHeight -= tableStyles.cellHeight;
@@ -288,60 +311,86 @@ export const Table = memo((props: Props) => {
   }
 
   return (
-    <div
-      {...getTableProps()}
-      className={tableStyles.table}
-      aria-label={ariaLabel}
-      role="table"
-      ref={tableDivRef}
-      style={{ width, height }}
-    >
-      <CustomScrollbar hideVerticalTrack={true}>
-        <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
-          {!noHeader && (
-            <HeaderRow headerGroups={headerGroups} showTypeIcons={showTypeIcons} tableStyles={tableStyles} />
-          )}
-          {itemCount > 0 ? (
-            <div data-testid={selectors.components.Panels.Visualization.Table.body} ref={variableSizeListScrollbarRef}>
-              <RowsList
-                data={data}
-                rows={rows}
-                width={width}
-                cellHeight={cellHeight}
-                headerHeight={headerHeight}
-                rowHeight={tableStyles.rowHeight}
-                itemCount={itemCount}
-                pageIndex={state.pageIndex}
-                listHeight={listHeight}
-                listRef={listRef}
-                tableState={state}
-                prepareRow={prepareRow}
-                timeRange={timeRange}
-                onCellFilterAdded={onCellFilterAdded}
-                nestedDataField={nestedDataField}
+    <div>
+      {showRowSelection && (
+        <HeaderActionRow
+          itemName={itemName}
+          actionText={actionText}
+          exportDataText={exportDataText}
+          selectedFlatRows={selectedFlatRows}
+          selectedRowIds={selectedRowIds}
+          windowURL={windowURL}
+          tableStyles={tableStyles}
+          fields={fields}
+        />
+      )}
+      <div
+        {...getTableProps()}
+        className={tableStyles.table}
+        aria-label={ariaLabel}
+        role="table"
+        ref={tableDivRef}
+        style={{ width, height }}
+      >
+        <CustomScrollbar hideVerticalTrack={true}>
+          <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
+            {!noHeader && (
+              <HeaderRow
+                headerGroups={headerGroups}
+                showTypeIcons={showTypeIcons}
                 tableStyles={tableStyles}
-                footerPaginationEnabled={Boolean(enablePagination)}
-                enableSharedCrosshair={enableSharedCrosshair}
-                initialRowIndex={initialRowIndex}
+                showRowSelection={showRowSelection}
               />
-            </div>
-          ) : (
-            <div style={{ height: height - headerHeight, width }} className={tableStyles.noData}>
-              {noValuesDisplayText}
-            </div>
-          )}
-          {footerItems && (
-            <FooterRow
-              isPaginationVisible={Boolean(enablePagination)}
-              footerValues={footerItems}
-              footerGroups={footerGroups}
-              totalColumnsWidth={totalColumnsWidth}
-              tableStyles={tableStyles}
-            />
-          )}
-        </div>
-      </CustomScrollbar>
-      {paginationEl}
+            )}
+            {itemCount > 0 ? (
+              <div
+                data-testid={selectors.components.Panels.Visualization.Table.body}
+                ref={variableSizeListScrollbarRef}
+              >
+                <RowsList
+                  data={data}
+                  rows={rows}
+                  width={width}
+                  cellHeight={cellHeight}
+                  headerHeight={headerHeight}
+                  rowHeight={tableStyles.rowHeight}
+                  itemCount={itemCount}
+                  pageIndex={state.pageIndex}
+                  listHeight={listHeight}
+                  listRef={listRef}
+                  tableState={state}
+                  prepareRow={prepareRow}
+                  timeRange={timeRange}
+                  onCellFilterAdded={onCellFilterAdded}
+                  nestedDataField={nestedDataField}
+                  tableStyles={tableStyles}
+                  footerPaginationEnabled={Boolean(enablePagination)}
+                  enableSharedCrosshair={enableSharedCrosshair}
+                  initialRowIndex={initialRowIndex}
+                  showRowSelection={showRowSelection}
+                />
+              </div>
+            ) : (
+              <div
+                style={{ height: height - headerHeight - selectedRowCountHeight, width }}
+                className={tableStyles.noData}
+              >
+                {noValuesDisplayText}
+              </div>
+            )}
+            {footerItems && (
+              <FooterRow
+                isPaginationVisible={Boolean(enablePagination)}
+                footerValues={footerItems}
+                footerGroups={footerGroups}
+                totalColumnsWidth={totalColumnsWidth}
+                tableStyles={tableStyles}
+              />
+            )}
+          </div>
+        </CustomScrollbar>
+        {paginationEl}
+      </div>
     </div>
   );
 });

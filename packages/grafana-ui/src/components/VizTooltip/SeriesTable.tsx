@@ -40,8 +40,8 @@ const getSeriesTableRowStyles = (theme: GrafanaTheme2) => {
       textAlign: 'right',
     }),
     activeSeries: css({
-      fontWeight: theme.typography.fontWeightBold,
-      color: theme.colors.text.maxContrast,
+      fontWeight: theme.typography.fontWeightBold + '!important',
+      color: theme.colors.text.maxContrast + '!important',
     }),
     timestamp: css({
       fontWeight: theme.typography.fontWeightBold,

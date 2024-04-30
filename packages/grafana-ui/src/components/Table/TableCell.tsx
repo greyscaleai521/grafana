@@ -4,7 +4,7 @@ import { Cell } from 'react-table';
 import { TimeRange, DataFrame } from '@grafana/data';
 
 import { TableStyles } from './styles';
-import { GrafanaTableColumn, TableFilterActionCallback } from './types';
+import { TableFilterActionCallback } from './types';
 
 export interface Props {
   cell: Cell;
@@ -16,11 +16,12 @@ export interface Props {
   userProps?: object;
   frame: DataFrame;
   rowStyled?: boolean;
+  field: any;
 }
 
-export const TableCell = ({ cell, tableStyles, onCellFilterAdded, timeRange, userProps, frame, rowStyled }: Props) => {
+export const TableCell = ({ cell, tableStyles, onCellFilterAdded, timeRange, userProps, frame, rowStyled, field }: Props) => {
   const cellProps = cell.getCellProps();
-  const field = (cell.column as unknown as GrafanaTableColumn).field;
+  // const field = (cell.column as unknown as GrafanaTableColumn).field;
 
   if (!field?.display) {
     return null;

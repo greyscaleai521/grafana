@@ -97,9 +97,14 @@ export interface Props {
   /** @alpha Used by SparklineCell when provided */
   timeRange?: TimeRange;
   enableSharedCrosshair?: boolean;
+  showRowSelection?: boolean;
   // The index of the field value that the table will initialize scrolled to
   initialRowIndex?: number;
   fieldConfig?: FieldConfigSource;
+  itemName?: string;
+  actionText?: string;
+  exportDataText?: string;
+  windowURL?: string;
 }
 
 /**
@@ -146,4 +151,8 @@ export type TableFieldOptions = Omit<schema.TableFieldOptions, 'cellOptions'> & 
 export interface CellColors {
   textColor?: string;
   bgColor?: string;
+}
+
+export interface FilterValues {
+  [key: string]: string[] | string | object;
 }

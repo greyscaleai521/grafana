@@ -6,6 +6,7 @@ import { TableCellHeight } from '@grafana/schema';
 export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCellHeight) {
   const borderColor = theme.colors.border.weak;
   const resizerColor = theme.colors.primary.border;
+  const headerBg = theme.colors.background.secondary;
   const cellPadding = 6;
   const cellHeight = getCellHeight(theme, cellHeightOption, cellPadding);
   const rowHeight = cellHeight + 2;
@@ -117,10 +118,11 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
     }),
     thead: css({
       label: 'thead',
-      height: `${headerHeight}px`,
+      height: `${cellHeight}px`,
       overflowY: 'auto',
       overflowX: 'hidden',
       position: 'relative',
+      background: headerBg,
     }),
     tfoot: css({
       label: 'tfoot',
@@ -129,6 +131,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       overflowY: 'auto',
       overflowX: 'hidden',
       position: 'relative',
+      background: headerBg,
     }),
     headerRow: css({
       label: 'row',
@@ -136,12 +139,13 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
     }),
     headerCell: css({
       height: '100%',
-      padding: `0 ${cellPadding}px`,
+      padding: `${cellPadding}px`,
       overflow: 'hidden',
       whiteSpace: 'nowrap',
       display: 'flex',
       alignItems: 'center',
       fontWeight: theme.typography.fontWeightMedium,
+      color: theme.colors.primary.text,
 
       '&:last-child': {
         borderRight: 'none',
@@ -230,6 +234,24 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       justifyContent: 'flex-end',
       padding: theme.spacing(0, 1, 0, 2),
     }),
+    selectedRowHeader: css({
+      padding: `${cellPadding}px`,
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      flexDirection: 'row-reverse',
+    }),
+    rowCountTextCont: css({
+      paddingLeft: '15px',
+    }),
+    noRowSelectedText: css({
+      color: '#d82828',
+    }),
+    viewImageButton: css({
+      button: {
+        color: '#ff5300',
+      },
+    }),
 
     tableContentWrapper: (totalColumnsWidth: number) => {
       const width = totalColumnsWidth !== undefined ? `${totalColumnsWidth}px` : '100%';
@@ -251,6 +273,9 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
 
       '&:last-child': {
         borderBottom: 0,
+      },
+      '&.selected': {
+        backgroundColor: '#edffec',
       },
     }),
     imageCell: css({

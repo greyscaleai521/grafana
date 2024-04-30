@@ -45,6 +45,7 @@ interface RowsListProps {
   timeRange?: TimeRange;
   footerPaginationEnabled: boolean;
   initialRowIndex?: number;
+  showRowSelection?: boolean;
 }
 
 export const RowsList = (props: RowsListProps) => {
@@ -68,6 +69,7 @@ export const RowsList = (props: RowsListProps) => {
     listRef,
     enableSharedCrosshair = false,
     initialRowIndex = undefined,
+    showRowSelection = false,
   } = props;
 
   const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(initialRowIndex);
@@ -245,7 +247,7 @@ export const RowsList = (props: RowsListProps) => {
       return (
         <div
           {...row.getRowProps({ style, ...additionalProps })}
-          className={cx(tableStyles.row, expandedRowStyle)}
+          className={`${cx(tableStyles.row, expandedRowStyle)} ${(row as any)?.isSelected ? 'selected' : ''}`}
           onMouseEnter={() => onRowHover(index, data)}
           onMouseLeave={onRowLeave}
         >
@@ -259,19 +261,36 @@ export const RowsList = (props: RowsListProps) => {
               cellHeight={cellHeight}
             />
           )}
-          {row.cells.map((cell: Cell, index: number) => (
-            <TableCell
-              key={index}
-              tableStyles={tableStyles}
-              cell={cell}
-              onCellFilterAdded={onCellFilterAdded}
-              columnIndex={index}
-              columnCount={row.cells.length}
-              timeRange={timeRange}
-              frame={data}
+          {row.cells.map((cell: Cell, index: number) => {
+            if (showRowSelection || index > 0) {
+              return (
+                <TableCell
+                  key={index}
+                  field={
+                    showRowSelection && cell.column.id === 'selection'
+                      ? ({
+                          display: { text: '', numeric: '' },
+                          name: 'selection',
+                          type: FieldType.other,
+                          config: {},
+                          values: [],
+                        } as any)
+                      : data?.fields[index - 1]
+                  }
+                  tableStyles={tableStyles}
+                  cell={cell}
+                  onCellFilterAdded={onCellFilterAdded}
+                  columnIndex={index}
+                  columnCount={row.cells.length}
+                  timeRange={timeRange}
+                  frame={data}
               rowStyled={rowBg !== undefined}
-            />
-          ))}
+                />
+              );
+            } else {
+              return null;
+            }
+          })}
         </div>
       );
     },
@@ -291,6 +310,7 @@ export const RowsList = (props: RowsListProps) => {
       timeRange,
       width,
       rowBg,
+      showRowSelection,
     ]
   );
 
