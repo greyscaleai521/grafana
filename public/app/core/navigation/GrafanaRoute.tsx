@@ -4,11 +4,11 @@ import Drop from 'tether-drop';
 
 import { locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
 import { ErrorBoundary } from '@grafana/ui';
+import { DashboardLoading } from 'app/features/dashboard/components/DashboardLoading/DashboardLoading';
 
 import { useGrafana } from '../context/GrafanaContext';
 
 import { GrafanaRouteError } from './GrafanaRouteError';
-import { GrafanaRouteLoading } from './GrafanaRouteLoading';
 import { GrafanaRouteComponentProps, RouteDescriptor } from './types';
 
 export interface Props extends Omit<GrafanaRouteComponentProps, 'queryParams'> {}
@@ -51,7 +51,7 @@ export function GrafanaRoute(props: Props) {
         }
 
         return (
-          <Suspense fallback={<GrafanaRouteLoading />}>
+          <Suspense fallback={<DashboardLoading />}>
             <props.route.component {...props} queryParams={locationSearchToObject(props.location.search)} />
           </Suspense>
         );
