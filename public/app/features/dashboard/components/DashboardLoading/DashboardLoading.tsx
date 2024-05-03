@@ -7,7 +7,7 @@ import { LoadingSpinner } from 'app/core/components/Loaders/LoadingSpinner';
 import { DashboardInitPhase } from 'app/types';
 
 export interface Props {
-  initPhase: DashboardInitPhase;
+  initPhase?: DashboardInitPhase;
 }
 
 export const DashboardLoading = ({ initPhase }: Props) => {
@@ -40,7 +40,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
 
   return {
     dashboardLoading: css`
-      height: 60vh;
+      height: 100%;
       display: flex;
       opacity: 0%;
       align-items: center;

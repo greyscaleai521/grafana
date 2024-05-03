@@ -333,22 +333,22 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           scrollRef={this.setScrollRef}
           scrollTop={updateScrollTop}
         >
-          {showToolbar && (
-            <header data-testid={selectors.pages.Dashboard.DashNav.navV2} className={'dashboardHeader'}>
-              <DashNav
-                dashboard={dashboard}
-                title={dashboard.title}
-                folderTitle={dashboard.meta.folderTitle}
-                isFullscreen={!!viewPanel}
-                kioskMode={kioskMode}
-                hideTimePicker={dashboard.timepicker.hidden}
-              />
-            </header>
-          )}
           <DashboardPrompt dashboard={dashboard} />
           {initError && <DashboardFailed />}
           {showSubMenu && (
             <section aria-label={selectors.pages.Dashboard.SubMenu.submenu} className={'submenu'}>
+              {showToolbar && (
+                <header data-testid={selectors.pages.Dashboard.DashNav.navV2} className={'dashboardHeader'}>
+                  <DashNav
+                    dashboard={dashboard}
+                    title={dashboard.title}
+                    folderTitle={dashboard.meta.folderTitle}
+                    isFullscreen={!!viewPanel}
+                    kioskMode={kioskMode}
+                    hideTimePicker={dashboard.timepicker.hidden}
+                  />
+                </header>
+              )}
               <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
             </section>
           )}

@@ -113,6 +113,16 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
     return <ExemplarHoverView displayValues={displayValues} links={links} header={header} />;
   }
 
+  const sendToParent = (link: LinkModel<Field>) => {
+    window.parent.postMessage(
+      {
+        key: 'navigateUrl',
+        value: link.href,
+      },
+      '*'
+    );
+  };
+
   return (
     <div className={styles.wrapper}>
       {header && (
@@ -123,7 +133,7 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
       <table className={styles.infoWrap}>
         <tbody>
           {displayValues.map((displayValue, i) => (
-            <tr key={`${i}/${rowIndex}`}>
+            <tr key={`${i}/${rowIndex}`} className={i === columnIndex ? styles.highlight : ''}>
               <th>{displayValue.name}</th>
               <td>{renderValue(displayValue.valueString)}</td>
             </tr>
@@ -132,9 +142,21 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
             <tr key={i}>
               <th>Link</th>
               <td colSpan={2}>
-                <TextLink href={link.href} external={link.target === '_blank'} weight={'medium'} inline={false}>
-                  {link.title}
-                </TextLink>
+                {link.target !== '_top' ? (
+                  <TextLink href={link.href} external={link.target === '_blank'} weight={'medium'} inline={false}>
+                    {link.title}
+                  </TextLink>
+                ) : (
+                  <TextLink
+                    external={link.target === '_top'}
+                    weight="medium"
+                    inline={false}
+                    onClick={() => sendToParent(link)}
+                    href={''}
+                  >
+                    {link.title}
+                  </TextLink>
+                )}
               </td>
             </tr>
           ))}
@@ -183,6 +205,9 @@ const getStyles = (theme: GrafanaTheme2, padding = 0) => {
     }),
     link: css({
       color: theme.colors.text.link,
+    }),
+    highlight: css({
+      background: `${theme.colors.action.hover} !important`,
     }),
   };
 };
