@@ -39,6 +39,7 @@ type Props = OwnProps & ConnectedProps & DispatchProps;
 function isDefault(filter: VariableWithOptions) {
   return filter?.current?.value === undefined ||
     filter?.current?.value?.toString() === '' ||
+    filter?.current?.value?.toString() === 'lb' ||
     filter?.current?.value?.toString() === 'All' ||
     filter?.current?.value?.toString() === '$__all' ||
     filter?.current?.value?.toString() === 'Production' ||

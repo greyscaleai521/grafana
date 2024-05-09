@@ -391,7 +391,7 @@ export function prepareBarChartDisplayValues(
   options: Options
 ): BarChartDisplayValues | BarChartDisplayWarning {
   if (!series.length || series.every((fr) => fr.length === 0)) {
-    return { warn: 'No data in response' };
+    return { warn: 'No data' };
   }
 
   cacheFieldDisplayNames(series);

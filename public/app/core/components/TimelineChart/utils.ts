@@ -405,7 +405,7 @@ export function prepareTimelineFields(
   theme: GrafanaTheme2
 ): { frames?: DataFrame[]; warn?: string } {
   if (!series?.length) {
-    return { warn: 'No data in response' };
+    return { warn: 'No data' };
   }
 
   cacheFieldDisplayNames(series);

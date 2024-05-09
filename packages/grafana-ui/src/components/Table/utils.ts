@@ -661,7 +661,7 @@ function getHiddenColumn(allColumn: Record<string, string>, visibleColumn: Set<n
 }
 
 function getColumnData(fields: any[], columnIndex: any, rowIndex: number) {
-  return fields[columnIndex].values.buffer[rowIndex];
+  return fields[columnIndex].values[rowIndex];
 }
 
 export function getValuesFromSelectedRows(selectedRows: any = [], fields: any[]) {
