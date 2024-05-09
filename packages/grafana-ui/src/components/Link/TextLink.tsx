@@ -25,6 +25,7 @@ interface TextLinkProps extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 't
   weight?: 'light' | 'regular' | 'medium' | 'bold';
   /** Set the icon to be shown. An external link will show the 'external-link-alt' icon as default.*/
   icon?: IconName;
+  target?: string;
   children: string;
 }
 
@@ -43,7 +44,18 @@ const svgSizes: {
 
 export const TextLink = forwardRef<HTMLAnchorElement, TextLinkProps>(
   (
-    { href, color = 'link', external = false, inline = true, variant = 'body', weight, icon, children, ...rest },
+    {
+      href,
+      color = 'link',
+      external = false,
+      inline = true,
+      variant = 'body',
+      weight,
+      icon,
+      children,
+      target,
+      ...rest
+    },
     ref
   ) => {
     const validUrl = textUtil.sanitizeUrl(href ?? '');
@@ -55,6 +67,15 @@ export const TextLink = forwardRef<HTMLAnchorElement, TextLinkProps>(
     if (external) {
       return (
         <a href={validUrl} ref={ref} {...rest} target="_blank" rel="noreferrer" className={styles}>
+          {children}
+          <Icon size={svgSizes[variant] || 'md'} name={externalIcon} />
+        </a>
+      );
+    }
+
+    if (target === '_top') {
+      return (
+        <a ref={ref} {...rest} rel="noreferrer" className={styles}>
           {children}
           <Icon size={svgSizes[variant] || 'md'} name={externalIcon} />
         </a>

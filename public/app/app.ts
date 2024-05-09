@@ -63,7 +63,7 @@ import { backendSrv } from './core/services/backend_srv';
 import { contextSrv } from './core/services/context_srv';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
-import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
+// import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
 import { ApplicationInsightsBackend } from './core/services/echo/backends/analytics/ApplicationInsightsBackend';
 import { GA4EchoBackend } from './core/services/echo/backends/analytics/GA4Backend';
 import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend';
@@ -298,9 +298,9 @@ function initEchoSrv() {
     }
   });
 
-  if (contextSrv.user.orgRole !== '') {
-    registerEchoBackend(new PerformanceBackend({}));
-  }
+  // if (contextSrv.user.orgRole !== '') {
+  //   registerEchoBackend(new PerformanceBackend({}));
+  // }
 
   if (config.grafanaJavascriptAgent.enabled) {
     registerEchoBackend(
