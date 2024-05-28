@@ -119,6 +119,18 @@ export function toDataQueryResponse(
           if (!df.refId) {
             df.refId = dr.refId;
           }
+          if (queries?.find((q) => q.refId === df.refId)?.datasource?.type === 'redis-datasource') {
+            // Redis datasource returns data in a different format
+            df.fields?.forEach((field) => {
+              if (field.values?.length === 1) {
+                try {
+                  field.values = JSON.parse(field.values[0]);
+                } catch (error) {
+                  // If there's an error, simply pass and do nothing
+                }
+              }
+            });
+          }
           rsp.data.push(df);
         }
         continue; // the other tests are legacy
