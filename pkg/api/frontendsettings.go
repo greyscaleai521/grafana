@@ -178,7 +178,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		AlertingErrorOrTimeout:              hs.Cfg.AlertingErrorOrTimeout,
 		AlertingNoDataOrNullValues:          hs.Cfg.AlertingNoDataOrNullValues,
 		AlertingMinInterval:                 hs.Cfg.AlertingMinInterval,
-		LiveEnabled:                         hs.Cfg.LiveMaxConnections != 0,
+		LiveEnabled:                         false, // hard coded to false for now as data is not read from config
 		AutoAssignOrg:                       hs.Cfg.AutoAssignOrg,
 		VerifyEmailEnabled:                  hs.Cfg.VerifyEmailEnabled,
 		SigV4AuthEnabled:                    hs.Cfg.SigV4AuthEnabled,
