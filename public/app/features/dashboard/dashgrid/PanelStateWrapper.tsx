@@ -311,6 +311,12 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         break;
       case LoadingState.Error:
         const { error, errors } = data;
+        if (error?.message && errors?.length) {
+          const parentWindow = window.parent || window;
+          const errorMessages = errors?.length ? JSON.stringify(errors) : JSON.stringify([error]);
+          parentWindow.postMessage({ type: 'grafanaPanelErrors', errors: errorMessages }, '*');
+        }
+
         if (errors?.length) {
           if (errors.length === 1) {
             errorMessage = errors[0].message;
@@ -393,6 +399,10 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     }
 
     const errorMessage = error.message || DEFAULT_PLUGIN_ERROR;
+    if (error?.message) {
+      const parentWindow = window.parent || window;
+      parentWindow.postMessage({ type: 'grafanaPanelErrors', errors: JSON.stringify([error]) }, '*');
+    }
 
     if (this.state.errorMessage !== errorMessage) {
       this.setState({ errorMessage });
