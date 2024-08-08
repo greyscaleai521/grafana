@@ -119,11 +119,20 @@ if (process.env.NODE_ENV === 'development') {
 
 export class GrafanaApp {
   context!: GrafanaContextType;
+  messageHandler: (event: MessageEvent) => void;
+
+  constructor() {
+    this.messageHandler = this.handleMessage.bind(this);
+  }
 
   async init() {
     try {
       // Let iframe container know grafana has started loading
       parent.postMessage('GrafanaAppInit', '*');
+
+      parent.postMessage({ key: 'isFactoryUser'}, '*');
+
+      window.addEventListener('message', this.messageHandler);
 
       const initI18nPromise = initializeI18n(config.bootData.user.language);
 
@@ -248,6 +257,7 @@ export class GrafanaApp {
         keybindings: keybindingsService,
         newAssetsChecker,
         config,
+        isFactoryUser: true,
       };
 
       setReturnToPreviousHook(useReturnToPreviousInternal);
@@ -264,6 +274,21 @@ export class GrafanaApp {
     } finally {
       stopMeasure('frontend_app_init');
     }
+  }
+
+  handleMessage(event: MessageEvent) {
+    const { key, value } = event.data;
+    switch (key) {
+      case 'isFactoryUser':
+        this.context.isFactoryUser = value;
+        break;
+      default:
+        console.warn(`Unhandled key: ${key}`);
+    }
+  }
+
+  destroy() {
+    window.removeEventListener('message', this.messageHandler);
   }
 }
 

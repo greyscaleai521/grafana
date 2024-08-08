@@ -14,6 +14,7 @@ export interface GrafanaContextType {
   chrome: AppChromeService;
   keybindings: KeybindingSrv;
   newAssetsChecker: NewFrontendAssetsChecker;
+  isFactoryUser?: boolean;
 }
 
 export const GrafanaContext = React.createContext<GrafanaContextType | undefined>(undefined);

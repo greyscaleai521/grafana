@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 
 import { TypedVariableModel, VariableHide, TextBoxVariableModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getLocationSrv } from '@grafana/runtime';
+import { getLocationSrv, locationService } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { getTemplateSrv } from '../../../templating/template_srv';
 import { ALL_VARIABLE_TEXT } from '../../../variables/constants';
@@ -17,8 +18,27 @@ interface Props {
 }
 
 export const SubMenuItems = ({ variables, readOnly, selectedCategory, categories = [] }: Props) => {
+  const { isFactoryUser } = useGrafana();
   const optionVariables = variables as TypedVariableModel[];
   const [visibleVariables, setVisibleVariables] = useState<TypedVariableModel[]>([]);
+
+  useEffect(() => {
+    const factoryVariable = variables.find(variable => variable.id === 'FactoryLocation' && isFactoryUser);
+    
+    if (factoryVariable) {
+      const concatedValues = (factoryVariable as any).options
+        .filter((option: { value: string; }) => option.value !== '$__all')
+        .map((option: { value: any; }) => `'${option.value}'`)
+        .join(',');
+  
+      locationService.partial(
+        { 'var-FactoryLocation': { ...factoryVariable, allValue: concatedValues } }, 
+        true
+      );
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  
 
   useEffect(() => {
     let visibleVariables = [];
