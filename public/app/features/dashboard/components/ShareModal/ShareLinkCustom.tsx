@@ -5,7 +5,7 @@ import { ClipboardButton, Field, FieldSet, Input, Spinner, Switch } from '@grafa
 import { t, Trans } from 'app/core/internationalization';
 
 import { ShareModalTabProps } from './types';
-import { buildParamsforShare } from './utils';
+import { buildParamsforShare, getLocationAccessParams } from './utils';
 
 export interface Props extends ShareModalTabProps {}
 
@@ -42,12 +42,13 @@ export class ShareLinkCustom extends PureComponent<Props, State> {
     }
   }
 
-  sendToParent = (link: string) => {
+  sendToParent = (link: string, locationAccessParams: any) => {
     this.onIsLoadingChange(true);
     window.parent.postMessage(
       {
         key: 'share-link',
         value: link,
+        locationAccessParams,
       },
       '*'
     );
@@ -66,7 +67,8 @@ export class ShareLinkCustom extends PureComponent<Props, State> {
     const isRelativeTime = dashboard ? dashboard.time.to === 'now' : false;
     this.setState({ isLoading: true });
     const params = buildParamsforShare({ useCurrentTimeRange, isRelativeTime });
-        this.sendToParent(params.toString());
+    const locationAccessParams = getLocationAccessParams(dashboard.getVariables());
+    this.sendToParent(params.toString(), locationAccessParams);
   };
 
   onUseCurrentTimeRangeChange = () => {
@@ -100,13 +102,15 @@ export class ShareLinkCustom extends PureComponent<Props, State> {
           <Trans i18nKey="share-modal-custom.link.info-text">Share this dashboard.</Trans>
         </p>
         <FieldSet>
-          {isRelativeTime && <Field label={timeRangeLabelTranslation} description={timeRangeDescriptionTranslation}>
-            <Switch
-              id="share-current-time-range"
-              value={useCurrentTimeRange}
-              onChange={this.onUseCurrentTimeRangeChange}
-            />
-          </Field>}
+          {isRelativeTime && (
+            <Field label={timeRangeLabelTranslation} description={timeRangeDescriptionTranslation}>
+              <Switch
+                id="share-current-time-range"
+                value={useCurrentTimeRange}
+                onChange={this.onUseCurrentTimeRangeChange}
+              />
+            </Field>
+          )}
 
           <Field label={linkURLTranslation}>
             <Input
@@ -120,7 +124,7 @@ export class ShareLinkCustom extends PureComponent<Props, State> {
                   variant="primary"
                   getText={this.getShareUrl}
                   disabled={this.state.isLoading}
-                  style={{width: '7rem', justifyContent: 'center'}}
+                  style={{ width: '7rem', justifyContent: 'center' }}
                 >
                   {this.state.isLoading ? (
                     <Spinner />

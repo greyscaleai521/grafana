@@ -5,7 +5,7 @@ import { Button, Field, FieldSet, Input, Modal, Spinner, Switch } from '@grafana
 import { t, Trans } from 'app/core/internationalization';
 
 import { ShareModalTabProps } from './types';
-import { buildParamsforShare } from './utils';
+import { buildParamsforShare, getLocationAccessParams } from './utils';
 
 export interface Props extends ShareModalTabProps {}
 
@@ -34,13 +34,14 @@ export class BookmarkLinkCustom extends PureComponent<Props, State> {
     window.removeEventListener('message', this.receiveFromParent, false);
   }
 
-  sendToParent = (link: string, filterName: string) => {
+  sendToParent = (link: string, filterName: string, locationAccessParams: any) => {
     this.onIsLoadingChange(true);
     window.parent.postMessage(
       {
         key: 'bookmark-link',
         value: link,
         filterName,
+        locationAccessParams,
       },
       '*'
     );
@@ -58,9 +59,11 @@ export class BookmarkLinkCustom extends PureComponent<Props, State> {
 
   bookmarkDashboard = async (isRelativeTime: any) => {
     const { useCurrentTimeRange } = this.state;
+    const { dashboard } = this.props;
     this.setState({ isLoading: true });
     const params = buildParamsforShare({ useCurrentTimeRange, isRelativeTime });
-    this.sendToParent(params.toString(), this.state.filterName);
+    const locationAccessParams = getLocationAccessParams(dashboard.getVariables());
+    this.sendToParent(params.toString(), this.state.filterName, locationAccessParams);
   };
 
   onUseCurrentTimeRangeChange = () => {
