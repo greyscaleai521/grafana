@@ -60,6 +60,34 @@ export function buildParams({
   return searchParams;
 }
 
+export function getLocationAccessParams(variables: any) {
+  let factoryLocationVariable: any, locationAccessVariable: any;
+
+  for (const v of variables) {
+    if (v.name === 'FactoryLocation') {
+      factoryLocationVariable = v;
+    }
+    if (v.name === 'LocationsAccess') {
+      locationAccessVariable = v;
+    }
+    if (factoryLocationVariable && locationAccessVariable) {
+      break;
+    }
+  }
+
+  if (!factoryLocationVariable?.current?.value.includes('$__all')) {
+    return;
+  }
+
+  const companyUserExists = locationAccessVariable?.options?.some((o: any) => o.value === 'NULL');
+
+  if (!companyUserExists) {
+    return locationAccessVariable?.options?.filter((o: any) => o.value !== '$__all').map((o: any) => o.value);
+  }
+
+  return;
+}
+
 export function buildParamsforShare({
   useCurrentTimeRange,
   isRelativeTime,

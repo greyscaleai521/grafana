@@ -45,31 +45,50 @@ export const HeaderActionRow = (props: HeaderActionRowProps) => {
 
   const getSelectedFilters = () => {
     const variables = getTemplateSrv().getVariables();
-    let selectedFilters: FilterValues = {};
+    let factoryLocationVariable: any = {};
+    let locationAccessVariable: any[] = [];
+    const selectedFilters: FilterValues = {};
+
     const params = locationService.getSearch();
-    const from = parseUrlParam(params.get('from')!) ?? 'now-24h';
-    const to = parseUrlParam(params.get('to')!) ?? 'now';
+    const from = parseUrlParam(params?.get('from')!) ?? 'now-24h';
+    const to = parseUrlParam(params?.get('to')!) ?? 'now';
     const tr = getTimeRange({ from, to });
 
-    selectedFilters = {
-      from: { Value: tr.from.toISOString(), Name: 'To' },
-      to: { Value: tr.to.toISOString(), Name: 'From' },
-    };
+    selectedFilters['from'] = { Value: tr.from.toISOString(), Name: 'From' };
+    selectedFilters['to'] = { Value: tr.to.toISOString(), Name: 'To' };
 
-    variables.forEach(({ id, current, label, hide, description }: any) => {
-      if (!id.includes('Advanced')) {
-        const { text } = current || {};
+    variables.forEach(({ id, current, label, hide, description, name, options }: any) => {
+      if (name === 'FactoryLocation') {
+        factoryLocationVariable = current || {};
+      }
+      if (name === 'LocationsAccess') {
+        locationAccessVariable = options || [];
+      }
 
-        if ((text && text.length) || id === 'Weight') {
-          selectedFilters[id] = {
-            Value: Array.isArray(text) ? text : [text],
-            Name: label,
-            hide: hide !== 0,
-            Description: description,
-          };
-        }
+      const text = current?.text;
+      if (text && !id.includes('Advanced')) {
+        selectedFilters[id] = {
+          Value: Array.isArray(text) ? text : [text],
+          Name: label,
+          hide: hide !== 0,
+          Description: description,
+        };
       }
     });
+
+    const factoryLocationValues = factoryLocationVariable?.value || [];
+    if (!factoryLocationValues.includes('$__all')) {
+      return selectedFilters;
+    }
+
+    const companyUserExists = locationAccessVariable.some((o: any) => o.value === 'NULL');
+
+    if (!companyUserExists) {
+      selectedFilters['FactoryLocation'] = {
+        ...(selectedFilters['FactoryLocation'] as any || {}),
+        Value: locationAccessVariable.filter((o: any) => o.value !== '$__all').map((o: any) => o.value),
+      };
+    }
 
     return selectedFilters;
   };
