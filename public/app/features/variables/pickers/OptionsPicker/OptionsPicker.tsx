@@ -97,7 +97,13 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
     };
 
     onFilterOrSearchOptions = (filter: string) => {
-      this.props.filterOrSearchOptions(toKeyedVariableIdentifier(this.props.variable), filter);
+      const trimmedFilter = filter.trim();
+      const regex = /^[a-zA-Z0-9][a-zA-Z0-9-]*$/;
+      if (trimmedFilter && !regex.test(trimmedFilter)) {
+        return;
+      }
+
+      this.props.filterOrSearchOptions(toKeyedVariableIdentifier(this.props.variable), trimmedFilter);
     };
 
     onNavigate = (key: NavigationKey, clearOthers: boolean) => {

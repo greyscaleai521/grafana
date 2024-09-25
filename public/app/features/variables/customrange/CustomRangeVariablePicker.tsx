@@ -66,7 +66,13 @@ export function CustomRangeVariablePicker({ variable, onVariableChange, readOnly
   }, [variable, updatedValue, dispatch, onVariableChange, validateInput]);
 
   const onChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
-    setUpdatedValue(event.target.value);
+    const { value: filter } = event.target;
+    const trimmedFilter = filter?.trim();
+    const regex = /^[a-zA-Z0-9][a-zA-Z0-9-]*$/;
+    if (trimmedFilter && !regex.test(trimmedFilter)) {
+      return;
+    }
+    setUpdatedValue(trimmedFilter);
   }, []);
 
   const onBlur = useCallback(
