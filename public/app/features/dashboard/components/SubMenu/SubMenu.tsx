@@ -36,16 +36,21 @@ interface DispatchProps {}
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
-function isDefault(filter: VariableWithOptions) {
-  return filter?.current?.value === undefined ||
-    filter?.current?.value?.toString() === '' ||
-    filter?.current?.value?.toString() === 'lb' ||
-    filter?.current?.value?.toString() === 'All' ||
-    filter?.current?.value?.toString() === '$__all' ||
-    filter?.current?.value?.toString() === 'Production' ||
-    filter?.current?.value?.toString() === 'Max Resolution'
-    ? true
-    : false;
+function isDefault(filter: VariableWithOptions): boolean {
+  if (!filter?.current?.value) {
+    return true;
+  }
+
+  const value = String(filter.current.value);
+
+  const defaultValues = new Set(['', 'lb', 'All', '$__all', 'Production', 'Max Resolution']);
+
+  const specialCases: Record<string, string> = {
+    InspTarget: '1200',
+    InspTargetPerc: '90',
+  };
+
+  return Boolean(defaultValues.has(value) || (filter.id && specialCases[filter.id] === value));
 }
 
 class SubMenuUnConnected extends PureComponent<Props, any> {
