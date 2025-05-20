@@ -56,7 +56,7 @@ export function TextBoxVariablePicker({ variable, onVariableChange, readOnly }: 
     (event: ChangeEvent<HTMLInputElement>) => {
       const { value: filter } = event.target;
       const trimmedFilter = filter?.trim();
-      const regex = /^[a-zA-Z0-9][a-zA-Z0-9-]*$/;
+      const regex = /^[a-zA-Z0-9][a-zA-Z0-9.@_-]*$/;
       if (trimmedFilter && !regex.test(trimmedFilter)) {
         return;
       }
