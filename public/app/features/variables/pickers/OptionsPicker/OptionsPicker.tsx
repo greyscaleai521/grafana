@@ -98,7 +98,7 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
 
     onFilterOrSearchOptions = (filter: string) => {
       const trimmedFilter = filter.trim();
-      const regex = /^[a-zA-Z0-9][a-zA-Z0-9-]*$/;
+      const regex = /^[a-zA-Z0-9][a-zA-Z0-9.@_-]*$/;
       if (trimmedFilter && !regex.test(trimmedFilter)) {
         return;
       }
