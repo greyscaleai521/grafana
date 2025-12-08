@@ -220,7 +220,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     isTime: true,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
-    range: coreConfig.xRange,
+    range: (): uPlot.Range.MinMax => {
+      const r = getTimeRange();
+      return [r.from.valueOf(), r.to.valueOf()];
+    },
   });
 
   builder.addScale({
@@ -234,7 +237,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   builder.addAxis({
     scaleKey: xScaleKey,
     isTime: true,
-    splits: coreConfig.xSplits!,
+    splits: coreConfig.xSplits,
     placement: AxisPlacement.Bottom,
     timeZone: timeZones[0],
     theme,

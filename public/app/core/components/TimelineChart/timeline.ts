@@ -11,7 +11,7 @@ import { FieldConfig as StatusHistoryFieldConfig } from 'app/plugins/panel/statu
 
 import { TimelineMode } from './utils';
 
-const { round, min, ceil } = Math;
+const { round, min } = Math;
 
 const textPadding = 2;
 
@@ -466,49 +466,11 @@ export function getConfig(opts: TimelineCoreOptions) {
   return {
     cursor,
 
-    xSplits:
-      mode === TimelineMode.Samples
-        ? (u: uPlot, axisIdx: number, scaleMin: number, scaleMax: number, foundIncr: number, foundSpace: number) => {
-            let splits = [];
+    xSplits: undefined,
 
-            let dataIncr = u.data[0][1] - u.data[0][0];
-            let skipFactor = ceil(foundIncr / dataIncr);
-
-            for (let i = 0; i < u.data[0].length; i += skipFactor) {
-              let v = u.data[0][i];
-
-              if (v >= scaleMin && v <= scaleMax) {
-                splits.push(v);
-              }
-            }
-
-            return splits;
-          }
-        : null,
-
-    xRange: (u: uPlot) => {
+    xRange: (): uPlot.Range.MinMax => {
       const r = getTimeRange();
-
-      let min = r.from.valueOf();
-      let max = r.to.valueOf();
-
-      if (mode === TimelineMode.Samples) {
-        let colWid = u.data[0][1] - u.data[0][0];
-        let scalePad = colWid / 2;
-
-        if (min <= u.data[0][0]) {
-          min = u.data[0][0] - scalePad;
-        }
-
-        let lastIdx = u.data[0].length - 1;
-
-        if (max >= u.data[0][lastIdx]) {
-          max = u.data[0][lastIdx] + scalePad;
-        }
-      }
-
-      const result: uPlot.Range.MinMax = [min, max];
-      return result;
+      return [r.from.valueOf(), r.to.valueOf()];
     },
 
     ySplits: (u: uPlot) => {
