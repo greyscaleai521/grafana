@@ -164,6 +164,18 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     // hardcoded formatter for state values
     formatValue: (seriesIdx, value) => formattedValueToString(frame.fields[seriesIdx].display!(value)),
     onHover: (seriesIndex, valueIndex) => {
+      // Check if the value is null/empty before setting hover state
+      if (seriesIndex != null && valueIndex != null) {
+        const field = frame.fields[seriesIndex];
+        const value = field.values[valueIndex];
+        // Skip hover for null/empty values
+        if (value == null || value === '' || value === undefined) {
+          hoveredSeriesIdx = null;
+          hoveredDataIdx = null;
+          shouldChangeHover = true;
+          return;
+        }
+      }
       hoveredSeriesIdx = seriesIndex;
       hoveredDataIdx = valueIndex;
       shouldChangeHover = true;

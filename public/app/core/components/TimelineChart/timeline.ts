@@ -174,8 +174,14 @@ export function getConfig(opts: TimelineCoreOptions) {
     seriesIdx: number,
     valueIdx: number,
     value: number | null,
-    discrete: boolean
+    discrete: boolean,
+    mappedNull: boolean
   ) {
+    // Skip creating boxes for null values (unless mappedNull is true)
+    if (value == null && !mappedNull) {
+      return;
+    }
+
     // clamp width to allow small boxes to be rendered
     boxWidth = Math.max(1, boxWidth);
 
@@ -310,7 +316,8 @@ export function getConfig(opts: TimelineCoreOptions) {
                   iy,
                   ix,
                   yVal,
-                  discrete
+                  discrete,
+                  mappedNull
                 );
 
                 ix = nextIx - 1;
@@ -364,7 +371,8 @@ export function getConfig(opts: TimelineCoreOptions) {
                   iy,
                   ix,
                   yVal,
-                  discrete
+                  discrete,
+                  mappedNull
                 );
               }
             }

@@ -16,6 +16,7 @@ import { TimeSeriesTooltipProps, getStyles } from '../timeseries/TimeSeriesToolt
 interface StateTimelineTooltip2Props extends TimeSeriesTooltipProps {
   timeRange: TimeRange;
   withDuration: boolean;
+  toTimeFieldName?: string;
 }
 
 export const StateTimelineTooltip2 = ({
@@ -30,6 +31,7 @@ export const StateTimelineTooltip2 = ({
   annotate,
   timeRange,
   withDuration,
+  toTimeFieldName,
 }: StateTimelineTooltip2Props) => {
   const styles = useStyles2(getStyles);
 
@@ -46,20 +48,78 @@ export const StateTimelineTooltip2 = ({
   // append duration in single mode
   if (withDuration && mode === TooltipDisplayMode.Single) {
     const field = seriesFrame.fields[seriesIdx!];
-    const nextStateIdx = findNextStateIndex(field, dataIdx!);
-    let nextStateTs;
-    if (nextStateIdx) {
-      nextStateTs = xField.values[nextStateIdx!];
-    }
-
     const stateTs = xField.values[dataIdx!];
     let duration: string;
+    let toTime: number | null = null;
 
-    if (nextStateTs) {
-      duration = nextStateTs && fmtDuration(nextStateTs - stateTs);
+    // Try to find to_time field from original frames if toTimeFieldName is provided
+    if (toTimeFieldName && frames) {
+      const dataFrameFieldIndex = field.state?.origin;
+      if (dataFrameFieldIndex) {
+        const originalFrame = frames[dataFrameFieldIndex.frameIndex];
+        const originalField = originalFrame.fields[dataFrameFieldIndex.fieldIndex];
+        const timeField = originalFrame.fields.find((f) => f.type === FieldType.time);
+
+        if (timeField) {
+          // Find the to_time field
+          let toTimeField: Field | undefined;
+          for (const f of originalFrame.fields) {
+            if (f.name === toTimeFieldName || f.state?.displayName === toTimeFieldName) {
+              toTimeField = f;
+              break;
+            }
+          }
+
+          if (!toTimeField) {
+            // Fallback: search all frames
+            for (const frame of frames) {
+              for (const f of frame.fields) {
+                if (f.name === toTimeFieldName || f.state?.displayName === toTimeFieldName) {
+                  toTimeField = f;
+                  break;
+                }
+              }
+              if (toTimeField) {
+                break;
+              }
+            }
+          }
+
+          if (toTimeField && timeField) {
+            // Find the row index that matches the current timestamp and field value
+            const fieldValue = field.values[dataIdx!];
+            for (let i = 0; i < timeField.values.length; i++) {
+              const timeVal = timeField.values[i];
+              const fieldVal = originalField.values[i];
+
+              // Match by timestamp and ensure the field has a value
+              if (timeVal === stateTs && fieldVal != null && fieldVal === fieldValue) {
+                const toTimeVal = toTimeField.values[i];
+                if (toTimeVal != null) {
+                  toTime = toTimeVal;
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Calculate duration
+    if (toTime != null) {
+      duration = fmtDuration(toTime - stateTs);
     } else {
-      const to = timeRange.to.valueOf();
-      duration = fmtDuration(to - stateTs);
+      // Fall back to next state change
+      const nextStateIdx = findNextStateIndex(field, dataIdx!);
+      if (nextStateIdx) {
+        const nextStateTs = xField.values[nextStateIdx!];
+        duration = fmtDuration(nextStateTs - stateTs);
+      } else {
+        // Fall back to time range end
+        const to = timeRange.to.valueOf();
+        duration = fmtDuration(to - stateTs);
+      }
     }
 
     contentItems.push({ label: 'Duration', value: duration });

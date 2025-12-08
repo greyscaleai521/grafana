@@ -87,6 +87,8 @@ export const StatusHistoryPanel = ({
     [frames, options.legend, theme]
   );
 
+  const dynamicColumnWidthField = (options as any).dynamicColumnWidthField;
+
   const renderCustomTooltip = useCallback(
     (alignedData: DataFrame, seriesIdx: number | null, datapointIdx: number | null) => {
       const data = frames ?? [];
@@ -109,6 +111,13 @@ export const StatusHistoryPanel = ({
        * See https://github.com/grafana/support-escalations/issues/932
        */
       if (alignedData.fields.length - 1 !== valueFieldsCount || !alignedData.fields[seriesIdx]) {
+        return null;
+      }
+
+      // Check for null/empty values - don't show tooltip
+      const field = alignedData.fields[seriesIdx];
+      const fieldValue = field.values[datapointIdx];
+      if (fieldValue == null || fieldValue === '' || fieldValue === undefined) {
         return null;
       }
 
@@ -139,11 +148,13 @@ export const StatusHistoryPanel = ({
             seriesIdx={seriesIdx}
             datapointIdx={datapointIdx}
             timeZone={timeZone}
+            timeRange={timeRange}
+            toTimeFieldName={dynamicColumnWidthField}
           />
         </>
       );
     },
-    [timeZone, frames, shouldDisplayCloseButton]
+    [timeZone, frames, shouldDisplayCloseButton, timeRange, dynamicColumnWidthField]
   );
 
   const renderTooltip = (alignedFrame: DataFrame) => {
@@ -261,7 +272,8 @@ export const StatusHistoryPanel = ({
                           isPinned={isPinned}
                           timeRange={timeRange}
                           annotate={enableAnnotationCreation ? annotate : undefined}
-                          withDuration={false}
+                          withDuration={true}
+                          toTimeFieldName={dynamicColumnWidthField}
                         />
                       );
                     }}
