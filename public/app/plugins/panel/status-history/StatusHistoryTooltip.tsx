@@ -28,23 +28,44 @@ export const StatusHistoryTooltip = ({
   data,
   alignedData,
   seriesIdx,
-  datapointIdx,
+  datapointIdx: initialDatapointIdx,
   timeZone,
   timeRange,
   toTimeFieldName,
 }: StatusHistoryTooltipProps) => {
   const theme = useTheme2();
 
-  if (!data || datapointIdx == null) {
+  if (!data || initialDatapointIdx == null) {
     return null;
   }
 
   const field = alignedData.fields[seriesIdx!];
+  const xField = alignedData.fields[0];
 
-  // Null value check - don't show tooltip for null values
-  const value = field.values[datapointIdx!];
+  // Find the correct datapointIdx - if the value is null at initialDatapointIdx,
+  // search for a non-null value at the same timestamp
+  let datapointIdx = initialDatapointIdx;
+  let value = field.values[datapointIdx];
+
   if (value == null || value === '' || value === undefined) {
-    return null;
+    const targetTime = xField.values[initialDatapointIdx];
+
+    // Search for a non-null value at the same timestamp
+    for (let i = 0; i < xField.values.length; i++) {
+      if (xField.values[i] === targetTime) {
+        const candidateValue = field.values[i];
+        if (candidateValue != null && candidateValue !== '' && candidateValue !== undefined) {
+          datapointIdx = i;
+          value = candidateValue;
+          break;
+        }
+      }
+    }
+
+    // If still null, don't show tooltip
+    if (value == null || value === '' || value === undefined) {
+      return null;
+    }
   }
 
   const links: Array<LinkModel<Field>> = [];
@@ -62,7 +83,6 @@ export const StatusHistoryTooltip = ({
     });
   }
 
-  const xField = alignedData.fields[0];
   const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, timeZone, theme });
 
   const dataFrameFieldIndex = field.state?.origin;

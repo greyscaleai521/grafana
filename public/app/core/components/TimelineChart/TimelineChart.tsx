@@ -60,7 +60,9 @@ export class TimelineChart extends React.Component<TimelineProps> {
       rowHeight: alignedFrame.fields.length > 2 ? this.props.rowHeight : 1,
       getValueColor: this.getValueColor,
       // @ts-ignore
-      hoverMulti: this.props.tooltip?.mode === TooltipDisplayMode.Multi,
+      // For Samples mode (Status History), always use single hover to ensure
+      // cursor only highlights the bar being hovered, not all bars at the same x position
+      hoverMulti: this.props.mode === TimelineMode.Samples ? false : this.props.tooltip?.mode === TooltipDisplayMode.Multi,
     });
   };
 

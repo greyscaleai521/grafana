@@ -167,12 +167,35 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
       // Check if the value is null/empty before setting hover state
       if (seriesIndex != null && valueIndex != null) {
         const field = frame.fields[seriesIndex];
-        const value = field.values[valueIndex];
-        // Skip hover for null/empty values
+        let value = field.values[valueIndex];
+
+        // If value is null at this index, try to find a non-null value at the same timestamp
         if (value == null || value === '' || value === undefined) {
-          hoveredSeriesIdx = null;
-          hoveredDataIdx = null;
-          shouldChangeHover = true;
+          const timeField = frame.fields[0];
+          const targetTime = timeField.values[valueIndex];
+          let foundValidIndex = false;
+
+          // Search for a non-null value at the same timestamp
+          for (let i = 0; i < timeField.values.length; i++) {
+            if (timeField.values[i] === targetTime) {
+              const candidateValue = field.values[i];
+              if (candidateValue != null && candidateValue !== '' && candidateValue !== undefined) {
+                // Found a valid value at the same timestamp
+                hoveredSeriesIdx = seriesIndex;
+                hoveredDataIdx = i;
+                shouldChangeHover = true;
+                foundValidIndex = true;
+                break;
+              }
+            }
+          }
+
+          if (!foundValidIndex) {
+            // No valid value found, skip hover
+            hoveredSeriesIdx = null;
+            hoveredDataIdx = null;
+            shouldChangeHover = true;
+          }
           return;
         }
       }

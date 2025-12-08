@@ -544,7 +544,9 @@ export function getConfig(opts: TimelineCoreOptions) {
       fill: 'rgba(255,255,255,0.2)',
       bbox: (u, seriesIdx) => {
         let hRect = hovered[seriesIdx];
-        let isHovered = hRect != null;
+        // Only show cursor point for the series that is actually being hovered over
+        // hoveredAtCursor contains the box that the cursor is physically over
+        let isHovered = hRect != null && hoveredAtCursor != null && hoveredAtCursor.sidx === seriesIdx;
 
         return {
           left: isHovered ? hRect!.x / uPlot.pxRatio : -10,

@@ -37,9 +37,35 @@ export const StateTimelineTooltip2 = ({
 
   const xField = seriesFrame.fields[0];
 
-  const dataIdx = seriesIdx != null ? dataIdxs[seriesIdx] : dataIdxs.find((idx) => idx != null);
+  let dataIdx = seriesIdx != null ? dataIdxs[seriesIdx] : dataIdxs.find((idx) => idx != null);
 
-  const xVal = xField.display!(xField.values[dataIdx!]).text;
+  // If the value at dataIdx is null for the hovered field, try to find a non-null value at the same timestamp
+  if (seriesIdx != null && dataIdx != null) {
+    const field = seriesFrame.fields[seriesIdx];
+    const value = field?.values[dataIdx];
+
+    if (value == null || value === '' || value === undefined) {
+      const targetTime = xField.values[dataIdx];
+
+      // Search for a non-null value at the same timestamp
+      for (let i = 0; i < xField.values.length; i++) {
+        if (xField.values[i] === targetTime) {
+          const candidateValue = field?.values[i];
+          if (candidateValue != null && candidateValue !== '' && candidateValue !== undefined) {
+            dataIdx = i;
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  // Don't render tooltip if we still have no valid data
+  if (dataIdx == null) {
+    return null;
+  }
+
+  const xVal = xField.display!(xField.values[dataIdx]).text;
 
   mode = isPinned ? TooltipDisplayMode.Single : mode;
 
