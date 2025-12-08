@@ -57,6 +57,7 @@ interface UPlotConfigOptions {
   sync?: () => DashboardCursorSync;
   rowHeight?: number;
   colWidth?: number;
+  axisWidth?: number;
   showValue: VisibilityMode;
   alignValue?: TimelineValueAlignment;
   mergeValues?: boolean;
@@ -101,6 +102,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   sync,
   rowHeight,
   colWidth,
+  axisWidth,
   showValue,
   alignValue,
   mergeValues,
@@ -253,6 +255,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     grid: { show: false },
     ticks: { show: false },
     gap: 16,
+    size: axisWidth,
     theme,
   });
 

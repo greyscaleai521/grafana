@@ -78,6 +78,14 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
           max: 1,
           step: 0.01,
         },
+      })
+      .addNumberInput({
+        path: 'axisWidth',
+        name: 'Axis width',
+        category: ['Axis'],
+        settings: {
+          placeholder: 'Auto',
+        },
       });
 
     commonOptionsBuilder.addLegendOptions(builder, false);

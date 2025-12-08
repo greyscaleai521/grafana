@@ -17,6 +17,7 @@ export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsT
   showValue: VisibilityMode;
   alignValue?: TimelineValueAlignment;
   colWidth?: number;
+  axisWidth?: number;
   legendItems?: VizLegendItem[];
 }
 

@@ -35,6 +35,8 @@ composableKinds: PanelCfg: {
 					showValue: ui.VisibilityMode & (*"auto" | _)
 					//Controls the column width
 					colWidth?: float & <=1 | *0.9
+					//Axis width for y-axis
+					axisWidth?: number
 				} @cuetsy(kind="interface")
 				FieldConfig: {
 					ui.HideableFieldConfig
