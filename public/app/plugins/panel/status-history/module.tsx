@@ -86,6 +86,15 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
         settings: {
           placeholder: 'Auto',
         },
+      })
+      .addFieldNamePicker({
+        path: 'dynamicColumnWidthField',
+        name: 'Dynamic Column Width Using',
+        description:
+          'Select a field to use for dynamic column width. If the field is a timestamp, bars will stretch from from_time to the selected field value.',
+        settings: {
+          placeholder: 'Choose',
+        },
       });
 
     commonOptionsBuilder.addLegendOptions(builder, false);

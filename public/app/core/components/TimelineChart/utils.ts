@@ -65,6 +65,8 @@ interface UPlotConfigOptions {
   // Identifies the shared key for uPlot cursor sync
   eventsScope?: string;
   hoverMulti: boolean;
+  dynamicColumnWidthField?: string;
+  allFrames?: DataFrame[];
 }
 
 /**
@@ -109,6 +111,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   getValueColor,
   eventsScope = '__global_',
   hoverMulti,
+  dynamicColumnWidthField,
+  allFrames,
 }) => {
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
@@ -170,6 +174,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
       shouldChangeHover = true;
     },
     hoverMulti,
+    dynamicColumnWidthField,
+    allFrames,
   };
 
   let shouldChangeHover = false;

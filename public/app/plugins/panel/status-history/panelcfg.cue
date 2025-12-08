@@ -37,6 +37,8 @@ composableKinds: PanelCfg: {
 					colWidth?: float & <=1 | *0.9
 					//Axis width for y-axis
 					axisWidth?: number
+					//Dynamic column width using field name
+					dynamicColumnWidthField?: string
 				} @cuetsy(kind="interface")
 				FieldConfig: {
 					ui.HideableFieldConfig
