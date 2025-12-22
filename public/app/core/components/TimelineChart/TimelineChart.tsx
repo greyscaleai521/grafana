@@ -19,9 +19,10 @@ export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsT
   colWidth?: number;
   axisWidth?: number;
   legendItems?: VizLegendItem[];
+  dynamicColumnWidthField?: string;
 }
 
-const propsToDiff = ['rowHeight', 'colWidth', 'showValue', 'mergeValues', 'alignValue', 'tooltip'];
+const propsToDiff = ['rowHeight', 'colWidth', 'showValue', 'mergeValues', 'alignValue', 'tooltip', 'dynamicColumnWidthField', 'frames'];
 
 export class TimelineChart extends React.Component<TimelineProps> {
   declare context: React.ContextType<typeof PanelContextRoot>;
