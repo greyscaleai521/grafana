@@ -78,8 +78,8 @@ export const StateTimelinePanel = ({
   };
 
   const { frames, warn } = useMemo(
-    () => prepareTimelineFields(data.series, options.mergeValues ?? true, timeRange, theme),
-    [data.series, options.mergeValues, timeRange, theme]
+    () => prepareTimelineFields(data.series, options.mergeValues ?? true, timeRange, theme, options.noDataMessage),
+    [data.series, options.mergeValues, timeRange, theme, options.noDataMessage]
   );
 
   const legendItems = useMemo(

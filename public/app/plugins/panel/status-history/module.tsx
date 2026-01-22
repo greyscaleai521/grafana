@@ -95,6 +95,15 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
         settings: {
           placeholder: 'Choose',
         },
+      })
+      .addTextInput({
+        path: 'noDataMessage',
+        name: 'No data message',
+        description: 'Custom message to show when there is no data',
+        defaultValue: '',
+        settings: {
+          placeholder: 'Data does not have a time field',
+        },
       });
 
     commonOptionsBuilder.addLegendOptions(builder, false);

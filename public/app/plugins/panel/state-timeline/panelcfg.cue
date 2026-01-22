@@ -37,6 +37,8 @@ composableKinds: PanelCfg: {
 					mergeValues?: bool | *true
 					//Controls value alignment on the timelines
 					alignValue?: ui.TimelineValueAlignment & (*"left" | _)
+					//Custom message to show when there is no data
+					noDataMessage?: string
 				} @cuetsy(kind="interface")
 				FieldConfig: {
 					ui.HideableFieldConfig

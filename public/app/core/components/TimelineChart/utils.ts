@@ -479,7 +479,8 @@ export function prepareTimelineFields(
   series: DataFrame[] | undefined,
   mergeValues: boolean,
   timeRange: TimeRange,
-  theme: GrafanaTheme2
+  theme: GrafanaTheme2,
+  noDataMsg?: string
 ): { frames?: DataFrame[]; warn?: string } {
   if (!series?.length) {
     return { warn: 'No data' };
@@ -559,7 +560,7 @@ export function prepareTimelineFields(
   }
 
   if (!hasTimeseries) {
-    return { warn: 'Data does not have a time field' };
+    return { warn: noDataMsg || 'Data does not have a time field' };
   }
   if (!frames.length) {
     return { warn: 'No graphable fields' };

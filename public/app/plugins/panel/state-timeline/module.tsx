@@ -119,6 +119,15 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
           step: 0.01,
         },
         defaultValue: defaultOptions.rowHeight,
+      })
+      .addTextInput({
+        path: 'noDataMessage',
+        name: 'No data message',
+        description: 'Custom message to show when there is no data',
+        defaultValue: '',
+        settings: {
+          placeholder: 'Data does not have a time field',
+        },
       });
 
     commonOptionsBuilder.addLegendOptions(builder, false);

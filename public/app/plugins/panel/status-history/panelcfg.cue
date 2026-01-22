@@ -39,6 +39,8 @@ composableKinds: PanelCfg: {
 					axisWidth?: number
 					//Dynamic column width using field name
 					dynamicColumnWidthField?: string
+					//Custom message to show when there is no data
+					noDataMessage?: string
 				} @cuetsy(kind="interface")
 				FieldConfig: {
 					ui.HideableFieldConfig

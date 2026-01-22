@@ -27,6 +27,10 @@ export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui
    * Show timeline values on chart
    */
   showValue: ui.VisibilityMode;
+  /**
+   * Custom message to show when there is no data
+   */
+  noDataMessage?: string;
 }
 
 export const defaultOptions: Partial<Options> = {

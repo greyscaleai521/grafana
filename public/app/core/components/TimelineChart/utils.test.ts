@@ -33,6 +33,19 @@ describe('prepare timeline graph', () => {
     expect(info.warn).toEqual('Data does not have a time field');
   });
 
+  it('errors with custom noDataMsg', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'a', values: [1, 2, 3] },
+          { name: 'b', values: ['a', 'b', 'c'] },
+        ],
+      }),
+    ];
+    const info = prepareTimelineFields(frames, true, timeRange, theme, 'Custom no data message');
+    expect(info.warn).toEqual('Custom no data message');
+  });
+
   it('requires a number, string, or boolean value', () => {
     const frames = [
       toDataFrame({

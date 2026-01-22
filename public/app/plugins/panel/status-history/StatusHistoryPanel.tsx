@@ -78,8 +78,8 @@ export const StatusHistoryPanel = ({
   };
 
   const { frames, warn } = useMemo(
-    () => prepareTimelineFields(data.series, false, timeRange, theme),
-    [data.series, timeRange, theme]
+    () => prepareTimelineFields(data.series, false, timeRange, theme, options.noDataMessage),
+    [data.series, timeRange, theme, options.noDataMessage]
   );
 
   const legendItems = useMemo(
