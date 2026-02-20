@@ -74,7 +74,7 @@ export function CustomRangeVariablePicker({ variable, onVariableChange, readOnly
   const onChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
     const { value: filter } = event.target;
     const trimmedFilter = filter?.trim();
-    const regex = /^[a-zA-Z0-9][a-zA-Z0-9.@_-]*$/;
+    const regex = /^(?!.*--)[0-9][0-9.-]*$/;
     if (trimmedFilter && !regex.test(trimmedFilter)) {
       return;
     }
