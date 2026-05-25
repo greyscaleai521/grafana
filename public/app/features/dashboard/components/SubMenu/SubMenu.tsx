@@ -54,12 +54,17 @@ function isDefault(filter: VariableWithOptions): boolean {
 }
 
 class SubMenuUnConnected extends PureComponent<Props, any> {
+  private mediaQuery?: MediaQueryList;
+  private onMediaQueryChange?: (event: MediaQueryListEvent) => void;
+
   constructor(props: any) {
     super(props);
     this.state = {
       selectedCategory: 0,
       uniqueCategories: [],
       categoryFilterCounter: {},
+      isSmallViewport: false,
+      expandedCategory: null,
     };
   }
   onAnnotationStateChanged = (updatedAnnotation: AnnotationQuery<DataQuery>) => {
@@ -83,6 +88,13 @@ class SubMenuUnConnected extends PureComponent<Props, any> {
     this.setState({
       selectedCategory: index,
     });
+  };
+
+  onCategoryToggle = (index: number) => {
+    this.setState((prevState: any) => ({
+      expandedCategory: prevState.expandedCategory === index ? null : index,
+      selectedCategory: index,
+    }));
   };
 
   onFilterCounterChange = (counter: Record<string, number>) => {
@@ -122,9 +134,26 @@ class SubMenuUnConnected extends PureComponent<Props, any> {
       }
     });
 
+    this.mediaQuery = window.matchMedia('(max-width: 1079px)');
+    this.onMediaQueryChange = (event: MediaQueryListEvent) => {
+      this.setState({
+        isSmallViewport: event.matches,
+        expandedCategory: event.matches ? this.state.expandedCategory : null,
+      });
+    };
+
     this.setState({
       uniqueCategories: Array.from(uniqueCategories),
+      isSmallViewport: this.mediaQuery.matches,
     });
+
+    this.mediaQuery.addEventListener('change', this.onMediaQueryChange);
+  }
+
+  componentWillUnmount() {
+    if (this.mediaQuery && this.onMediaQueryChange) {
+      this.mediaQuery.removeEventListener('change', this.onMediaQueryChange);
+    }
   }
 
   render() {
@@ -147,6 +176,9 @@ class SubMenuUnConnected extends PureComponent<Props, any> {
             selecedCategory={this.state.selectedCategory}
             categoryFilterCounter={this.state.categoryFilterCounter}
             variables={variables}
+            isSmallViewport={this.state.isSmallViewport}
+            expandedCategory={this.state.expandedCategory}
+            onCategoryToggle={this.onCategoryToggle}
           />
         </div>
         <div className={styles.submenu}>
@@ -156,6 +188,8 @@ class SubMenuUnConnected extends PureComponent<Props, any> {
               readOnly={readOnlyVariables}
               selectedCategory={this.state.selectedCategory}
               categories={Array.from(this.state.uniqueCategories)}
+              isSmallViewport={this.state.isSmallViewport}
+              expandedCategory={this.state.expandedCategory}
             />
           </form>
           <Annotations

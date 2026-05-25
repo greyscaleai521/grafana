@@ -14,9 +14,18 @@ interface Props {
   readOnly?: boolean;
   selectedCategory?: number;
   categories?: any;
+  isSmallViewport?: boolean;
+  expandedCategory?: number | null;
 }
 
-export const SubMenuItems = ({ variables, readOnly, selectedCategory, categories = [] }: Props) => {
+export const SubMenuItems = ({
+  variables,
+  readOnly,
+  selectedCategory,
+  categories = [],
+  isSmallViewport,
+  expandedCategory,
+}: Props) => {
   const optionVariables = variables as TypedVariableModel[];
   const [visibleVariables, setVisibleVariables] = useState<TypedVariableModel[]>([]);
 
@@ -67,6 +76,10 @@ export const SubMenuItems = ({ variables, readOnly, selectedCategory, categories
   }
 
   if (visibleVariables.length === 0) {
+    return null;
+  }
+
+  if (isSmallViewport && expandedCategory === null) {
     return null;
   }
 
