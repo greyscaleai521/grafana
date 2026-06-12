@@ -1,4 +1,4 @@
 /**
  * Target for links - controls whether link opens in new tab or same tab
  */
-export type LinkTarget = '_blank' | '_self' | undefined;
+export type LinkTarget = '_blank' | '_self' | '_top' | undefined;

@@ -164,4 +164,37 @@ describe('mapInternalLinkToExplore', () => {
 
     expect(link.interpolatedParams?.timeRange).toEqual(TIME_RANGE);
   });
+
+  it.each([
+    [{ targetTop: true }, '_top'],
+    [{ targetBlank: true }, '_blank'],
+    [{ targetTop: true, targetBlank: true }, '_top'],
+    [{}, '_self'],
+  ])('resolves the link target from targetTop/targetBlank (%o -> %s)', (linkProps, expectedTarget) => {
+    const dataLink: DataLink = {
+      url: '',
+      title: '',
+      ...linkProps,
+      internal: {
+        datasourceUid: 'uid',
+        datasourceName: 'dsName',
+        query: { query: '12344' },
+      },
+    };
+
+    const link = mapInternalLinkToExplore({
+      link: dataLink,
+      internalLink: dataLink.internal!,
+      scopedVars: {},
+      field: {
+        name: 'test',
+        type: FieldType.number,
+        config: {},
+        values: [2],
+      },
+      replaceVariables: (val) => val,
+    });
+
+    expect(link.target).toBe(expectedTarget);
+  });
 });
