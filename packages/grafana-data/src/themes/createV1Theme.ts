@@ -133,6 +133,7 @@ export function createV1Theme(theme: Omit<GrafanaTheme2, 'v1'>): GrafanaTheme {
     variable: '#32d1df',
     orange: '#eb7b18',
     orangeDark: '#ff780a',
+    redOrange: '#ff5300',
   };
 
   const backgrounds = {

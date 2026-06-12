@@ -66,7 +66,7 @@ describe('FetchQueueWorker', () => {
           const { updates, addMock, dataUrl, apiUrl } = getTestContext();
           updates.next({
             noOfPending: 2,
-            noOfInProgress: 5,
+            noOfInProgress: 20,
             state: {
               ['data']: { state: FetchStatus.Pending, options: { url: dataUrl } },
               ['api']: { state: FetchStatus.Pending, options: { url: apiUrl } },
