@@ -545,6 +545,7 @@ export {
   type DataSourceVariableModel,
   type QueryVariableModel,
   type TextBoxVariableModel,
+  type CustomRangeVariableModel,
   type ConstantVariableModel,
   type SwitchVariableModel,
   type VariableWithMultiSupport,

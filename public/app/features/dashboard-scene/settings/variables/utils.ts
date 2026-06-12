@@ -27,6 +27,7 @@ import { getIntervalsQueryFromNewIntervalModel } from '../../utils/utils';
 
 import { AdHocFiltersVariableEditor, getAdHocFilterOptions } from './editors/AdHocFiltersVariableEditor';
 import { ConstantVariableEditor, getConstantVariableOptions } from './editors/ConstantVariableEditor';
+import { CustomRangeVariableEditor } from './editors/CustomRangeVariableEditor';
 import { CustomVariableEditor } from './editors/CustomVariableEditor/CustomVariableEditor';
 import { getCustomVariableOptions } from './editors/CustomVariableEditor/getCustomVariableOptions';
 import { DataSourceVariableEditor, getDataSourceVariableOptions } from './editors/DataSourceVariableEditor';
@@ -129,6 +130,11 @@ export const getEditableVariables: () => Record<EditableVariableType, EditableVa
     editor: SwitchVariableEditor,
     getOptions: getSwitchVariableOptions,
   },
+  customrange: {
+    name: t('dashboard-scene.get-editable-variables.name.custom-range', 'Custom Range'),
+    description: t('dashboard-scene.get-editable-variables.description.custom-range', 'Define a custom range variable'),
+    editor: CustomRangeVariableEditor,
+  },
 });
 
 export function getEditableVariableDefinition(type: string): EditableVariableConfig {
@@ -152,6 +158,7 @@ export const EDITABLE_VARIABLES_SELECT_ORDER: EditableVariableType[] = [
   'adhoc',
   'switch',
   'groupby',
+  'customrange',
 ];
 
 export function getVariableTypeSelectOptions(): Array<SelectableValue<EditableVariableType>> {
@@ -218,6 +225,8 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
       return new TextBoxVariable(initialState);
     case 'switch':
       return new SwitchVariable(initialState);
+    case 'customrange':
+      return new TextBoxVariable(initialState);
   }
 }
 

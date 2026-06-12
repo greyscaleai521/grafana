@@ -5453,9 +5453,6 @@
       "aria-label-dashboard-name": "{{dashboardName}} dashboard",
       "label-no-dashboards-found": "No dashboards found"
     },
-    "dashboard-loading": {
-      "cancel-loading-dashboard": "Cancel loading dashboard"
-    },
     "dashboard-page-error": {
       "text": {
         "not-found": "Not found"
@@ -6892,6 +6889,11 @@
       "recommendation": "Once the feature is enabled again, your dashboards will render normally in their Dynamic Dashboard format. Because of this, we strongly recommend not making changes to these dashboards until the feature is turned back on, as edits made in classic mode may lead to unexpected results. Alternatively, you can save a copy of the dashboard using the \"Save as copy\" option, in the save dashboard menu.",
       "save-warning": "Any dashboard created as or converted to a Dynamic Dashboard will open as a classic dashboard. Saving the dashboard could lead to losing already set up Dynamic Dashboard features."
     },
+    "custom-range-variable-form": {
+      "name-default-value": "Default value",
+      "placeholder-default-value-if-any": "default value, if any",
+      "text-options": "Text options"
+    },
     "custom-variable-form": {
       "custom-options": "Custom options",
       "json-values-tooltip": "Provide a JSON representing an array of objects, where each object can have any number of properties.<br/>Check <4>our docs</4> for more information.",
@@ -7076,6 +7078,7 @@
     "get-editable-variables": {
       "description": {
         "add-keyvalue-filters-on-the-fly": "Add key/value filters on the fly",
+        "custom-range": "Define a custom range variable",
         "dynamically-switch-source-multiple-panels": "Dynamically switch the data source for multiple panels",
         "group": "Add keys to group by on the fly",
         "hidden-constant-variable": "A hidden constant variable, useful for metric prefixes in dashboards you want to share",
@@ -7089,6 +7092,7 @@
         "ad-hoc-filters": "Filter",
         "constant": "Constant",
         "custom": "Custom",
+        "custom-range": "Custom Range",
         "data-source": "Data source",
         "group-by": "Group by",
         "interval": "Interval",
@@ -16394,6 +16398,10 @@
     "adhoc": {
       "placeholder": "Select value"
     },
+    "customrange": {
+      "invalid-format": "Invalid format. Format should be number or number - number",
+      "placeholder": "e.g. 1.2 or 1.2-100.4"
+    },
     "dropdown": {
       "placeholder": "Enter variable value"
     },
@@ -16443,6 +16451,11 @@
     },
     "create-switch-variable-adapter": {
       "description": "A variable that can be toggled on and off"
+    },
+    "custom-range-variable-editor": {
+      "name-default-value": "Default value",
+      "placeholder-default-value-if-any": "default value, if any",
+      "text-options": "Text options"
     },
     "data-source-variable-slice": {
       "text": {

@@ -16,6 +16,7 @@ import {
 import {
   createAdhocVariable,
   createConstantVariable,
+  createCustomRangeVariable,
   createCustomVariable,
   createDashboardVariable,
   createDatasourceVariable,
@@ -177,6 +178,7 @@ describe('type guards', () => {
     org: { variable: createOrgVariable(), isMulti: false, hasOptions: false, hasCurrent: true },
     dashboard: { variable: createDashboardVariable(), isMulti: false, hasOptions: false, hasCurrent: true },
     custom: { variable: createCustomVariable(), isMulti: true, hasOptions: true, hasCurrent: true },
+    customrange: { variable: createCustomRangeVariable(), isMulti: false, hasOptions: true, hasCurrent: true },
     snapshot: { variable: createSnapshotVariable(), isMulti: false, hasOptions: true, hasCurrent: true },
     switch: { variable: createSwitchVariable(), isMulti: false, hasOptions: true, hasCurrent: true },
   };

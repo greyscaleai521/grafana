@@ -2,6 +2,7 @@ import {
   type AdHocVariableModel,
   type BaseVariableModel,
   type ConstantVariableModel,
+  type CustomRangeVariableModel,
   type CustomVariableModel,
   type DashboardVariableModel,
   type DataSourceVariableModel,
@@ -144,6 +145,17 @@ export function createTextBoxVariable(input: Partial<TextBoxVariableModel> = {})
     originalQuery: null,
     query: '',
     current: createVariableOption('prom-prod'),
+    options: [],
+    ...input,
+  };
+}
+
+export function createCustomRangeVariable(input: Partial<CustomRangeVariableModel> = {}): CustomRangeVariableModel {
+  return {
+    ...createBaseVariableModel('customrange'),
+    originalQuery: null,
+    query: '',
+    current: createVariableOption('1.2-100.4'),
     options: [],
     ...input,
   };
