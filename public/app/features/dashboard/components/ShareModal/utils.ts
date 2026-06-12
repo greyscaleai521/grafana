@@ -14,6 +14,7 @@ export interface BuildParamsArgs {
   search?: string;
   range?: TimeRange;
   orgId?: number;
+  isRelativeTime?: boolean;
 }
 
 export function buildParams({
@@ -57,6 +58,23 @@ export function buildParams({
 
   // The shareView param is used to indicate that the sharing modal is open and should never be included in the URL
   searchParams.delete('shareView');
+
+  return searchParams;
+}
+
+export function buildParamsforShare({
+  useCurrentTimeRange,
+  isRelativeTime,
+  range = getTimeSrv().timeRange(),
+}: BuildParamsArgs): URLSearchParams {
+  const searchParams = new URLSearchParams();
+
+  searchParams.set('from', String(range.from.valueOf()));
+  searchParams.set('to', String(range.to.valueOf()));
+  if (isRelativeTime && useCurrentTimeRange) {
+    searchParams.set('from', String(range.raw.from));
+    searchParams.set('to', String(range.raw.to));
+  }
 
   return searchParams;
 }

@@ -1,6 +1,6 @@
 import { type TimeRange } from '@grafana/data';
 
-import { buildParams } from './utils';
+import { buildParams, buildParamsforShare } from './utils';
 
 describe('buildParams', () => {
   it.each`
@@ -44,4 +44,27 @@ describe('buildParams', () => {
       expect(result.toString()).toEqual(expected);
     }
   );
+});
+
+describe('buildParamsforShare', () => {
+  const range: TimeRange = {
+    from: 1000,
+    to: 2000,
+    raw: { from: 'now-6h', to: 'now' },
+  } as unknown as TimeRange;
+
+  it('uses the raw time range when isRelativeTime and useCurrentTimeRange are both true', () => {
+    const result = buildParamsforShare({ useCurrentTimeRange: true, isRelativeTime: true, range });
+    expect(result.toString()).toEqual('from=now-6h&to=now');
+  });
+
+  it('uses the absolute epoch time range when isRelativeTime is false', () => {
+    const result = buildParamsforShare({ useCurrentTimeRange: true, isRelativeTime: false, range });
+    expect(result.toString()).toEqual('from=1000&to=2000');
+  });
+
+  it('uses the absolute epoch time range when useCurrentTimeRange is false even if relative', () => {
+    const result = buildParamsforShare({ useCurrentTimeRange: false, isRelativeTime: true, range });
+    expect(result.toString()).toEqual('from=1000&to=2000');
+  });
 });

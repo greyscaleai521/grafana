@@ -4233,6 +4233,20 @@
       "label-value-color": "Value color"
     }
   },
+  "bookmark-modal": {
+    "cancel-button": "Cancel",
+    "local-button": "Bookmark",
+    "snapshot": {
+      "name": "Name*"
+    }
+  },
+  "bookmark-modal-custom": {
+    "link": {
+      "info-text": "Bookmark this dashboard.",
+      "time-range-description": "Turn off the toggle to convert relative time range to an absolute time range",
+      "time-range-label": "Use Relative Time Range"
+    }
+  },
   "bookmarks-page": {
     "empty": {
       "message": "It looks like you haven’t created any bookmarks yet",
@@ -6357,6 +6371,7 @@
       "add": "Add",
       "alert-rules": "Alert rules",
       "back-to-dashboard": "Back to dashboard",
+      "bookmark": "Bookmark dashboard",
       "dashboard-settings": {
         "label": "Settings",
         "tooltip": "Dashboard settings"
@@ -6431,6 +6446,7 @@
       "playlist-stop": "Stop playlist",
       "read-only": "Read only",
       "refresh": "Refresh dashboard",
+      "refresh-enabled-30-days": "Refresh enabled for last 30 days",
       "save": "Save dashboard",
       "save-dashboard": {
         "label": "Save dashboard",
@@ -6443,6 +6459,7 @@
       "save-dashboard-short": "Save",
       "save-library-panel": "Save library panel",
       "settings": "Dashboard settings",
+      "share": "Share dashboard",
       "share-button": "Share",
       "snapshot": {
         "title": "Source"
@@ -14600,6 +14617,22 @@
     },
     "view-json": {
       "copy-button": "Copy to Clipboard"
+    }
+  },
+  "share-modal-custom": {
+    "dashboard": {
+      "title": "Share"
+    },
+    "link": {
+      "copy-link-button": "Copy",
+      "info-text": "Share this dashboard.",
+      "link-url": "Link URL",
+      "time-range-description": "Turn off the toggle to convert relative time range to an absolute time range",
+      "time-range-label": "Use Relative Time Range"
+    },
+    "tab-title": {
+      "bookmark": "Bookmark",
+      "share": "Share"
     }
   },
   "share-panel": {

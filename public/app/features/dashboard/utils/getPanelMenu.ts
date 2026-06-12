@@ -15,7 +15,6 @@ import {
   copyPanel,
   duplicatePanel,
   removePanel,
-  sharePanel,
   toggleLegend,
   unlinkLibraryPanel,
 } from 'app/features/dashboard/utils/panel';
@@ -35,23 +34,11 @@ export function getPanelMenu(
   panel: PanelModel,
   extensions: PluginExtensionLink[]
 ): PanelMenuItem[] {
-  const onViewPanel = (event: React.MouseEvent) => {
-    event.preventDefault();
-    locationService.partial({
-      viewPanel: panel.id,
-    });
-  };
-
   const onEditPanel = (event: React.MouseEvent) => {
     event.preventDefault();
     locationService.partial({
       editPanel: panel.id,
     });
-  };
-
-  const onSharePanel = (event: React.MouseEvent) => {
-    event.preventDefault();
-    sharePanel(dashboard, panel);
   };
 
   const onAddLibraryPanel = (event: React.MouseEvent) => {
@@ -109,7 +96,6 @@ export function getPanelMenu(
     menu.push({
       text: t('panel.header-menu.view', `View`),
       iconClassName: 'eye',
-      onClick: onViewPanel,
       shortcut: 'v',
     });
   }
@@ -122,13 +108,6 @@ export function getPanelMenu(
       shortcut: 'e',
     });
   }
-
-  menu.push({
-    text: t('panel.header-menu.share', `Share`),
-    iconClassName: 'share-alt',
-    onClick: onSharePanel,
-    shortcut: 'p s',
-  });
 
   if (
     contextSrv.hasAccessToExplore() &&

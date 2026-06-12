@@ -1,6 +1,6 @@
-import { useEffect, useReducer } from 'react';
+import { useEffect, useReducer, useState } from 'react';
 
-import { dateMath, type TimeRange, type TimeZone } from '@grafana/data';
+import { dateMath, dateTime, type RawTimeRange, type TimeRange, type TimeZone } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction, TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { defaultIntervals, isWeekStart, RefreshPicker } from '@grafana/ui';
@@ -11,6 +11,7 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { ShiftTimeEvent, ShiftTimeEventDirection, ZoomOutEvent } from '../../../../types/events';
 import { type DashboardModel } from '../../state/DashboardModel';
+import { ShareDashboard } from '../SubMenu/ShareDashboard';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -30,13 +31,12 @@ export function DashNavTimeControls({
   onToolbarTimePickerClick,
 }: Props) {
   const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
-
-  useEffect(() => {
-    const sub = dashboard.events.subscribe(TimeRangeUpdatedEvent, () => forceUpdate());
-    return () => sub.unsubscribe();
-  }, [dashboard.events]);
+  const [timeRangeGreaterThanDay, setTimeRangeGreaterThanDay] = useState(false);
 
   const onRefresh = () => {
+    if (timeRangeGreaterThanDay) {
+      return Promise.resolve();
+    }
     getTimeSrv().refreshTimeModel();
     return Promise.resolve();
   };
@@ -45,6 +45,33 @@ export function DashNavTimeControls({
     getTimeSrv().setAutoRefresh(interval);
     forceUpdate();
   };
+
+  const checkSelectedTimeRange = (range: RawTimeRange) => {
+    const fr = dateMath.parse(range.from);
+    const now = dateTime();
+    let greaterThanThirtyDay = false;
+    try {
+      if (fr) {
+        const timeDiff = now.valueOf() - fr.valueOf();
+        greaterThanThirtyDay = Math.abs(timeDiff / 86400000) > 30;
+      }
+    } catch (error) {
+      console.error(error);
+    }
+    if (greaterThanThirtyDay) {
+      setTimeRangeGreaterThanDay(true);
+      onChangeRefreshInterval('');
+    } else {
+      setTimeRangeGreaterThanDay(false);
+    }
+  };
+
+  useEffect(() => {
+    const sub = dashboard.events.subscribe(TimeRangeUpdatedEvent, () => forceUpdate());
+    checkSelectedTimeRange(getTimeSrv().timeRange().raw);
+    return () => sub.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dashboard.events]);
 
   const onMoveBack = () => {
     appEvents.publish(new ShiftTimeEvent({ direction: ShiftTimeEventDirection.Left }));
@@ -65,6 +92,7 @@ export function DashNavTimeControls({
       to: hasDelay ? 'now-' + panel.nowDelay : adjustedTo,
     };
 
+    checkSelectedTimeRange(nextRange);
     getTimeSrv().setTime(nextRange);
     reportInteraction('grafana_dashboards_time_picker_changed');
   };
@@ -96,7 +124,10 @@ export function DashNavTimeControls({
   const timePickerValue = getTimeSrv().timeRange();
   const timeZone = dashboard.getTimezone();
   const fiscalYearStartMonth = dashboard.fiscalYearStartMonth;
-  const hideIntervalPicker = dashboard.panelInEdit?.isEditing;
+  const hideIntervalPicker = timeRangeGreaterThanDay || dashboard.panelInEdit?.isEditing;
+  const refreshTooltip = timeRangeGreaterThanDay
+    ? t('dashboard.toolbar.refresh-enabled-30-days', 'Refresh enabled for last 30 days')
+    : t('dashboard.toolbar.refresh', 'Refresh dashboard');
   const weekStart = dashboard.weekStart;
 
   let text: string | undefined = undefined;
@@ -127,11 +158,12 @@ export function DashNavTimeControls({
         value={dashboard.refresh}
         intervals={intervals}
         isOnCanvas={isOnCanvas}
-        tooltip={t('dashboard.toolbar.refresh', 'Refresh dashboard')}
+        tooltip={refreshTooltip}
         noIntervalPicker={hideIntervalPicker}
         showAutoInterval={true}
         text={text}
       />
+      <ShareDashboard dashboard={dashboard} />
     </>
   );
 }

@@ -48,7 +48,6 @@ describe('getPanelMenu()', () => {
       [
         {
           "iconClassName": "eye",
-          "onClick": [Function],
           "shortcut": "v",
           "text": "View",
         },
@@ -57,12 +56,6 @@ describe('getPanelMenu()', () => {
           "onClick": [Function],
           "shortcut": "e",
           "text": "Edit",
-        },
-        {
-          "iconClassName": "share-alt",
-          "onClick": [Function],
-          "shortcut": "p s",
-          "text": "Share",
         },
         {
           "iconClassName": "compass",
@@ -655,7 +648,6 @@ describe('getPanelMenu()', () => {
         [
           {
             "iconClassName": "eye",
-            "onClick": [Function],
             "shortcut": "v",
             "text": "View",
           },
@@ -664,12 +656,6 @@ describe('getPanelMenu()', () => {
             "onClick": [Function],
             "shortcut": "e",
             "text": "Edit",
-          },
-          {
-            "iconClassName": "share-alt",
-            "onClick": [Function],
-            "shortcut": "p s",
-            "text": "Share",
           },
           {
             "iconClassName": "compass",
