@@ -1,13 +1,13 @@
 import { useEffect, useRef } from 'react';
-import { type Params, useParams } from 'react-router-dom-v5-compat';
+import { type Params, useLocation, useParams } from 'react-router-dom-v5-compat';
 import { usePrevious } from 'react-use';
 
 import { PageLayoutType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Box } from '@grafana/ui';
+import { LoadingSpinner } from 'app/core/components/Loaders/LoadingSpinner';
 import { Page } from 'app/core/components/Page/Page';
-import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import {
   DashboardBrandingFooter,
@@ -46,6 +46,8 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
   const routeReloadCounter = (location.state as any)?.routeReloadCounter;
   const prevParams = useRef<Params<string>>(params);
+  const currentLocation = useLocation();
+  const previousSearch = usePrevious(currentLocation.search);
 
   useEffect(() => {
     if (route.routeName === DashboardRoutes.Normal && type === 'snapshot') {
@@ -105,6 +107,13 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     };
   }, [route, slug, type, uid]);
 
+  useEffect(() => {
+    if (previousSearch !== undefined && previousSearch !== currentLocation.search && currentLocation.search) {
+      const parentWindow = window.parent || window;
+      parentWindow.postMessage({ key: 'filterChanged', value: currentLocation.search }, '*');
+    }
+  }, [currentLocation.search, previousSearch]);
+
   if (!dashboard) {
     let errorElement;
     if (loadError) {
@@ -115,7 +124,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       errorElement || (
         <Page navId="dashboards/browse" layout={PageLayoutType.Canvas} data-testid={'dashboard-scene-page'}>
           <Box paddingY={4} display="flex" direction="column" alignItems="center">
-            {isLoading && <PageLoader />}
+            {isLoading && <LoadingSpinner />}
           </Box>
         </Page>
       )

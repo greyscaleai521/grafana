@@ -48,6 +48,31 @@ describe('ErrorBoundary', () => {
     expect((faro.api.pushError as jest.Mock).mock.calls[0][0]).toBe(problem);
   });
 
+  it('should post the error to the parent window', async () => {
+    const postMessageSpy = jest.spyOn(window.parent, 'postMessage').mockImplementation(() => {});
+    const problem = new Error('things went terribly wrong');
+
+    render(
+      <ErrorBoundary>
+        {({ error }) => {
+          if (!error) {
+            return <ErrorThrower error={problem} />;
+          } else {
+            return <p>{error.message}</p>;
+          }
+        }}
+      </ErrorBoundary>
+    );
+
+    await screen.findByText(problem.message);
+    expect(postMessageSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'error', error: problem.toString() }),
+      '*'
+    );
+
+    postMessageSpy.mockRestore();
+  });
+
   it('should rerender when recover props change', async () => {
     const problem = new Error('things went terribly wrong');
     let renderCount = 0;

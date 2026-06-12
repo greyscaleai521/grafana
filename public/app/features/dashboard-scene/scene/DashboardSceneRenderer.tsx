@@ -26,6 +26,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     panelsPerRow,
     isEditing,
     layoutOrchestrator,
+    title,
   } = model.useState();
 
   const scopesServices = useScopesServices();
@@ -99,12 +100,15 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
         {editPanel && <editPanel.Component model={editPanel} />}
         {!editPanel && (
-          <DashboardEditPaneSplitter
-            dashboard={model}
-            isEditing={isEditing}
-            controls={controls && <controls.Component model={controls} />}
-            body={renderBody()}
-          />
+          <>
+            <div className="dashboard-title">{title}</div>
+            <DashboardEditPaneSplitter
+              dashboard={model}
+              isEditing={isEditing}
+              controls={controls && <controls.Component model={controls} />}
+              body={renderBody()}
+            />
+          </>
         )}
         {overlay && <overlay.Component model={overlay} />}
       </Page>
