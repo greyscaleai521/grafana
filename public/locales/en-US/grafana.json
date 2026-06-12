@@ -10030,18 +10030,22 @@
       },
       "tooltip": {
         "category": "Tooltip",
+        "description-fixed-fields": "Fixed fields which will be shown in the tooltip",
         "description-hover-proximity": "How close the cursor must be to a point to trigger the tooltip, in pixels",
         "modeOptions": {
           "label-all": "All",
+          "label-custom": "Custom",
           "label-hidden": "Hidden",
           "label-single": "Single"
         },
+        "name-fixed-fields": "Fixed fields to show",
         "name-hide-zeros": "Hide zeros",
         "name-hover-proximity": "Hover proximity",
         "name-max-height": "Max height",
         "name-max-width": "Max width",
         "name-tooltip-mode": "Tooltip mode",
         "name-values-sort-order": "Values sort order",
+        "placeholder-fixed-fields": "Enter comma separated field names",
         "sortOptions": {
           "label-ascending": "Ascending",
           "label-descending": "Descending",

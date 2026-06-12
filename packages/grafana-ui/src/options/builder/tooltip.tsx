@@ -15,7 +15,8 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
   builder: PanelOptionsEditorBuilder<T>,
   singleOnly = false,
   setProximity = false,
-  defaultOptions?: Partial<OptionsWithTooltip>
+  defaultOptions?: Partial<OptionsWithTooltip>,
+  showCustom = false
 ) {
   const category = [t('grafana-ui.builder.tooltip.category', 'Tooltip')];
   const modeOptions = singleOnly
@@ -27,6 +28,14 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
         { value: TooltipDisplayMode.Single, label: t('grafana-ui.builder.tooltip.modeOptions.label-single', 'Single') },
         { value: TooltipDisplayMode.Multi, label: t('grafana-ui.builder.tooltip.modeOptions.label-all', 'All') },
         { value: TooltipDisplayMode.None, label: t('grafana-ui.builder.tooltip.modeOptions.label-hidden', 'Hidden') },
+        ...(showCustom
+          ? [
+              {
+                value: TooltipDisplayMode.Custom,
+                label: t('grafana-ui.builder.tooltip.modeOptions.label-custom', 'Custom'),
+              },
+            ]
+          : []),
       ];
 
   const sortOptions = [
@@ -62,6 +71,19 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
       defaultValue: false,
       showIf: (options: T) =>
         defaultOptions?.tooltip?.hideZeros !== undefined && options.tooltip?.mode === TooltipDisplayMode.Multi,
+    })
+    .addTextInput({
+      path: 'tooltip.fixedFields',
+      name: t('grafana-ui.builder.tooltip.name-fixed-fields', 'Fixed fields to show'),
+      description: t(
+        'grafana-ui.builder.tooltip.description-fixed-fields',
+        'Fixed fields which will be shown in the tooltip'
+      ),
+      category,
+      settings: {
+        placeholder: t('grafana-ui.builder.tooltip.placeholder-fixed-fields', 'Enter comma separated field names'),
+      },
+      showIf: (options: T) => options.tooltip?.mode === TooltipDisplayMode.Custom,
     });
 
   if (setProximity) {
