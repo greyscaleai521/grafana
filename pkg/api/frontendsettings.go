@@ -217,7 +217,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		LdapEnabled:                          hs.Cfg.LDAPAuthEnabled,
 		JwtHeaderName:                        hs.Cfg.JWTAuth.HeaderName,
 		JwtUrlLogin:                          hs.Cfg.JWTAuth.URLLogin,
-		LiveEnabled:                          hs.Cfg.LiveMaxConnections != 0,
+		LiveEnabled:                          false, // hard coded to false for now as data is not read from config
 		LiveMessageSizeLimit:                 hs.Cfg.LiveMessageSizeLimit,
 		LiveNamespaced:                       true, // frontend will select a namespaced channel vs orgId channel
 		AutoAssignOrg:                        hs.Cfg.AutoAssignOrg,
