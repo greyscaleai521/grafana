@@ -64,6 +64,7 @@ interface RowsListProps {
   getActions?: GetActionsFunction;
   replaceVariables?: InterpolateFunction;
   setInspectCell?: TableInspectCellCallback;
+  showRowSelection?: boolean;
 }
 
 export const RowsList = (props: RowsListProps) => {
@@ -93,6 +94,7 @@ export const RowsList = (props: RowsListProps) => {
     getActions,
     replaceVariables,
     setInspectCell,
+    showRowSelection = false,
   } = props;
 
   const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(initialRowIndex);
@@ -317,12 +319,14 @@ export const RowsList = (props: RowsListProps) => {
         style.height = bbox.height;
       }
       const { key, ...rowProps } = row.getRowProps({ style, ...additionalProps });
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const isRowSelected = (row as Row & { isSelected?: boolean }).isSelected;
 
       return (
         <div
           key={key}
           {...rowProps}
-          className={cx(tableStyles.row, expandedRowStyle)}
+          className={`${cx(tableStyles.row, expandedRowStyle)} ${isRowSelected ? 'selected' : ''}`}
           onMouseEnter={() => onRowHover(row.index, data)}
           onMouseLeave={onRowLeave}
         >
@@ -338,27 +342,42 @@ export const RowsList = (props: RowsListProps) => {
               cellHeight={cellHeight}
             />
           )}
-          {row.cells.map((cell: Cell, index: number) => (
-            <TableCell
-              key={index}
-              tableStyles={tableStyles}
-              cell={cell}
-              onCellFilterAdded={onCellFilterAdded}
-              columnIndex={index}
-              columnCount={row.cells.length}
-              timeRange={timeRange}
-              frame={data}
-              rowStyled={rowBg !== undefined}
-              rowExpanded={rowExpanded}
-              textWrapped={textWrapFinal !== undefined}
-              // VariableSizeList overrides calculated in buildCellContainerStyle height of the cell,
-              // so we need to subtract 1 to respect the row border
-              height={Number(style.height) - 1}
-              getActions={getActions}
-              replaceVariables={replaceVariables}
-              setInspectCell={setInspectCell}
-            />
-          ))}
+          {row.cells.map((cell: Cell, index: number) => {
+            // The synthetic selection column has no backing data field, so provide a minimal one
+            // that satisfies TableCell's `field?.display` guard and renders the checkbox cell.
+            const selectionField: Field | undefined =
+              showRowSelection && cell.column.id === 'selection'
+                ? {
+                    name: 'selection',
+                    type: FieldType.other,
+                    config: {},
+                    values: [],
+                    display: () => ({ text: '', numeric: 0 }),
+                  }
+                : undefined;
+            return (
+              <TableCell
+                key={index}
+                field={selectionField}
+                tableStyles={tableStyles}
+                cell={cell}
+                onCellFilterAdded={onCellFilterAdded}
+                columnIndex={index}
+                columnCount={row.cells.length}
+                timeRange={timeRange}
+                frame={data}
+                rowStyled={rowBg !== undefined}
+                rowExpanded={rowExpanded}
+                textWrapped={textWrapFinal !== undefined}
+                // VariableSizeList overrides calculated in buildCellContainerStyle height of the cell,
+                // so we need to subtract 1 to respect the row border
+                height={Number(style.height) - 1}
+                getActions={getActions}
+                replaceVariables={replaceVariables}
+                setInspectCell={setInspectCell}
+              />
+            );
+          })}
         </div>
       );
     },
@@ -386,6 +405,7 @@ export const RowsList = (props: RowsListProps) => {
       getActions,
       replaceVariables,
       setInspectCell,
+      showRowSelection,
     ]
   );
 

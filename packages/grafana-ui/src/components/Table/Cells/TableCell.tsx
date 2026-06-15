@@ -1,6 +1,6 @@
 import { type Cell } from 'react-table';
 
-import { type TimeRange, type DataFrame, type InterpolateFunction } from '@grafana/data';
+import { type TimeRange, type DataFrame, type Field, type InterpolateFunction } from '@grafana/data';
 
 import { type TableStyles } from '../TableRT/styles';
 import {
@@ -26,6 +26,8 @@ export interface Props {
   getActions?: GetActionsFunction;
   replaceVariables?: InterpolateFunction;
   setInspectCell?: TableInspectCellCallback;
+  /** When provided (e.g. for the synthetic row-selection column), used instead of the column-derived field */
+  field?: Field;
 }
 
 export const TableCell = ({
@@ -42,9 +44,10 @@ export const TableCell = ({
   getActions,
   replaceVariables,
   setInspectCell,
+  field: fieldProp,
 }: Props) => {
   const cellProps = cell.getCellProps();
-  const field = (cell.column as unknown as GrafanaTableColumn).field;
+  const field = fieldProp ?? (cell.column as unknown as GrafanaTableColumn).field;
 
   if (!field?.display) {
     return null;

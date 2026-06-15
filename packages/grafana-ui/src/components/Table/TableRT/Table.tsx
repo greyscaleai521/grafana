@@ -5,6 +5,7 @@ import {
   useFilters,
   usePagination,
   useResizeColumns,
+  useRowSelect,
   useSortBy,
   useTable,
 } from 'react-table';
@@ -32,8 +33,10 @@ import {
 } from '../utils';
 
 import { FooterRow } from './FooterRow';
+import { HeaderActionRow } from './HeaderActionRow';
 import { HeaderRow } from './HeaderRow';
 import { RowsList } from './RowsList';
+import { SelectionHook } from './SelectionHook';
 import { useTableStyles } from './styles';
 
 const COLUMN_MIN_WIDTH = 150;
@@ -65,6 +68,11 @@ export const Table = memo((props: Props) => {
     timeRange,
     enableSharedCrosshair = false,
     initialRowIndex = undefined,
+    showRowSelection,
+    itemName,
+    actionText,
+    exportDataText,
+    windowURL,
     fieldConfig,
     getActions,
     replaceVariables,
@@ -76,6 +84,7 @@ export const Table = memo((props: Props) => {
   const theme = useTheme2();
   const tableStyles = useTableStyles(theme, cellHeight);
   const headerHeight = noHeader ? 0 : tableStyles.rowHeight;
+  const selectedRowCountHeight = showRowSelection ? 38 : 0;
   const [footerItems, setFooterItems] = useState<FooterItem[] | undefined>(footerValues);
   const noValuesDisplayText = fieldConfig?.defaults?.noValue ?? NO_DATA_TEXT;
   const [inspectCell, setInspectCell] = useState<InspectCell | null>(null);
@@ -192,13 +201,27 @@ export const Table = memo((props: Props) => {
     rows,
     prepareRow,
     totalColumnsWidth,
+    selectedFlatRows,
+    selectedRowIds,
     page,
     state,
     gotoPage,
     setPageSize,
     pageOptions,
     toggleAllRowsExpanded,
-  } = useTable(options, useFilters, useSortBy, useAbsoluteLayout, useResizeColumns, useExpanded, usePagination);
+  } = useTable(
+    options,
+    useFilters,
+    useSortBy,
+    useAbsoluteLayout,
+    useResizeColumns,
+    useExpanded,
+    usePagination,
+    useRowSelect,
+    (e) => SelectionHook(e, showRowSelection)
+  );
+
+  const { fields } = data;
 
   const extendedState = state as GrafanaTableState;
   toggleAllRowsExpandedRef.current = toggleAllRowsExpanded;
@@ -243,7 +266,7 @@ export const Table = memo((props: Props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [footerOptions, theme, state.filters, data]);
 
-  let listHeight = height - (headerHeight + footerHeight);
+  let listHeight = height - (headerHeight + footerHeight) - selectedRowCountHeight;
 
   if (enablePagination) {
     listHeight -= tableStyles.cellHeight;
@@ -332,6 +355,18 @@ export const Table = memo((props: Props) => {
 
   return (
     <>
+      {showRowSelection && (
+        <HeaderActionRow
+          itemName={itemName}
+          actionText={actionText}
+          exportDataText={exportDataText}
+          selectedFlatRows={selectedFlatRows}
+          selectedRowIds={selectedRowIds}
+          windowURL={windowURL}
+          tableStyles={tableStyles}
+          fields={fields}
+        />
+      )}
       <div
         {...getTableProps()}
         className={tableStyles.table}
@@ -376,10 +411,14 @@ export const Table = memo((props: Props) => {
                   getActions={getActions}
                   replaceVariables={replaceVariables}
                   setInspectCell={setInspectCell}
+                  showRowSelection={showRowSelection}
                 />
               </div>
             ) : (
-              <div style={{ height: height - headerHeight, width }} className={tableStyles.noData}>
+              <div
+                style={{ height: height - headerHeight - selectedRowCountHeight, width }}
+                className={tableStyles.noData}
+              >
                 {noValuesDisplayText}
               </div>
             )}

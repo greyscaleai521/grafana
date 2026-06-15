@@ -17,7 +17,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
   .setPanelChangeHandler(graphPanelChangedHandler)
   .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
   .setPanelOptions((builder) => {
-    commonOptionsBuilder.addTooltipOptions(builder, false, true, optsWithHideZeros);
+    commonOptionsBuilder.addTooltipOptions(builder, false, true, optsWithHideZeros, true);
     commonOptionsBuilder.addLegendOptions(builder, true, true);
 
     const legendCategory = [t('timeseries.legend.category', 'Legend')];

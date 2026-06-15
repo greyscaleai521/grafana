@@ -46,6 +46,16 @@ composableKinds: PanelCfg: {
 					}
 					// If true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
 					disableKeyboardEvents?: bool
+					// Controls whether the panel should show row selection checkboxes
+					showRowSelection?: bool | *true
+					// Represents the name of the table
+					tableName?: string | *""
+					// Represents the text for the action link
+					actionLinkText?: string | *"View Images"
+					// Represents the text for the export data button
+					exportDataText?: string | *"Export Data"
+					// Represents the URL of the parent window
+					windowURL?: string
 				} @cuetsy(kind="interface")
 				FieldConfig: {ui.TableFieldOptions} @cuetsy(kind="interface")
 			}

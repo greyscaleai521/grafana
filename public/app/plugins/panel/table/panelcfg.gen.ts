@@ -17,6 +17,10 @@ import * as ui from '@grafana/schema';
  */
 export interface Options {
   /**
+   * Represents the text for the action link
+   */
+  actionLinkText?: string;
+  /**
    * Controls the height of the rows
    */
   cellHeight?: ui.TableCellHeight;
@@ -28,6 +32,10 @@ export interface Options {
    * Enable pagination on the table
    */
   enablePagination?: boolean;
+  /**
+   * Represents the text for the export data button
+   */
+  exportDataText?: string;
   /**
    * Represents the index of the selected frame
    */
@@ -47,6 +55,10 @@ export interface Options {
    */
   showHeader: boolean;
   /**
+   * Controls whether the panel should show row selection checkboxes
+   */
+  showRowSelection?: boolean;
+  /**
    * Controls whether the header should show icons for the column types
    */
   showTypeIcons?: boolean;
@@ -54,14 +66,26 @@ export interface Options {
    * Used to control row sorting
    */
   sortBy?: Array<ui.TableSortByFieldState>;
+  /**
+   * Represents the name of the table
+   */
+  tableName?: string;
+  /**
+   * Represents the URL of the parent window
+   */
+  windowURL?: string;
 }
 
 export const defaultOptions: Partial<Options> = {
+  actionLinkText: 'View Images',
   cellHeight: ui.TableCellHeight.Sm,
+  exportDataText: 'Export Data',
   frameIndex: 0,
   showHeader: true,
+  showRowSelection: true,
   showTypeIcons: false,
   sortBy: [],
+  tableName: '',
 };
 
 export interface FieldConfig extends ui.TableFieldOptions {}

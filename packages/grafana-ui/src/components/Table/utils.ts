@@ -806,3 +806,66 @@ export const tooltipOnClickHandler = (setTooltipCoords: (coords: DataLinksAction
     }
   };
 };
+
+function getAllColumns(fields: Field[]): Record<string, string> {
+  return fields.reduce((accum: Record<string, string>, field: Field, index: number) => {
+    accum[index] = field.name;
+    return accum;
+  }, {});
+}
+
+function getVisibleColumns(selectedRows: Row[] = []): Set<number | string> {
+  return Object.keys(selectedRows[0].values).reduce((accum: Set<number | string>, columnIndex: number | string) => {
+    accum.add(columnIndex);
+    return accum;
+  }, new Set());
+}
+
+function getHiddenColumn(allColumn: Record<string, string>, visibleColumn: Set<number | string>) {
+  let hiddenColumnPresent = false;
+  let hiddenColumn: Record<string, string> = {};
+  for (let columnIndex in allColumn) {
+    if (!visibleColumn.has(columnIndex)) {
+      hiddenColumnPresent = true;
+      hiddenColumn[columnIndex] = allColumn[columnIndex];
+    }
+  }
+
+  return {
+    hiddenColumnPresent,
+    hiddenColumn,
+  };
+}
+
+function getColumnData(fields: Field[], columnIndex: number | string, rowIndex: number) {
+  return fields[Number(columnIndex)].values[rowIndex];
+}
+
+export function getValuesFromSelectedRows(selectedRows: Row[] = [], fields: Field[]) {
+  const allColumns = getAllColumns(fields);
+  const visibleColumn = getVisibleColumns(selectedRows);
+  const { hiddenColumnPresent, hiddenColumn } = getHiddenColumn(allColumns, visibleColumn);
+
+  return selectedRows.map((row: Row) => {
+    let rowData: Record<string, unknown> = {};
+    const { index, values }: { index: number; values: Record<number, unknown> } = row;
+
+    // visible column data
+    for (let columnIndex in values) {
+      rowData[allColumns[columnIndex]] = values[columnIndex];
+    }
+
+    // hidden column data
+    if (hiddenColumnPresent) {
+      for (let columnIndex in hiddenColumn) {
+        rowData[allColumns[columnIndex]] = getColumnData(fields, columnIndex, index);
+      }
+    }
+
+    return rowData;
+  });
+}
+
+export const numberWithComas = (num: string | number) => {
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+};

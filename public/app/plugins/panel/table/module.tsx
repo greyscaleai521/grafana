@@ -12,7 +12,7 @@ import { addTableCustomPanelOptions } from 'app/features/panel/table/addTableCus
 import { TableCellOptionEditor } from './TableCellOptionEditor';
 import { TablePanel } from './TablePanel';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
-import { type FieldConfig, type Options } from './panelcfg.gen';
+import { type FieldConfig, type Options, defaultOptions } from './panelcfg.gen';
 import { tableSuggestionsSupplier } from './suggestions';
 
 function getTableNoValuePlaceholder(): string {
@@ -134,5 +134,43 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
   })
   .setPanelOptions((builder) => {
     addTableCustomPanelOptions(builder);
+
+    const rowSelectionCategory = [t('table.category-row-selection', 'Row Selection')];
+    builder
+      .addBooleanSwitch({
+        path: 'showRowSelection',
+        name: t('table.name-show-row-selection', 'Show Row Selection'),
+        description: t('table.description-show-row-selection', "To display table's row selection or not to display"),
+        defaultValue: defaultOptions.showRowSelection,
+        category: rowSelectionCategory,
+      })
+      .addTextInput({
+        path: 'tableName',
+        name: t('table.name-table-name', 'Table name'),
+        description: t('table.description-table-name', 'Display name for selected rows'),
+        category: rowSelectionCategory,
+        showIf: (cfg) => cfg.showRowSelection,
+      })
+      .addTextInput({
+        path: 'actionLinkText',
+        name: t('table.name-action-link-text', 'Action Link Text'),
+        description: t('table.description-action-link-text', 'Display name for link text'),
+        category: rowSelectionCategory,
+        showIf: (cfg) => cfg.showRowSelection,
+      })
+      .addTextInput({
+        path: 'exportDataText',
+        name: t('table.name-export-data-text', 'Export Data Text'),
+        description: t('table.description-export-data-text', 'Display name for Export Data button text'),
+        category: rowSelectionCategory,
+        showIf: (cfg) => cfg.showRowSelection,
+      })
+      .addTextInput({
+        path: 'windowURL',
+        name: t('table.name-window-url', 'Parent Window URL'),
+        description: t('table.description-window-url', 'Specify URL of parent window to listen action event'),
+        category: rowSelectionCategory,
+        showIf: (cfg) => cfg.showRowSelection,
+      });
   })
   .setSuggestionsSupplier(tableSuggestionsSupplier);

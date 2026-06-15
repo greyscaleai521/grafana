@@ -14,6 +14,8 @@ import {
   sortOptions,
   valuesToOptions,
   guessLongestField,
+  getValuesFromSelectedRows,
+  numberWithComas,
 } from './utils';
 
 function getData() {
@@ -614,6 +616,36 @@ describe('Table utils', () => {
 
       const longestField = guessLongestField(config, data);
       expect(longestField?.name).toBe('Lorem 10');
+    });
+  });
+
+  describe('numberWithComas', () => {
+    it('adds thousands separators', () => {
+      expect(numberWithComas(1000)).toBe('1,000');
+      expect(numberWithComas(1234567)).toBe('1,234,567');
+      expect(numberWithComas(999)).toBe('999');
+      expect(numberWithComas('12345')).toBe('12,345');
+    });
+  });
+
+  describe('getValuesFromSelectedRows', () => {
+    const fields = [
+      { name: 'Name', type: FieldType.string, values: ['Alice', 'Bob'], config: {} },
+      { name: 'Age', type: FieldType.number, values: [30, 40], config: {} },
+      { name: 'Secret', type: FieldType.string, values: ['x', 'y'], config: {} },
+    ] as unknown as Field[];
+
+    it('maps visible columns by their field name', () => {
+      const rows = [{ index: 0, values: { 0: 'Alice', 1: 30, 2: 'x' } }] as unknown as Row[];
+      const result = getValuesFromSelectedRows(rows, fields);
+      expect(result).toEqual([{ Name: 'Alice', Age: 30, Secret: 'x' }]);
+    });
+
+    it('pulls hidden column data from the fields by row index', () => {
+      // only columns 0 and 1 are visible; column 2 (Secret) is hidden and read from fields by index
+      const rows = [{ index: 1, values: { 0: 'Bob', 1: 40 } }] as unknown as Row[];
+      const result = getValuesFromSelectedRows(rows, fields);
+      expect(result).toEqual([{ Name: 'Bob', Age: 40, Secret: 'y' }]);
     });
   });
 });

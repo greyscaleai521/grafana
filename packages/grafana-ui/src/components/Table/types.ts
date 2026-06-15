@@ -119,8 +119,13 @@ export interface TableRTProps {
   /** @alpha Used by SparklineCell when provided */
   timeRange?: TimeRange;
   enableSharedCrosshair?: boolean;
+  showRowSelection?: boolean;
   // The index of the field value that the table will initialize scrolled to
   initialRowIndex?: number;
+  itemName?: string;
+  actionText?: string;
+  exportDataText?: string;
+  windowURL?: string;
   fieldConfig?: FieldConfigSource;
   getActions?: GetActionsFunction;
   replaceVariables?: InterpolateFunction;
@@ -179,3 +184,7 @@ export type GetActionsFunction = (
   rowIndex: number,
   replaceVariables?: InterpolateFunction
 ) => ActionModel[];
+
+export interface FilterValues {
+  [key: string]: string[] | string | object;
+}
