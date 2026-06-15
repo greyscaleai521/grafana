@@ -38,6 +38,12 @@ export function CustomRangeVariablePicker({ variable, onVariableChange, readOnly
     );
   }, []);
 
+  useEffect(() => {
+    if (validateInput(updatedValue)) {
+      setError(false);
+    }
+  }, [updatedValue, validateInput]);
+
   const updateVariable = useCallback(() => {
     if (!variable.rootStateKey) {
       console.error('Cannot update variable without rootStateKey');
@@ -77,7 +83,7 @@ export function CustomRangeVariablePicker({ variable, onVariableChange, readOnly
   const onChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
     const { value: filter } = event.target;
     const trimmedFilter = filter?.trim();
-    const regex = /^[a-zA-Z0-9][a-zA-Z0-9-]*$/;
+    const regex = /^[a-zA-Z0-9][a-zA-Z0-9.@_-]*$/;
     if (trimmedFilter && !regex.test(trimmedFilter)) {
       return;
     }
