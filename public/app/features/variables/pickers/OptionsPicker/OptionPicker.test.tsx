@@ -163,7 +163,7 @@ describe('OptionPicker', () => {
       });
 
       dispatch.mockClear();
-      await userEvent.type(screen.getByRole('textbox'), '@');
+      await userEvent.type(screen.getByRole('textbox'), '#');
       expect(dispatch).not.toHaveBeenCalled();
     });
   });
