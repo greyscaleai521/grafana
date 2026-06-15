@@ -62,7 +62,7 @@ export function getDisplayValuesAndLinks(data: DataFrame, rowIndex: number, colu
   return { displayValues, links };
 }
 
-export const DataHoverView = ({ data, rowIndex, header, padding = 0 }: Props) => {
+export const DataHoverView = ({ data, rowIndex, columnIndex, header, padding = 0 }: Props) => {
   const styles = useStyles2(getStyles, padding);
 
   if (!data || rowIndex == null) {
@@ -77,6 +77,16 @@ export const DataHoverView = ({ data, rowIndex, header, padding = 0 }: Props) =>
 
   const { displayValues, links } = dispValuesAndLinks;
 
+  const sendToParent = (link: LinkModel<Field>) => {
+    window.parent.postMessage(
+      {
+        key: 'navigateUrl',
+        value: link.href,
+      },
+      '*'
+    );
+  };
+
   return (
     <div className={styles.wrapper}>
       {header && (
@@ -87,7 +97,7 @@ export const DataHoverView = ({ data, rowIndex, header, padding = 0 }: Props) =>
       <table className={styles.infoWrap}>
         <tbody>
           {displayValues.map((displayValue, i) => (
-            <tr key={`${i}/${rowIndex}`}>
+            <tr key={`${i}/${rowIndex}`} className={i === columnIndex ? styles.highlight : ''}>
               <th>{displayValue.name}</th>
               <td>{renderValue(displayValue.valueString)}</td>
             </tr>
@@ -98,9 +108,21 @@ export const DataHoverView = ({ data, rowIndex, header, padding = 0 }: Props) =>
                 <Trans i18nKey="visualization.data-hover-view.link">Link</Trans>
               </th>
               <td colSpan={2}>
-                <TextLink href={link.href} external={link.target === '_blank'} weight={'medium'} inline={false}>
-                  {link.title}
-                </TextLink>
+                {link.target !== '_top' ? (
+                  <TextLink href={link.href} external={link.target === '_blank'} weight={'medium'} inline={false}>
+                    {link.title}
+                  </TextLink>
+                ) : (
+                  <TextLink
+                    external={link.target === '_top'}
+                    weight="medium"
+                    inline={false}
+                    onClick={() => sendToParent(link)}
+                    href={''}
+                  >
+                    {link.title}
+                  </TextLink>
+                )}
               </td>
             </tr>
           ))}
@@ -150,6 +172,9 @@ const getStyles = (theme: GrafanaTheme2, padding = 0) => {
     }),
     link: css({
       color: theme.colors.text.link,
+    }),
+    highlight: css({
+      background: `${theme.colors.action.hover} !important`,
     }),
   };
 };

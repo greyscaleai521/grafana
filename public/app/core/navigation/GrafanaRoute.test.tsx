@@ -9,6 +9,10 @@ import { Echo } from '../services/echo/Echo';
 import { GrafanaRoute, type Props } from './GrafanaRoute';
 import { type GrafanaRouteComponentProps } from './types';
 
+jest.mock('app/features/dashboard/components/DashboardLoading/DashboardLoading', () => ({
+  DashboardLoading: () => <div data-testid="dashboard-loading-fallback" />,
+}));
+
 const mockLocation = {
   search: '?query=hello&test=asd',
   pathname: '',
@@ -51,7 +55,7 @@ describe('GrafanaRoute', () => {
 
     setup({ route: { component: PageComponent, path: '' } });
 
-    expect(await screen.findByLabelText('Loading')).toBeInTheDocument();
+    expect(await screen.findByTestId('dashboard-loading-fallback')).toBeInTheDocument();
   });
 
   it('Shows error on page error', async () => {

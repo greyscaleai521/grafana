@@ -190,7 +190,7 @@ describe('DashboardPage', () => {
         </KBarProvider>
       );
 
-      await screen.findByText('My dashboard');
+      await screen.findAllByText('My dashboard');
       expect(mockInitDashboard).toHaveBeenCalledTimes(1);
     });
   });
@@ -276,12 +276,38 @@ describe('DashboardPage', () => {
   });
 
   describe('No kiosk mode tv', () => {
-    it('should render dashboard page toolbar with no submenu', async () => {
+    // The toolbar (DashNav) header now renders inside the submenu section, so it is
+    // only shown when the dashboard has a submenu to display.
+    it('should not render the toolbar when there is no submenu', async () => {
       setup({
         dashboard: getTestDashboard(),
       });
-      expect(await screen.findAllByTestId(selectors.pages.Dashboard.DashNav.navV2)).toHaveLength(1);
+      expect(await screen.findByText('My panel title')).toBeInTheDocument();
+      expect(screen.queryAllByTestId(selectors.pages.Dashboard.DashNav.navV2)).toHaveLength(0);
       expect(screen.queryAllByLabelText(selectors.pages.Dashboard.SubMenu.submenu)).toHaveLength(0);
+    });
+
+    it('should render the toolbar inside the submenu when a submenu is present', async () => {
+      setup({
+        dashboard: getTestDashboard({
+          links: [
+            {
+              asDropdown: false,
+              icon: 'external link',
+              includeVars: false,
+              keepTime: false,
+              tags: [],
+              targetBlank: false,
+              title: 'link',
+              tooltip: '',
+              type: 'link',
+              url: 'http://example.com',
+            },
+          ],
+        }),
+      });
+      expect(await screen.findAllByTestId(selectors.pages.Dashboard.DashNav.navV2)).toHaveLength(1);
+      expect(screen.queryAllByLabelText(selectors.pages.Dashboard.SubMenu.submenu)).toHaveLength(1);
     });
   });
 
