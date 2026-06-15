@@ -74,6 +74,10 @@ export interface HeatmapColorOptions {
    */
   scheme: string;
   /**
+   * Sets the start step for the color scale
+   */
+  startStep?: number;
+  /**
    * Controls the number of color steps
    */
   steps: number;

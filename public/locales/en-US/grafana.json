@@ -10684,6 +10684,7 @@
     "name-show-color-scale": "Show color scale",
     "name-show-histogram": "Show histogram (Y axis)",
     "name-show-legend": "Show legend",
+    "name-start-at-step": "Start at step",
     "name-start-color-from-value": "Start color scale from value",
     "name-steps": "Steps",
     "name-tick-alignment": "Tick alignment",
@@ -10700,6 +10701,7 @@
     "placeholder-hide-cells-lt": "None",
     "placeholder-max-value": "Auto",
     "placeholder-min-value": "Auto",
+    "placeholder-start-at-step": "0 - Steps",
     "placeholder-start-color-from-value": "Auto (min)",
     "placeholder-value-name": "Value",
     "placement-options": {

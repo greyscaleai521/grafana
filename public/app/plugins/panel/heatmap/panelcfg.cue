@@ -42,6 +42,8 @@ composableKinds: PanelCfg: lineage: {
 				exponent: float32
 				// Controls the number of color steps
 				steps: uint8 & >=2 & <=128
+				// Sets the start step for the color scale
+				startStep?: uint8 & >=0 & <=127
 				// Reverses the color scheme
 				reverse: bool
 				// Sets the minimum value for the color scale
