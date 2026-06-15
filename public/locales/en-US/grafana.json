@@ -4111,10 +4111,13 @@
     }
   },
   "barchart": {
+    "category-variable-mapping": "Variable mapping",
     "config": {
       "category-thresholds": "Thresholds",
       "description-color-by-field": "Use the color value for a sibling field to color each bar value.",
       "description-x-label-max-length": "X-axis labels will be truncated to the length provided",
+      "description-x-value-mapped-variable": "Select x variable to update on click",
+      "description-y-value-mapped-variable": "Select y variable to update on click",
       "name-bar-radius": "Bar radius",
       "name-bar-width": "Bar width",
       "name-color-by-field": "Color by field",
@@ -4132,6 +4135,8 @@
       "name-x-axis": "X Axis",
       "name-x-label-max-length": "X-axis tick label max length",
       "name-x-label-min-spacing": "X-axis labels minimum spacing",
+      "name-x-value-mapped-variable": "Variable name for x values",
+      "name-y-value-mapped-variable": "Variable name for y values",
       "orientation-options": {
         "label-auto": "Auto",
         "label-horizontal": "Horizontal",

@@ -175,6 +175,8 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     xTickLabelSpacing = 0,
     legend,
     fullHighlight,
+    xValueMappedVariable,
+    yValueMappedVariable,
   } = options;
   // this and color is kept up to date by returned prepData()
   let frame = series[0];
@@ -283,13 +285,16 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     negY: frame.fields.map((f) => f.config.custom?.transform === GraphTransform.NegativeY),
     fullHighlight,
     hoverMulti: tooltip.mode === TooltipDisplayMode.Multi,
+    xValueMappedVariable,
+    yValueMappedVariable,
   };
 
-  const config = getConfig(opts, theme);
+  const config = getConfig(opts, theme, frame);
 
   builder.setCursor(config.cursor);
 
   builder.addHook('init', config.init);
+  builder.addHook('destroy', config.destroy);
   builder.addHook('drawClear', config.drawClear);
   builder.addHook('draw', config.draw);
 

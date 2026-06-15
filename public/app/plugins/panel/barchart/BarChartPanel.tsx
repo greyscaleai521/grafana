@@ -49,6 +49,8 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     fullHighlight,
     xField,
     colorByField,
+    xValueMappedVariable,
+    yValueMappedVariable,
   } = options;
 
   // size-dependent, calculated opts that should cause viz re-config
@@ -119,6 +121,8 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
       xField,
       colorByField,
       xTickLabelMaxLength, // maybe not?
+      xValueMappedVariable,
+      yValueMappedVariable,
       // props.fieldConfig, // usePrevious hideFrom on all fields?
     ]
   );
