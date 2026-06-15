@@ -7,7 +7,7 @@ import { type Field, FieldType, type TypedVariableModel } from '@grafana/data';
 import { HeaderActionRow, type HeaderActionRowProps } from './HeaderActionRow';
 import { type TableStyles } from './styles';
 
-const variablesMock: TypedVariableModel[] = [];
+let variablesMock: TypedVariableModel[] = [];
 
 jest.mock('@grafana/runtime', () => ({
   getTemplateSrv: () => ({ getVariables: () => variablesMock }),
@@ -46,6 +46,7 @@ describe('HeaderActionRow', () => {
 
   afterEach(() => {
     postMessageSpy.mockRestore();
+    variablesMock = [];
   });
 
   it('renders the action and export buttons', () => {
@@ -91,6 +92,30 @@ describe('HeaderActionRow', () => {
         expect.objectContaining({
           source: 'grafana-table-plugin',
           isExport: true,
+        }),
+        '*'
+      )
+    );
+  });
+
+  it('expands FactoryLocation to the accessible location values when set to $__all', async () => {
+    const user = userEvent.setup();
+    variablesMock = [
+      { name: 'FactoryLocation', current: { value: ['$__all'] } },
+      { name: 'LocationsAccess', options: [{ value: '$__all' }, { value: 'plant-1' }, { value: 'plant-2' }] },
+    ] as unknown as TypedVariableModel[];
+    renderHeaderActionRow();
+
+    await user.click(screen.getByText('Export Data'));
+
+    await waitFor(() =>
+      expect(postMessageSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          source: 'grafana-table-plugin',
+          isExport: true,
+          payload: expect.objectContaining({
+            FactoryLocation: { Value: ['plant-1', 'plant-2'] },
+          }),
         }),
         '*'
       )

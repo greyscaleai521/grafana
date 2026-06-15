@@ -1,4 +1,4 @@
-import { dateTime, locationUtil, type TimeRange, urlUtil, rangeUtil } from '@grafana/data';
+import { dateTime, locationUtil, type TimeRange, type TypedVariableModel, urlUtil, rangeUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { createShortLink } from 'app/core/utils/shortLinks';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -60,6 +60,41 @@ export function buildParams({
   searchParams.delete('shareView');
 
   return searchParams;
+}
+
+export function getLocationAccessParams(variables: TypedVariableModel[]) {
+  let factoryLocationVariable: TypedVariableModel | undefined;
+  let locationAccessVariable: TypedVariableModel | undefined;
+
+  for (const v of variables) {
+    if (v.name === 'FactoryLocation') {
+      factoryLocationVariable = v;
+    }
+    if (v.name === 'LocationsAccess') {
+      locationAccessVariable = v;
+    }
+    if (factoryLocationVariable && locationAccessVariable) {
+      break;
+    }
+  }
+
+  const current =
+    factoryLocationVariable && 'current' in factoryLocationVariable ? factoryLocationVariable.current : undefined;
+  const rawValue = current && 'value' in current ? current.value : undefined;
+  const value = typeof rawValue === 'string' || Array.isArray(rawValue) ? rawValue : undefined;
+  const includesAll = Array.isArray(value) ? value.includes('$__all') : (value?.includes('$__all') ?? false);
+  if (!includesAll) {
+    return;
+  }
+
+  const options =
+    locationAccessVariable && 'options' in locationAccessVariable ? locationAccessVariable.options : undefined;
+  const companyUserExists = options?.some((o) => o.value === 'NULL');
+  if (!companyUserExists) {
+    return options?.filter((o) => o.value !== '$__all').map((o) => o.value);
+  }
+
+  return;
 }
 
 export function buildParamsforShare({

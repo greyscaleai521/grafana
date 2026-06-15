@@ -1,6 +1,6 @@
-import { type TimeRange } from '@grafana/data';
+import { type TimeRange, type TypedVariableModel } from '@grafana/data';
 
-import { buildParams, buildParamsforShare } from './utils';
+import { buildParams, buildParamsforShare, getLocationAccessParams } from './utils';
 
 describe('buildParams', () => {
   it.each`
@@ -66,5 +66,28 @@ describe('buildParamsforShare', () => {
   it('uses the absolute epoch time range when useCurrentTimeRange is false even if relative', () => {
     const result = buildParamsforShare({ useCurrentTimeRange: false, isRelativeTime: true, range });
     expect(result.toString()).toEqual('from=1000&to=2000');
+  });
+});
+
+describe('getLocationAccessParams', () => {
+  const makeVariables = (factoryValue: string | string[], locationOptions: Array<{ value: string }>) =>
+    [
+      { name: 'FactoryLocation', current: { value: factoryValue } },
+      { name: 'LocationsAccess', options: locationOptions },
+    ] as unknown as TypedVariableModel[];
+
+  it('returns undefined when FactoryLocation does not include $__all', () => {
+    const variables = makeVariables('plant-1', [{ value: 'plant-1' }, { value: 'plant-2' }]);
+    expect(getLocationAccessParams(variables)).toBeUndefined();
+  });
+
+  it('returns the non-$__all location values when FactoryLocation is $__all and no NULL option exists', () => {
+    const variables = makeVariables(['$__all'], [{ value: '$__all' }, { value: 'plant-1' }, { value: 'plant-2' }]);
+    expect(getLocationAccessParams(variables)).toEqual(['plant-1', 'plant-2']);
+  });
+
+  it('returns undefined when a NULL (company-user) option exists', () => {
+    const variables = makeVariables(['$__all'], [{ value: 'NULL' }, { value: 'plant-1' }]);
+    expect(getLocationAccessParams(variables)).toBeUndefined();
   });
 });

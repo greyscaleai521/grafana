@@ -5,7 +5,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { ClipboardButton, Field, FieldSet, Input, Spinner, Switch } from '@grafana/ui';
 
 import { type ShareModalTabProps } from './types';
-import { buildParamsforShare } from './utils';
+import { buildParamsforShare, getLocationAccessParams } from './utils';
 
 export interface Props extends ShareModalTabProps {}
 
@@ -19,14 +19,16 @@ export function ShareLinkCustom({ dashboard }: Props) {
   const generateShareURL = useCallback(() => {
     setIsLoading(true);
     const params = buildParamsforShare({ useCurrentTimeRange, isRelativeTime });
+    const locationAccessParams = getLocationAccessParams(dashboard.getVariables());
     window.parent.postMessage(
       {
         key: 'share-link',
         value: params.toString(),
+        locationAccessParams,
       },
       '*'
     );
-  }, [useCurrentTimeRange, isRelativeTime]);
+  }, [useCurrentTimeRange, isRelativeTime, dashboard]);
 
   useEffect(() => {
     reportInteraction('grafana_dashboards_link_share_viewed');

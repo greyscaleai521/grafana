@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { type Row } from 'react-table';
 
-import { type Field, type TypedVariableModel } from '@grafana/data';
+import { type Field, type TypedVariableModel, type VariableOption } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { Button } from '../../Button/Button';
@@ -49,32 +49,55 @@ export const HeaderActionRow = (props: HeaderActionRowProps) => {
   };
 
   const buildSelectedFilters = (variables: TypedVariableModel[], params: URLSearchParams): FilterValues => {
-    let selectedFilters: FilterValues = {};
+    const selectedFilters: FilterValues = {};
+    let factoryLocationValue: string | string[] | undefined;
+    let locationAccessOptions: VariableOption[] = [];
     const from = parseUrlParam(params.get('from')) ?? 'now-24h';
     const to = parseUrlParam(params.get('to')) ?? 'now';
     const tr = getTimeRange({ from, to });
 
-    selectedFilters = {
-      from: { Value: tr.from.toISOString(), Name: 'To' },
-      to: { Value: tr.to.toISOString(), Name: 'From' },
-    };
+    selectedFilters['from'] = { Value: tr.from.toISOString(), Name: 'From' };
+    selectedFilters['to'] = { Value: tr.to.toISOString(), Name: 'To' };
 
     variables.forEach((variable: TypedVariableModel) => {
-      const { id, label, hide, description } = variable;
+      const { id, name, label, hide, description } = variable;
       const current = 'current' in variable ? variable.current : undefined;
-      if (!id.includes('Advanced')) {
-        const text = current && 'text' in current ? current.text : undefined;
+      const options = 'options' in variable ? variable.options : undefined;
 
-        if ((text && text.length) || id === 'Weight') {
-          selectedFilters[id] = {
-            Value: Array.isArray(text) ? text : [text ?? ''],
-            Name: label ?? '',
-            hide: hide !== 0,
-            Description: description ?? '',
-          };
-        }
+      if (name === 'FactoryLocation') {
+        const value = current && 'value' in current ? current.value : undefined;
+        factoryLocationValue = typeof value === 'string' || Array.isArray(value) ? value : undefined;
+      }
+      if (name === 'LocationsAccess') {
+        locationAccessOptions = options ?? [];
+      }
+
+      const text = current && 'text' in current ? current.text : undefined;
+      if (text && !id.includes('Advanced')) {
+        selectedFilters[id] = {
+          Value: Array.isArray(text) ? text : [text],
+          Name: label ?? '',
+          hide: hide !== 0,
+          Description: description ?? '',
+        };
       }
     });
+
+    const includesAll = Array.isArray(factoryLocationValue)
+      ? factoryLocationValue.includes('$__all')
+      : (factoryLocationValue?.includes('$__all') ?? false);
+    if (!includesAll) {
+      return selectedFilters;
+    }
+
+    const companyUserExists = locationAccessOptions.some((o) => o.value === 'NULL');
+    if (!companyUserExists) {
+      const existing = selectedFilters['FactoryLocation'];
+      selectedFilters['FactoryLocation'] = {
+        ...(existing && typeof existing === 'object' && !Array.isArray(existing) ? existing : {}),
+        Value: locationAccessOptions.filter((o) => o.value !== '$__all').map((o) => o.value),
+      };
+    }
 
     return selectedFilters;
   };

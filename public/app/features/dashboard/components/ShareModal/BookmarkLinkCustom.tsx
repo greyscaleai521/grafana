@@ -5,7 +5,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { Button, Field, FieldSet, Input, Modal, Spinner, Switch } from '@grafana/ui';
 
 import { type ShareModalTabProps } from './types';
-import { buildParamsforShare } from './utils';
+import { buildParamsforShare, getLocationAccessParams } from './utils';
 
 export interface Props extends ShareModalTabProps {}
 
@@ -35,15 +35,17 @@ export function BookmarkLinkCustom({ dashboard, onDismiss }: Props) {
   const bookmarkDashboard = useCallback(() => {
     setIsLoading(true);
     const params = buildParamsforShare({ useCurrentTimeRange, isRelativeTime });
+    const locationAccessParams = getLocationAccessParams(dashboard.getVariables());
     window.parent.postMessage(
       {
         key: 'bookmark-link',
         value: params.toString(),
         filterName,
+        locationAccessParams,
       },
       '*'
     );
-  }, [useCurrentTimeRange, isRelativeTime, filterName]);
+  }, [useCurrentTimeRange, isRelativeTime, filterName, dashboard]);
 
   const onUseCurrentTimeRangeChange = () => {
     setUseCurrentTimeRange((value) => !value);
