@@ -113,13 +113,7 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, header, padding = 0
                     {link.title}
                   </TextLink>
                 ) : (
-                  <TextLink
-                    external={link.target === '_top'}
-                    weight="medium"
-                    inline={false}
-                    onClick={() => sendToParent(link)}
-                    href={''}
-                  >
+                  <TextLink target="_top" weight="medium" inline={false} onClick={() => sendToParent(link)} href={''}>
                     {link.title}
                   </TextLink>
                 )}

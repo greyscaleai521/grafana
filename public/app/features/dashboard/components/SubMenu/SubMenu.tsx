@@ -50,6 +50,7 @@ function isDefault(variable: TypedVariableModel) {
   return (
     value === undefined ||
     valueStr === '' ||
+    valueStr === 'lb' ||
     valueStr === 'All' ||
     valueStr === '$__all' ||
     valueStr === 'Production' ||

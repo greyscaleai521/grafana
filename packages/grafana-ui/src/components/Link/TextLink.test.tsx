@@ -65,4 +65,22 @@ describe('TextLink', () => {
     await userEvent.click(screen.getByRole('link'));
     expect(onClick).toHaveBeenCalled();
   });
+
+  it('should render an onClick-driven anchor (no href) when target is _top', async () => {
+    const onClick = jest.fn();
+
+    render(
+      <TextLink target="_top" href="" onClick={onClick}>
+        Link to Grafana
+      </TextLink>
+    );
+
+    const anchor = screen.getByText('Link to Grafana').closest('a');
+    expect(anchor).toBeInTheDocument();
+    expect(anchor).toHaveAttribute('rel', 'noreferrer');
+    expect(anchor).not.toHaveAttribute('href');
+
+    await userEvent.click(screen.getByText('Link to Grafana'));
+    expect(onClick).toHaveBeenCalled();
+  });
 });

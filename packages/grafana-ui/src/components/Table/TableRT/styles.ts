@@ -188,12 +188,12 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       textOverflow: 'ellipsis',
       userSelect: 'text',
       whiteSpace: 'nowrap',
-      color: `${theme.colors.text.link} !important`,
+      color: '#ff5300 !important',
       fontWeight: theme.typography.fontWeightMedium,
       paddingRight: theme.spacing(1.5),
       '&:hover': {
         textDecoration: 'underline',
-        color: theme.colors.text.link,
+        color: '#ff5300',
       },
     }),
     cellLinkEmpty: css({
