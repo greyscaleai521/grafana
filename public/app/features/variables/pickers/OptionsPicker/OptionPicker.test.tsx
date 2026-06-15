@@ -144,5 +144,27 @@ describe('OptionPicker', () => {
       expect(getOption('B')).toBeInTheDocument();
       expect(getOption('C')).toBeInTheDocument();
     });
+
+    it('dispatches a search when a valid character is typed', async () => {
+      const { dispatch } = setupTestContext({
+        variable: defaultVariable,
+        pickerState: { id: defaultVariable.id, options: defaultVariable.options, multi: defaultVariable.multi },
+      });
+
+      dispatch.mockClear();
+      await userEvent.type(screen.getByRole('textbox'), 'a');
+      expect(dispatch).toHaveBeenCalled();
+    });
+
+    it('does not dispatch a search when an invalid character is typed', async () => {
+      const { dispatch } = setupTestContext({
+        variable: defaultVariable,
+        pickerState: { id: defaultVariable.id, options: defaultVariable.options, multi: defaultVariable.multi },
+      });
+
+      dispatch.mockClear();
+      await userEvent.type(screen.getByRole('textbox'), '@');
+      expect(dispatch).not.toHaveBeenCalled();
+    });
   });
 });

@@ -50,4 +50,15 @@ describe('CustomRangeVariablePicker', () => {
     expect(onVariableChange).not.toHaveBeenCalled();
     expect(screen.getByRole('textbox')).toHaveValue('not-a-range');
   });
+
+  it('rejects characters outside [a-zA-Z0-9-] in the input handler', async () => {
+    const user = userEvent.setup();
+    setup();
+
+    const input = screen.getByRole('textbox');
+    await user.type(input, '1.2');
+
+    // The restriction regex blocks '.', so the dot is dropped as it is typed.
+    expect(input).toHaveValue('12');
+  });
 });
