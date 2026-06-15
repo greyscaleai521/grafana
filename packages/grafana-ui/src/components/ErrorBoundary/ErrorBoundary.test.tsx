@@ -66,7 +66,7 @@ describe('ErrorBoundary', () => {
 
     await screen.findByText(problem.message);
     expect(postMessageSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'error', error: problem.toString() }),
+      expect.objectContaining({ type: 'grafanaError', error: JSON.stringify(problem) }),
       '*'
     );
 

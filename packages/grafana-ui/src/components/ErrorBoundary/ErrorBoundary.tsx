@@ -60,7 +60,10 @@ export class ErrorBoundary extends PureComponent<Props, State> {
     this.setState({ error, errorInfo });
 
     const parentWindow = window.parent || window;
-    parentWindow.postMessage({ type: 'error', error: error.toString(), stack: errorInfo.componentStack }, '*');
+    parentWindow.postMessage(
+      { type: 'grafanaError', error: JSON.stringify(error), stack: JSON.stringify(errorInfo) },
+      '*'
+    );
 
     if (this.props.onError) {
       this.props.onError(error);
