@@ -192,6 +192,7 @@ export const TimeSeriesPanel = ({
                       seriesIdx={seriesIdx}
                       mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
                       sortOrder={options.tooltip.sort}
+                      fixedFields={options?.tooltip?.fixedFields?.split(',') ?? []}
                       hideZeros={options.tooltip.hideZeros}
                       isPinned={isPinned}
                       annotate={enableAnnotationCreation ? annotate : undefined}
