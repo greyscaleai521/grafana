@@ -3,7 +3,13 @@ import { PureComponent } from 'react';
 import * as React from 'react';
 import { connect, type MapStateToProps } from 'react-redux';
 
-import { type AnnotationQuery, type DataQuery, type TypedVariableModel, type GrafanaTheme2 } from '@grafana/data';
+import {
+  type AnnotationQuery,
+  type DataQuery,
+  type TypedVariableModel,
+  type GrafanaTheme2,
+  VariableHide,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type DashboardLink } from '@grafana/schema';
 import { stylesFactory, type Themeable2, withTheme2 } from '@grafana/ui';
@@ -13,6 +19,7 @@ import { getSubMenuVariables, getVariablesState } from '../../../variables/state
 import { type DashboardModel } from '../../state/DashboardModel';
 
 import { Annotations } from './Annotations';
+import { CategoryBar } from './CategoryBar';
 import { DashboardLinks } from './DashboardLinks';
 import { SubMenuItems } from './SubMenuItems';
 
@@ -30,7 +37,36 @@ interface DispatchProps {}
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
-class SubMenuUnConnected extends PureComponent<Props> {
+interface State {
+  selectedCategory: number;
+  uniqueCategories: string[];
+  categoryFilterCounter: Record<string, number>;
+}
+
+function isDefault(variable: TypedVariableModel) {
+  const current = 'current' in variable ? variable.current : undefined;
+  const value = current?.value;
+  const valueStr = value?.toString();
+  return (
+    value === undefined ||
+    valueStr === '' ||
+    valueStr === 'All' ||
+    valueStr === '$__all' ||
+    valueStr === 'Production' ||
+    valueStr === 'Max Resolution'
+  );
+}
+
+class SubMenuUnConnected extends PureComponent<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      selectedCategory: 0,
+      uniqueCategories: [],
+      categoryFilterCounter: {},
+    };
+  }
+
   onAnnotationStateChanged = (updatedAnnotation: AnnotationQuery<DataQuery>) => {
     // we're mutating dashboard state directly here until annotations are in Redux.
     for (let index = 0; index < this.props.dashboard.annotations.list.length; index++) {
@@ -48,6 +84,39 @@ class SubMenuUnConnected extends PureComponent<Props> {
     e.preventDefault();
   };
 
+  onCategoryChange = (index: number) => {
+    this.setState({ selectedCategory: index });
+  };
+
+  componentDidMount() {
+    const { variables } = this.props;
+    const uniqueCategories = new Set<string>();
+    variables.forEach((variable) => {
+      if (variable.category) {
+        uniqueCategories.add(variable.category);
+      }
+    });
+
+    this.setState({ uniqueCategories: Array.from(uniqueCategories) });
+  }
+
+  componentDidUpdate(prevProps: Props, prevState: State) {
+    const { variables } = this.props;
+    const counter: Record<string, number> = {};
+
+    variables.forEach((variable) => {
+      if (variable.category) {
+        if (variable.hide !== VariableHide.hideVariable && !isDefault(variable)) {
+          counter[variable.category] = (counter[variable.category] ?? 0) + 1;
+        }
+      }
+    });
+
+    if (JSON.stringify(counter) !== JSON.stringify(prevState.categoryFilterCounter)) {
+      this.setState({ categoryFilterCounter: counter });
+    }
+  }
+
   render() {
     const { dashboard, variables, links, annotations, theme } = this.props;
 
@@ -56,22 +125,38 @@ class SubMenuUnConnected extends PureComponent<Props> {
     const readOnlyVariables = dashboard.meta.isSnapshot ?? false;
 
     return (
-      <div className={styles.submenu}>
-        <form
-          aria-label={t('dashboard.sub-menu-un-connected.aria-label-template-variables', 'Template variables')}
-          className={styles.formStyles}
-          onSubmit={this.disableSubmitOnEnter}
-        >
-          <SubMenuItems variables={variables} readOnly={readOnlyVariables} />
-        </form>
-        <Annotations
-          annotations={annotations}
-          onAnnotationChanged={this.onAnnotationStateChanged}
-          events={dashboard.events}
-        />
-        <div className={styles.spacer} />
-        {dashboard && <DashboardLinks dashboard={dashboard} links={links} />}
-      </div>
+      <>
+        <div className={styles.controlsTop}>
+          <CategoryBar
+            categories={this.state.uniqueCategories}
+            onCategoryChange={this.onCategoryChange}
+            selecedCategory={this.state.selectedCategory}
+            categoryFilterCounter={this.state.categoryFilterCounter}
+            variables={variables}
+          />
+        </div>
+        <div className={styles.submenu}>
+          <form
+            aria-label={t('dashboard.sub-menu-un-connected.aria-label-template-variables', 'Template variables')}
+            className={styles.formStyles}
+            onSubmit={this.disableSubmitOnEnter}
+          >
+            <SubMenuItems
+              variables={variables}
+              readOnly={readOnlyVariables}
+              selectedCategory={this.state.selectedCategory}
+              categories={this.state.uniqueCategories}
+            />
+          </form>
+          <Annotations
+            annotations={annotations}
+            onAnnotationChanged={this.onAnnotationStateChanged}
+            events={dashboard.events}
+          />
+          <div className={styles.spacer} />
+          {dashboard && <DashboardLinks dashboard={dashboard} links={links} />}
+        </div>
+      </>
     );
   }
 }
@@ -86,6 +171,10 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
+    controlsTop: css({
+      display: 'flex',
+      flexWrap: 'wrap',
+    }),
     formStyles: css({
       display: 'contents',
       flexWrap: 'wrap',
@@ -97,7 +186,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       alignContent: 'flex-start',
       alignItems: 'flex-start',
       gap: `${theme.spacing(1)} ${theme.spacing(2)}`,
-      padding: `0 0 ${theme.spacing(1)} 0`,
+      padding: `${theme.spacing(1)} 0 ${theme.spacing(1)} ${theme.spacing(1)}`,
     }),
     spacer: css({
       flexGrow: 1,

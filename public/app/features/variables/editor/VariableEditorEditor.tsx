@@ -117,6 +117,10 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
     this.props.changeVariableProp(this.props.identifier, 'description', event.currentTarget.value);
   };
 
+  onCategoryChange = (event: FormEvent<HTMLTextAreaElement>) => {
+    this.props.changeVariableProp(this.props.identifier, 'category', event.currentTarget.value);
+  };
+
   onHideChange = (option: VariableHide) => {
     this.props.changeVariableProp(this.props.identifier, 'hide', option);
   };
@@ -223,6 +227,16 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
               'Descriptive text'
             )}
             onChange={this.onDescriptionChange}
+            width={52}
+          />
+          <VariableTextAreaField
+            name={t('variables.variable-editor-editor-un-connected.name-category', 'Category')}
+            value={variable.category ?? ''}
+            placeholder={t(
+              'variables.variable-editor-editor-un-connected.placeholder-category',
+              'Category of the variable'
+            )}
+            onChange={this.onCategoryChange}
             width={52}
           />
           <VariableHideSelect

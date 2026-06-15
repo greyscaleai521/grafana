@@ -210,6 +210,7 @@ export interface BaseVariableModel {
   description: string | null;
   usedInRepeat?: boolean;
   origin?: ControlSourceRef;
+  category?: string;
 }
 
 export interface SnapshotVariableModel extends VariableWithOptions {

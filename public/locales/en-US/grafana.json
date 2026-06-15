@@ -5362,6 +5362,9 @@
       "ungroup-rows": "Ungroup rows",
       "ungroup-tabs": "Ungroup tabs"
     },
+    "category-bar": {
+      "clear-all": "Clear All"
+    },
     "code-pane": {
       "collapse": "Collapse editor",
       "expand": "Expand editor",
@@ -6313,6 +6316,9 @@
     "source-link": {
       "title": "Source ({{provider}})",
       "tooltip": "View source file in repository"
+    },
+    "sub-menu-items": {
+      "clear": "Clear"
     },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "Template variables"
@@ -16581,8 +16587,10 @@
       "description-optional-display-name": "Optional display name",
       "description-template-variable-characters": "The name of the template variable. (Max. 50 characters)",
       "general": "General",
+      "name-category": "Category",
       "name-label": "Label",
       "name-name": "Name",
+      "placeholder-category": "Category of the variable",
       "placeholder-descriptive-text": "Descriptive text",
       "placeholder-label-name": "Label name",
       "placeholder-variable-name": "Variable name",
