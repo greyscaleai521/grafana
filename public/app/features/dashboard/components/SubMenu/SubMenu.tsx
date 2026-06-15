@@ -43,19 +43,21 @@ interface State {
   categoryFilterCounter: Record<string, number>;
 }
 
-function isDefault(variable: TypedVariableModel) {
+export function isDefault(variable: TypedVariableModel): boolean {
   const current = 'current' in variable ? variable.current : undefined;
   const value = current?.value;
-  const valueStr = value?.toString();
-  return (
-    value === undefined ||
-    valueStr === '' ||
-    valueStr === 'lb' ||
-    valueStr === 'All' ||
-    valueStr === '$__all' ||
-    valueStr === 'Production' ||
-    valueStr === 'Max Resolution'
-  );
+  if (!value) {
+    return true;
+  }
+
+  const valueStr = String(value);
+  const defaultValues = new Set(['', 'lb', 'All', '$__all', 'Production', 'Max Resolution']);
+  const specialCases: Record<string, string> = {
+    InspTarget: '1200',
+    InspTargetPerc: '90',
+  };
+
+  return Boolean(defaultValues.has(valueStr) || (variable.id && specialCases[variable.id] === valueStr));
 }
 
 class SubMenuUnConnected extends PureComponent<Props, State> {
