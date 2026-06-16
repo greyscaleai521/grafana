@@ -39,26 +39,31 @@ describe('CustomRangeVariablePicker', () => {
     expect(onVariableChange).toHaveBeenCalledTimes(1);
   });
 
-  it('rejects an invalid value and does not propagate the change', async () => {
+  it('rejects an invalid numeric value and does not propagate the change', async () => {
     const user = userEvent.setup();
     const { onVariableChange } = setup();
 
     const input = screen.getByRole('textbox');
-    await user.type(input, 'not-a-range');
+    // '1-2-3' passes the keystroke regex (numeric chars only) but fails the blur-time range validation.
+    await user.type(input, '1-2-3');
     await user.tab();
 
     expect(onVariableChange).not.toHaveBeenCalled();
-    expect(screen.getByRole('textbox')).toHaveValue('not-a-range');
+    expect(screen.getByRole('textbox')).toHaveValue('1-2-3');
   });
 
-  it('allows "." (widened charset) but still rejects characters outside [a-zA-Z0-9.@_-]', async () => {
+  it('accepts only numerics / "." / "-" and rejects other characters', async () => {
     const user = userEvent.setup();
     setup();
 
     const input = screen.getByRole('textbox');
     await user.type(input, '1.2#');
-
-    // '.' is now allowed; '#' is still rejected and dropped as it is typed.
+    // '.' is allowed; '#' is rejected and dropped as it is typed.
     expect(input).toHaveValue('1.2');
+
+    await user.clear(input);
+    await user.type(input, 'a');
+    // A leading letter is rejected (numerics-only), so the field stays empty.
+    expect(input).toHaveValue('');
   });
 });

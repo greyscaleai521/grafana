@@ -35,7 +35,9 @@ export function TextBoxVariablePicker({ variable, onVariableChange, readOnly }: 
       return;
     }
 
-    if (variable.current.value === updatedValue) {
+    const trimmedValue = typeof updatedValue === 'string' ? updatedValue.trim() : updatedValue;
+
+    if (variable.current.value === trimmedValue) {
       return;
     }
 
@@ -43,7 +45,7 @@ export function TextBoxVariablePicker({ variable, onVariableChange, readOnly }: 
       toKeyedAction(
         variable.rootStateKey,
         changeVariableProp(
-          toVariablePayload({ id: variable.id, type: variable.type }, { propName: 'query', propValue: updatedValue })
+          toVariablePayload({ id: variable.id, type: variable.type }, { propName: 'query', propValue: trimmedValue })
         )
       )
     );
@@ -51,7 +53,7 @@ export function TextBoxVariablePicker({ variable, onVariableChange, readOnly }: 
     if (onVariableChange) {
       onVariableChange({
         ...variable,
-        current: isEmptyObject(variable.current) ? {} : { ...variable.current, value: updatedValue },
+        current: isEmptyObject(variable.current) ? {} : { ...variable.current, value: trimmedValue },
       });
       return;
     }
@@ -61,13 +63,19 @@ export function TextBoxVariablePicker({ variable, onVariableChange, readOnly }: 
 
   const onChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
-      const { value: filter } = event.target;
-      const trimmedFilter = filter?.trim();
-      const regex = /^[a-zA-Z0-9][a-zA-Z0-9.@_-]*$/;
-      if (trimmedFilter && !regex.test(trimmedFilter)) {
+      const { value } = event.target;
+
+      if (value === '') {
+        setUpdatedValue('');
         return;
       }
-      setUpdatedValue(trimmedFilter);
+
+      const regex = /^(?!.*--)[a-zA-Z0-9][a-zA-Z0-9.@_ -]*$/;
+      if (!regex.test(value)) {
+        return;
+      }
+
+      setUpdatedValue(value);
     },
     [setUpdatedValue]
   );
