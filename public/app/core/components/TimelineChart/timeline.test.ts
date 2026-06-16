@@ -209,6 +209,27 @@ describe('StateTimeline uPlot integration', () => {
     });
   });
 
+  describe('x-axis range', () => {
+    it('returns undefined for xSplits in Samples mode (Status History)', () => {
+      const config = getConfig(buildTestCoreOptions({ mode: TimelineMode.Samples }));
+      expect(config.xSplits).toBeUndefined();
+    });
+
+    it('returns undefined for xSplits in Changes mode (State Timeline)', () => {
+      const config = getConfig(buildTestCoreOptions({ mode: TimelineMode.Changes }));
+      expect(config.xSplits).toBeUndefined();
+    });
+
+    it('returns the full time range from getTimeRange without data-driven padding in Samples mode', () => {
+      const timeRange = getDefaultTimeRange();
+      const config = getConfig(
+        buildTestCoreOptions({ mode: TimelineMode.Samples, getTimeRange: jest.fn(() => timeRange) })
+      );
+
+      expect(config.xRange()).toEqual([timeRange.from.valueOf(), timeRange.to.valueOf()]);
+    });
+  });
+
   describe('#shouldDrawYValue', () => {
     describe.each([
       [true, undefined, undefined, true, 'boolean true returns true'],

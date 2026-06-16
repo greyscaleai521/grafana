@@ -156,11 +156,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     isTime: true,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
-    range: (u) => {
+    range: () => {
       const state = builder.getState();
       if (state.isPanning) {
         if (state.isTimeRangePending) {
-          const propsRange = coreConfig.xRange(u);
+          const propsRange = coreConfig.xRange();
           const propsFrom = propsRange[0];
           const propsTo = propsRange[1];
 
@@ -179,7 +179,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
 
         return [state.min, state.max];
       }
-      return coreConfig.xRange(u);
+      return coreConfig.xRange();
     },
   });
 
@@ -198,7 +198,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     show: !xAxisHidden,
     scaleKey: xScaleKey,
     isTime: true,
-    splits: coreConfig.xSplits!,
+    splits: coreConfig.xSplits,
     placement: AxisPlacement.Bottom,
     timeZone: timeZones[0],
     theme,
