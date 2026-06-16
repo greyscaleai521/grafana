@@ -9,7 +9,7 @@ import {
 } from '@grafana/schema';
 import { type UPlotConfigBuilder, VizLayout, VizLegend, type VizLegendItem } from '@grafana/ui';
 
-import { GraphNG, type GraphNGProps } from '../GraphNG/GraphNG';
+import { GraphNG, type GraphNGProps, type PropDiffFn } from '../GraphNG/GraphNG';
 import { getXAxisConfig } from '../TimeSeries/utils';
 
 import { preparePlotConfigBuilder, TimelineMode } from './utils';
@@ -27,7 +27,16 @@ export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsT
   paginationRev?: string;
 }
 
-const propsToDiff = [
+// Status History (Samples) must rebuild the config when frames change so the
+// dynamic-column-width mapping (captured at config-build time) is refreshed.
+// State Timeline (Changes) keeps the cheaper data-only update path.
+export const reconfigOnFramesChangeInSamples: PropDiffFn = (prev, next) => {
+  const isSamples = 'mode' in next && next.mode === TimelineMode.Samples;
+  const framesChanged = 'frames' in prev && 'frames' in next && prev.frames !== next.frames;
+  return !(isSamples && framesChanged);
+};
+
+const propsToDiff: Array<string | PropDiffFn> = [
   'rowHeight',
   'colWidth',
   'dynamicColumnWidthField',
@@ -38,6 +47,7 @@ const propsToDiff = [
   'paginationRev',
   'annotationLanes',
   'theme',
+  reconfigOnFramesChangeInSamples,
 ];
 
 export const TimelineChart = (props: TimelineProps) => {
