@@ -54,6 +54,7 @@ interface UPlotConfigOptions {
   getValueColor: (frameIdx: number, fieldIdx: number, value: unknown) => string;
   hoverMulti: boolean;
   axisWidth?: number;
+  dynamicColumnWidthField?: string;
 }
 
 /**
@@ -94,6 +95,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   getValueColor,
   hoverMulti,
   xAxisConfig,
+  dynamicColumnWidthField,
+  allFrames,
 }) => {
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
@@ -140,6 +143,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     // hardcoded formatter for state values
     formatValue: (seriesIdx, value) => formattedValueToString(frame.fields[seriesIdx].display!(value)),
     hoverMulti,
+    dynamicColumnWidthField,
+    allFrames,
   };
 
   const coreConfig = getConfig(opts);

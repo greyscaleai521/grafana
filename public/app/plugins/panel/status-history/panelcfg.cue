@@ -38,6 +38,8 @@ composableKinds: PanelCfg: {
 					colWidth?: float & <=1 | *0.9
 					//Enables pagination when > 0
 					perPage?: number & >=1 | *20
+					//Dynamic column width using field name
+					dynamicColumnWidthField?: string
 				} @cuetsy(kind="interface")
 				FieldConfig: {
 					ui.AxisConfig

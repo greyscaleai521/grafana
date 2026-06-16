@@ -15022,12 +15022,15 @@
   },
   "status-history": {
     "category-status-history": "Status history",
+    "description-dynamic-column-width": "Select a field to use for dynamic column width. If the field is a timestamp, bars stretch from from_time to the selected field value.",
     "name-column-width": "Column width",
+    "name-dynamic-column-width": "Dynamic column width using",
     "name-fill-opacity": "Fill opacity",
     "name-line-width": "Line width",
     "name-page-size": "Page size (enable pagination)",
     "name-row-height": "Row height",
     "name-show-values": "Show values",
+    "placeholder-dynamic-column-width": "Choose",
     "show-values-options": {
       "label-always": "Always",
       "label-auto": "Auto",

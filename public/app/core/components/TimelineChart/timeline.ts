@@ -1,6 +1,13 @@
 import uPlot, { type Series } from 'uplot';
 
-import { type GrafanaTheme2, type TimeRange, colorManipulator } from '@grafana/data';
+import {
+  type DataFrame,
+  type Field,
+  FieldType,
+  type GrafanaTheme2,
+  type TimeRange,
+  colorManipulator,
+} from '@grafana/data';
 import { type TimelineValueAlignment, VisibilityMode } from '@grafana/schema';
 import { FIXED_UNIT } from '@grafana/ui';
 import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute';
@@ -54,6 +61,8 @@ export interface TimelineCoreOptions {
   formatValue?: (seriesIdx: number, value: unknown) => string;
   getFieldConfig: (seriesIdx: number) => StateTimeLineFieldConfig | StatusHistoryFieldConfig;
   hoverMulti: boolean;
+  dynamicColumnWidthField?: string;
+  allFrames?: DataFrame[];
 }
 
 /**
@@ -100,12 +109,51 @@ export function getConfig(opts: TimelineCoreOptions) {
     getValueColor,
     getFieldConfig,
     hoverMulti,
+    dynamicColumnWidthField,
+    allFrames,
   } = opts;
 
   let qt: Quadtree;
 
   // Needed for to calculate text positions
   let boxRectsBySeries: TimelineBoxRect[][];
+
+  // Find dynamic width field from original frames
+  let dynamicWidthFieldInfo: { field: Field; frameIdx: number; fieldIdx: number; timeFieldIdx: number } | null = null;
+  if (dynamicColumnWidthField && allFrames) {
+    for (let frameIdx = 0; frameIdx < allFrames.length; frameIdx++) {
+      const frame = allFrames[frameIdx];
+      let timeFieldIdx = -1;
+      let fieldIdx = -1;
+
+      // Find time field
+      for (let i = 0; i < frame.fields.length; i++) {
+        if (frame.fields[i].type === FieldType.time) {
+          timeFieldIdx = i;
+          break;
+        }
+      }
+
+      // Find the dynamic width field
+      for (let i = 0; i < frame.fields.length; i++) {
+        const field = frame.fields[i];
+        if (field.name === dynamicColumnWidthField || field.state?.displayName === dynamicColumnWidthField) {
+          fieldIdx = i;
+          break;
+        }
+      }
+
+      if (fieldIdx >= 0 && timeFieldIdx >= 0) {
+        dynamicWidthFieldInfo = {
+          field: allFrames[frameIdx].fields[fieldIdx],
+          frameIdx,
+          fieldIdx,
+          timeFieldIdx,
+        };
+        break;
+      }
+    }
+  }
 
   const resetBoxRectsBySeries = (count: number) => {
     boxRectsBySeries = Array(numSeries)
@@ -228,6 +276,28 @@ export function getConfig(opts: TimelineCoreOptions) {
         rect(u.ctx, u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
         u.ctx.clip();
 
+        // Create Map from time values to to_time values for dynamic width
+        let timeToToTimeMap: Map<number, number> | null = null;
+        if (dynamicWidthFieldInfo && mode === TimelineMode.Samples) {
+          const frame = allFrames![dynamicWidthFieldInfo.frameIdx];
+          const timeField = frame.fields[dynamicWidthFieldInfo.timeFieldIdx];
+          const toTimeField = dynamicWidthFieldInfo.field;
+
+          // Only timestamp fields are supported for dynamic width
+          if (toTimeField.type === FieldType.time) {
+            timeToToTimeMap = new Map();
+
+            for (let i = 0; i < timeField.values.length; i++) {
+              const timeVal = timeField.values[i];
+              const toTimeVal = toTimeField.values[i];
+
+              if (timeVal != null && toTimeVal != null) {
+                timeToToTimeMap.set(timeVal, toTimeVal);
+              }
+            }
+          }
+        }
+
         walk(rowHeight, sidx - 1, numSeries, yDim, (iy, y0, height) => {
           if (mode === TimelineMode.Changes) {
             for (let ix = 0; ix < dataY.length; ix++) {
@@ -269,11 +339,9 @@ export function getConfig(opts: TimelineCoreOptions) {
               }
             }
           } else if (mode === TimelineMode.Samples) {
-            let colWid = valToPosX(dataX[1], scaleX, xDim, xOff) - valToPosX(dataX[0], scaleX, xDim, xOff);
-            let gapWid = colWid * gapFactor;
-            let barWid = round(min(maxWidth, colWid - gapWid) - strokeWidth);
-            let xShift = barWid / 2;
-            //let xShift = align === 1 ? 0 : align === -1 ? barWid : barWid / 2;
+            let defaultColWid = valToPosX(dataX[1], scaleX, xDim, xOff) - valToPosX(dataX[0], scaleX, xDim, xOff);
+            let defaultGapWid = defaultColWid * gapFactor;
+            let defaultBarWid = round(min(maxWidth, defaultColWid - defaultGapWid) - strokeWidth);
 
             for (let ix = idx0; ix <= idx1; ix++) {
               let yVal = dataY[ix];
@@ -282,6 +350,19 @@ export function getConfig(opts: TimelineCoreOptions) {
               if (shouldDrawY) {
                 // TODO: all xPos can be pre-computed once for all series in aligned set
                 let left = valToPosX(dataX[ix], scaleX, xDim, xOff);
+                let barWid: number;
+                let xShift: number;
+
+                // Use dynamic width (from_time -> to_time) when available, else fixed width
+                const toTime = timeToToTimeMap?.get(dataX[ix]);
+                if (toTime != null) {
+                  let right = valToPosX(toTime, scaleX, xDim, xOff);
+                  barWid = round(right - left - strokeWidth);
+                  xShift = 0;
+                } else {
+                  barWid = defaultBarWid;
+                  xShift = defaultBarWid / 2;
+                }
 
                 putBox(
                   u.ctx,

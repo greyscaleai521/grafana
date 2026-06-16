@@ -20,6 +20,7 @@ export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsT
   showValue: VisibilityMode;
   alignValue?: TimelineValueAlignment;
   colWidth?: number;
+  dynamicColumnWidthField?: string;
   legendItems?: VizLegendItem[];
   tooltip?: VizTooltipOptions;
   // Whenever `paginationRev` changes, the graph will be fully re-configured/rendered.
@@ -29,6 +30,7 @@ export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsT
 const propsToDiff = [
   'rowHeight',
   'colWidth',
+  'dynamicColumnWidthField',
   'showValue',
   'mergeValues',
   'alignValue',
