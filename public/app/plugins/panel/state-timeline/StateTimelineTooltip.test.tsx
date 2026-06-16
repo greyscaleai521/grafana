@@ -103,6 +103,44 @@ describe('StateTimelineTooltip', () => {
       expect(screen.getByText(/90000/)).toBeInTheDocument();
     });
 
+    it('resolves to a non-null row at the same timestamp when skipNullHover is set', () => {
+      const overlapTimeField: Field = {
+        name: 'Time',
+        type: FieldType.time,
+        values: [0, 50000, 50000, 80000],
+        display: (v) => ({ text: String(v), numeric: NaN }),
+        config: {},
+      };
+      const overlapValueField: Field = {
+        name: 'State',
+        type: FieldType.number,
+        values: [0, null, 100, 50],
+        display: (v) => ({ text: String(v), numeric: Number(v) }),
+        config: {},
+      };
+      const overlapSeries = createDataFrame({ fields: [overlapTimeField, overlapValueField] });
+
+      render(
+        <StateTimelineTooltip
+          series={overlapSeries}
+          seriesIdx={1}
+          dataIdxs={[null, 1]}
+          mode={TooltipDisplayMode.Single}
+          timeRange={timeRange}
+          withDuration
+          skipNullHover
+          dataLinks={[]}
+          isPinned={false}
+        />
+      );
+
+      // dataIdx 1 is null at t=50000; the search finds index 2 (value 100) at the same timestamp,
+      // so duration becomes 80000 - 50000 = 30s and the header end time is 80000
+      expect(screen.queryByText('Duration')).toBeInTheDocument();
+      expect(screen.queryByText('30s')).toBeInTheDocument();
+      expect(screen.getByText(/80000/)).toBeInTheDocument();
+    });
+
     it('should not include the duration in multi mode even when withDuration is true', () => {
       render(
         <StateTimelineTooltip

@@ -558,6 +558,12 @@ export function getConfig(opts: TimelineCoreOptions) {
         let hRect = hovered[seriesIdx];
         let isHovered = hRect != null;
 
+        // For Samples mode (Status History), only show the cursor overlay for the bar
+        // physically under the cursor, not other bars at the same x position
+        if (mode === TimelineMode.Samples) {
+          isHovered = isHovered && hoveredAtCursor != null && hoveredAtCursor.sidx === seriesIdx;
+        }
+
         return {
           left: isHovered ? hRect!.x / uPlot.pxRatio : -10,
           top: isHovered ? hRect!.y / uPlot.pxRatio : -10,

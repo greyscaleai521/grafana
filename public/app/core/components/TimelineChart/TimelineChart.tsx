@@ -12,7 +12,7 @@ import { type UPlotConfigBuilder, VizLayout, VizLegend, type VizLegendItem } fro
 import { GraphNG, type GraphNGProps } from '../GraphNG/GraphNG';
 import { getXAxisConfig } from '../TimeSeries/utils';
 
-import { preparePlotConfigBuilder, type TimelineMode } from './utils';
+import { preparePlotConfigBuilder, TimelineMode } from './utils';
 
 export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'> {
   mode: TimelineMode;
@@ -74,7 +74,9 @@ export const TimelineChart = (props: TimelineProps) => {
         rowHeight: alignedFrame.fields.length > 2 ? rowHeight : 1,
         getValueColor: getValueColor,
 
-        hoverMulti: tooltip?.mode === TooltipDisplayMode.Multi,
+        // For Samples mode (Status History), always use single hover so the cursor
+        // only highlights the bar being hovered, not all bars at the same x position
+        hoverMulti: props.mode === TimelineMode.Samples ? false : tooltip?.mode === TooltipDisplayMode.Multi,
         xAxisConfig: getXAxisConfig(props.annotationLanes),
       });
     },

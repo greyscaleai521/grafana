@@ -22,6 +22,7 @@ interface StateTimelineTooltipProps extends TimeSeriesTooltipProps {
   withDuration: boolean;
   toTimeFieldName?: string;
   frames?: DataFrame[];
+  skipNullHover?: boolean;
 }
 
 export const StateTimelineTooltip = ({
@@ -36,6 +37,7 @@ export const StateTimelineTooltip = ({
   withDuration,
   toTimeFieldName,
   frames,
+  skipNullHover,
   maxHeight,
   replaceVariables,
   dataLinks,
@@ -43,9 +45,35 @@ export const StateTimelineTooltip = ({
   const pluginContext = usePluginContext();
   const xField = series.fields[0];
 
-  const dataIdx = seriesIdx != null ? dataIdxs[seriesIdx] : dataIdxs.find((idx) => idx != null);
+  let dataIdx = seriesIdx != null ? dataIdxs[seriesIdx] : dataIdxs.find((idx) => idx != null);
 
-  const xVal = xField.display!(xField.values[dataIdx!]).text;
+  // Status History: if the hovered field value is null at this index, look for a non-null
+  // value at the same timestamp (multiple rows can share a timestamp with values on
+  // different fields), so the tooltip reflects the bar actually under the cursor
+  if (skipNullHover && seriesIdx != null && dataIdx != null) {
+    const field = series.fields[seriesIdx];
+    const value = field?.values[dataIdx];
+
+    if (value == null || value === '') {
+      const targetTime = xField.values[dataIdx];
+
+      for (let i = 0; i < xField.values.length; i++) {
+        if (xField.values[i] === targetTime) {
+          const candidateValue = field?.values[i];
+          if (candidateValue != null && candidateValue !== '') {
+            dataIdx = i;
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  if (dataIdx == null) {
+    return null;
+  }
+
+  const xVal = xField.display!(xField.values[dataIdx]).text;
 
   mode = isPinned ? TooltipDisplayMode.Single : mode;
 

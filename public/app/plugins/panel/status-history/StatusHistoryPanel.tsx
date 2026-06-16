@@ -155,6 +155,7 @@ export const StatusHistoryPanel = ({
                         withDuration={true}
                         toTimeFieldName={options.dynamicColumnWidthField}
                         frames={paginatedFrames}
+                        skipNullHover={true}
                         maxHeight={options.tooltip.maxHeight}
                         replaceVariables={replaceVariables}
                         dataLinks={dataLinks}
