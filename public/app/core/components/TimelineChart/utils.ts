@@ -343,7 +343,8 @@ export function prepareTimelineFields(
   series: DataFrame[] | undefined,
   mergeValues: boolean,
   timeRange: TimeRange,
-  theme: GrafanaTheme2
+  theme: GrafanaTheme2,
+  noDataMsg?: string
 ): { frames?: DataFrame[]; warn?: string } {
   // this allows PanelDataErrorView to show the default noValue message
   if (!series?.length) {
@@ -475,7 +476,7 @@ export function prepareTimelineFields(
   }
 
   if (!hasTimeseries) {
-    return { warn: t('timeline.missing-field.time', 'Data does not have a time field') };
+    return { warn: noDataMsg || t('timeline.missing-field.time', 'Data does not have a time field') };
   }
   if (!frames.length) {
     return { warn: t('timeline.missing-field.all', 'No graphable fields') };

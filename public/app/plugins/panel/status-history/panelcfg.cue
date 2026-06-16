@@ -40,6 +40,8 @@ composableKinds: PanelCfg: {
 					perPage?: number & >=1 | *20
 					//Dynamic column width using field name
 					dynamicColumnWidthField?: string
+					//Custom message to show when there is no data
+					noDataMessage?: string
 				} @cuetsy(kind="interface")
 				FieldConfig: {
 					ui.AxisConfig

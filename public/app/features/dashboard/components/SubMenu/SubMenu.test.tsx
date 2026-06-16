@@ -11,7 +11,7 @@ describe('isDefault', () => {
   });
 
   it('returns true for each literal default value', () => {
-    for (const value of ['lb', 'All', '$__all', 'Production', 'Max Resolution']) {
+    for (const value of ['lb', 'All', '$__all', 'Production', 'Max Resolution', 'hour', '1']) {
       expect(isDefault(makeVariable(value))).toBe(true);
     }
   });

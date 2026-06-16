@@ -51,7 +51,7 @@ export function isDefault(variable: TypedVariableModel): boolean {
   }
 
   const valueStr = String(value);
-  const defaultValues = new Set(['', 'lb', 'All', '$__all', 'Production', 'Max Resolution']);
+  const defaultValues = new Set(['', 'lb', 'All', '$__all', 'Production', 'Max Resolution', 'hour', '1']);
   const specialCases: Record<string, string> = {
     InspTarget: '1200',
     InspTargetPerc: '90',

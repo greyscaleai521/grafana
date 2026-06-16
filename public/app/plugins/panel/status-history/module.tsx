@@ -120,6 +120,16 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
         settings: {
           placeholderText: t('status-history.placeholder-dynamic-column-width', 'Choose'),
         },
+      })
+      .addTextInput({
+        path: 'noDataMessage',
+        name: t('status-history.name-no-data-message', 'No data message'),
+        description: t('status-history.description-no-data-message', 'Custom message to show when there is no data'),
+        category,
+        defaultValue: '',
+        settings: {
+          placeholder: t('status-history.placeholder-no-data-message', 'Data does not have a time field'),
+        },
       });
 
     commonOptionsBuilder.addLegendOptions(builder, false, true);

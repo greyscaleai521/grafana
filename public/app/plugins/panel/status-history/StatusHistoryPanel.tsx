@@ -56,8 +56,8 @@ export const StatusHistoryPanel = ({
   const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
 
   const { frames, warn } = useMemo(
-    () => prepareTimelineFields(data.series, false, timeRange, theme),
-    [data.series, timeRange, theme]
+    () => prepareTimelineFields(data.series, false, timeRange, theme, options.noDataMessage),
+    [data.series, timeRange, theme, options.noDataMessage]
   );
 
   const { paginatedFrames, paginationRev, paginationElement, paginationHeight } = usePagination(
