@@ -62,6 +62,47 @@ describe('StateTimelineTooltip', () => {
       expect(screen.queryByText('20s')).toBeInTheDocument(); // 120000 - 100000 = 20000 ms = 20s
     });
 
+    it('uses the to_time field for duration and end time when toTimeFieldName is provided', () => {
+      const originSeries = createDataFrame({ fields: [timeField, valueField] });
+      originSeries.fields[1].state = { origin: { frameIndex: 0, fieldIndex: 1 } };
+      const frames = [
+        createDataFrame({
+          fields: [
+            timeField,
+            valueField,
+            {
+              name: 'to_time',
+              type: FieldType.time,
+              values: [30000, 90000, 130000],
+              display: (v) => ({ text: String(v), numeric: Number(v) }),
+              config: {},
+            },
+          ],
+        }),
+      ];
+
+      render(
+        <StateTimelineTooltip
+          series={originSeries}
+          seriesIdx={1}
+          dataIdxs={[null, 1]}
+          mode={TooltipDisplayMode.Single}
+          timeRange={timeRange}
+          withDuration
+          toTimeFieldName="to_time"
+          frames={frames}
+          dataLinks={[]}
+          isPinned={false}
+        />
+      );
+
+      expect(screen.queryByText('Duration')).toBeInTheDocument();
+      // to_time (90000) - stateTs (60000) = 30000 ms = 30s, overriding the next-state (40s) fallback
+      expect(screen.queryByText('30s')).toBeInTheDocument();
+      // header shows the to_time end value
+      expect(screen.getByText(/90000/)).toBeInTheDocument();
+    });
+
     it('should not include the duration in multi mode even when withDuration is true', () => {
       render(
         <StateTimelineTooltip

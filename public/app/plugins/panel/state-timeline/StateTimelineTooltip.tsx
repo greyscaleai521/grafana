@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react';
 
-import { FieldType, type TimeRange, usePluginContext } from '@grafana/data';
+import { type DataFrame, type Field, FieldType, type TimeRange, usePluginContext } from '@grafana/data';
 import { SortOrder } from '@grafana/schema';
 import { TooltipDisplayMode } from '@grafana/ui';
 import {
@@ -20,6 +20,8 @@ import { isTooltipScrollable } from '../timeseries/utils';
 interface StateTimelineTooltipProps extends TimeSeriesTooltipProps {
   timeRange: TimeRange;
   withDuration: boolean;
+  toTimeFieldName?: string;
+  frames?: DataFrame[];
 }
 
 export const StateTimelineTooltip = ({
@@ -32,6 +34,8 @@ export const StateTimelineTooltip = ({
   annotate,
   timeRange,
   withDuration,
+  toTimeFieldName,
+  frames,
   maxHeight,
   replaceVariables,
   dataLinks,
@@ -51,22 +55,81 @@ export const StateTimelineTooltip = ({
   // append duration in single mode
   if (withDuration && mode === TooltipDisplayMode.Single) {
     const field = series.fields[seriesIdx!];
-    const nextStateIdx = findNextStateIndex(field, dataIdx!);
-    let nextStateTs;
-    if (nextStateIdx != null) {
-      nextStateTs = xField.values[nextStateIdx];
-    }
-
     const stateTs = xField.values[dataIdx!];
     let duration: string;
+    let toTime: number | null = null;
 
-    if (nextStateTs) {
-      duration = nextStateTs && fmtDuration(nextStateTs - stateTs);
-      endTime = nextStateTs;
+    // Try to resolve an explicit to_time field from the original frames when configured
+    if (toTimeFieldName && frames) {
+      const origin = field.state?.origin;
+      if (origin) {
+        const originalFrame = frames[origin.frameIndex];
+        const originalField = originalFrame?.fields[origin.fieldIndex];
+        const timeField = originalFrame?.fields.find((f) => f.type === FieldType.time);
+
+        if (originalFrame && originalField && timeField) {
+          let toTimeField: Field | undefined;
+          for (const f of originalFrame.fields) {
+            if (f.name === toTimeFieldName || f.state?.displayName === toTimeFieldName) {
+              toTimeField = f;
+              break;
+            }
+          }
+
+          if (!toTimeField) {
+            // Fallback: search all frames
+            for (const frame of frames) {
+              for (const f of frame.fields) {
+                if (f.name === toTimeFieldName || f.state?.displayName === toTimeFieldName) {
+                  toTimeField = f;
+                  break;
+                }
+              }
+              if (toTimeField) {
+                break;
+              }
+            }
+          }
+
+          if (toTimeField) {
+            // Match the row by timestamp and field value, then read its to_time
+            const fieldValue = field.values[dataIdx!];
+            for (let i = 0; i < timeField.values.length; i++) {
+              const timeVal = timeField.values[i];
+              const fieldVal = originalField.values[i];
+
+              if (timeVal === stateTs && fieldVal != null && fieldVal === fieldValue) {
+                const toTimeVal = toTimeField.values[i];
+                if (toTimeVal != null) {
+                  toTime = toTimeVal;
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (toTime != null) {
+      duration = fmtDuration(toTime - stateTs);
+      endTime = toTime;
     } else {
-      const to = timeRange.to.valueOf();
-      duration = fmtDuration(to - stateTs);
-      endTime = to;
+      // Fall back to the next state change, then the time range end
+      const nextStateIdx = findNextStateIndex(field, dataIdx!);
+      let nextStateTs;
+      if (nextStateIdx != null) {
+        nextStateTs = xField.values[nextStateIdx];
+      }
+
+      if (nextStateTs) {
+        duration = nextStateTs && fmtDuration(nextStateTs - stateTs);
+        endTime = nextStateTs;
+      } else {
+        const to = timeRange.to.valueOf();
+        duration = fmtDuration(to - stateTs);
+        endTime = to;
+      }
     }
 
     contentItems.push({ label: 'Duration', value: duration });
