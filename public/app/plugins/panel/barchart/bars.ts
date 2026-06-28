@@ -7,7 +7,9 @@ import {
   type GrafanaTheme2,
   systemDateFormats,
   type TimeZone,
+  type TypedVariableModel,
 } from '@grafana/data';
+import { getTemplateSrv, locationService } from '@grafana/runtime';
 import {
   StackingMode,
   VisibilityMode,
@@ -67,6 +69,40 @@ export interface BarsOptions {
   xTimeAuto?: boolean;
   negY?: boolean[];
   fullHighlight?: boolean;
+  xValueMappedVariable?: string;
+  yValueMappedVariable?: string;
+}
+
+/**
+ * Builds the template-variable update query for a clicked bar.
+ * Returns the `var-<name>` keys to push into the URL based on the configured
+ * x/y variable mappings. Exported for unit testing.
+ * @internal
+ */
+export function getBarClickVariableQuery(opts: {
+  rect: Rect;
+  data: AlignedData;
+  frame?: DataFrame;
+  isStacked: boolean;
+  variables: TypedVariableModel[];
+  xValueMappedVariable?: string;
+  yValueMappedVariable?: string;
+}): Record<string, string> {
+  const { rect, data, frame, isStacked, variables, xValueMappedVariable, yValueMappedVariable } = opts;
+  const updateQuery: Record<string, string> = {};
+
+  if (xValueMappedVariable && variables.some((variable) => variable.name === xValueMappedVariable)) {
+    updateQuery[`var-${xValueMappedVariable}`] = String(data[0][rect.didx]);
+  }
+
+  if (isStacked && yValueMappedVariable && variables.some((variable) => variable.name === yValueMappedVariable)) {
+    const field = frame?.fields[rect.sidx];
+    if (field) {
+      updateQuery[`var-${yValueMappedVariable}`] = field.config?.displayName ? field.config.displayName : field.name;
+    }
+  }
+
+  return updateQuery;
 }
 
 /**
@@ -123,7 +159,7 @@ function calculateFontSizeWithMetrics(
 /**
  * @internal
  */
-export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
+export function getConfig(opts: BarsOptions, theme: GrafanaTheme2, frame?: DataFrame) {
   const {
     xOri,
     xDir: dir,
@@ -460,7 +496,47 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     },
   });
 
+  let plotInstance: uPlot | undefined = undefined;
+
+  const handleClick = () => {
+    const u = plotInstance;
+
+    if (u == null) {
+      return;
+    }
+
+    const cx = u.cursor.left! * uPlot.pxRatio;
+    const cy = u.cursor.top! * uPlot.pxRatio;
+
+    let found: Rect | undefined;
+    qt.get(cx, cy, 1, 1, (o) => {
+      if (!found && pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
+        found = o;
+      }
+    });
+
+    if (!found) {
+      return;
+    }
+
+    const updateQuery = getBarClickVariableQuery({
+      rect: found,
+      data: u.data,
+      frame,
+      isStacked,
+      variables: getTemplateSrv().getVariables(),
+      xValueMappedVariable: opts.xValueMappedVariable,
+      yValueMappedVariable: opts.yValueMappedVariable,
+    });
+
+    if (Object.keys(updateQuery).length > 0) {
+      locationService.partial(updateQuery, true);
+    }
+  };
+
   const init = (u: uPlot) => {
+    plotInstance = u;
+    u.over.addEventListener('click', handleClick);
     u.root.querySelectorAll<HTMLDivElement>('.u-cursor-pt').forEach((el) => {
       el.style.borderRadius = '0';
 
@@ -468,6 +544,10 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         el.style.zIndex = '-1';
       }
     });
+  };
+
+  const destroy = (u: uPlot) => {
+    u.over.removeEventListener('click', handleClick);
   };
 
   const cursor: uPlot.Cursor = {
@@ -664,6 +744,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
     // hooks
     init,
+    destroy,
     drawClear,
     draw,
     prepData,

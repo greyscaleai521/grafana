@@ -85,6 +85,9 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 1`] = `
     "alpha": 1,
   },
   "hooks": {
+    "destroy": [
+      [Function],
+    ],
     "draw": [
       [Function],
     ],
@@ -241,6 +244,9 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 2`] = `
     "alpha": 1,
   },
   "hooks": {
+    "destroy": [
+      [Function],
+    ],
     "draw": [
       [Function],
     ],
@@ -397,6 +403,9 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 3`] = `
     "alpha": 1,
   },
   "hooks": {
+    "destroy": [
+      [Function],
+    ],
     "draw": [
       [Function],
     ],
@@ -553,6 +562,9 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 1`] = `
     "alpha": 1,
   },
   "hooks": {
+    "destroy": [
+      [Function],
+    ],
     "draw": [
       [Function],
     ],
@@ -709,6 +721,9 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 2`] = `
     "alpha": 1,
   },
   "hooks": {
+    "destroy": [
+      [Function],
+    ],
     "draw": [
       [Function],
     ],
@@ -865,6 +880,9 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 3`] = `
     "alpha": 1,
   },
   "hooks": {
+    "destroy": [
+      [Function],
+    ],
     "draw": [
       [Function],
     ],
@@ -1021,6 +1039,9 @@ exports[`BarChart utils preparePlotConfigBuilder value visibility 1`] = `
     "alpha": 1,
   },
   "hooks": {
+    "destroy": [
+      [Function],
+    ],
     "draw": [
       [Function],
     ],
@@ -1177,6 +1198,9 @@ exports[`BarChart utils preparePlotConfigBuilder value visibility 2`] = `
     "alpha": 1,
   },
   "hooks": {
+    "destroy": [
+      [Function],
+    ],
     "draw": [
       [Function],
     ],

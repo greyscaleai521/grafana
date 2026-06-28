@@ -63,6 +63,14 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
    * negative values indicate backwards skipping behavior
    */
   xTickLabelSpacing?: number;
+  /**
+   * Variable name to update with the clicked bar's x value.
+   */
+  xValueMappedVariable?: string;
+  /**
+   * Variable name to update with the clicked series name (stacked only).
+   */
+  yValueMappedVariable?: string;
 }
 
 export const defaultOptions: Partial<Options> = {

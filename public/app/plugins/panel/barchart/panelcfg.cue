@@ -57,6 +57,10 @@ composableKinds: PanelCfg: {
 					// Enables mode which highlights the entire bar area and shows tooltip when cursor
 					// hovers over highlighted area
 					fullHighlight: bool | *false
+					// Variable name to update with the clicked bar's x value.
+					xValueMappedVariable?: string
+					// Variable name to update with the clicked series name (stacked only).
+					yValueMappedVariable?: string
 				} @cuetsy(kind="interface")
 				FieldConfig: {
 					common.AxisConfig

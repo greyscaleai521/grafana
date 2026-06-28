@@ -5,9 +5,11 @@ import {
   FieldType,
   identityOverrideProcessor,
   PanelPlugin,
+  type SelectableValue,
   VizOrientation,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { getTemplateSrv } from '@grafana/runtime';
 import { GraphTransform, GraphThresholdsStyleMode, StackingMode, VisibilityMode } from '@grafana/schema';
 import { getGraphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
 import { optsWithHideZeros } from '@grafana/ui/internal';
@@ -243,6 +245,25 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         name: t('barchart.config.name-full-highlight', 'Highlight full area on hover'),
         defaultValue: defaultOptions.fullHighlight,
         showIf: (c) => c.stacking === StackingMode.None,
+      })
+      .addSelect({
+        path: 'xValueMappedVariable',
+        name: t('barchart.config.name-x-value-mapped-variable', 'Variable name for x values'),
+        description: t('barchart.config.description-x-value-mapped-variable', 'Select x variable to update on click'),
+        settings: {
+          options: getVariablesList(),
+        },
+        category: [t('barchart.category-variable-mapping', 'Variable mapping')],
+      })
+      .addSelect({
+        path: 'yValueMappedVariable',
+        name: t('barchart.config.name-y-value-mapped-variable', 'Variable name for y values'),
+        description: t('barchart.config.description-y-value-mapped-variable', 'Select y variable to update on click'),
+        settings: {
+          options: getVariablesList(),
+        },
+        category: [t('barchart.category-variable-mapping', 'Variable mapping')],
+        showIf: (c) => c.stacking != null && c.stacking !== StackingMode.None,
       });
 
     builder.addFieldNamePicker({
@@ -273,4 +294,13 @@ function countNumberFields(data?: DataFrame[]): number {
     }
   }
   return count;
+}
+
+function getVariablesList(): Array<SelectableValue<string>> {
+  return getTemplateSrv()
+    .getVariables()
+    .map((variable) => ({
+      value: variable.name,
+      label: variable.label ? variable.label : variable.name,
+    }));
 }
