@@ -153,6 +153,16 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
           step: 1,
           integer: true,
         },
+      })
+      .addTextInput({
+        path: 'noDataMessage',
+        name: t('state-timeline.name-no-data-message', 'No data message'),
+        description: t('state-timeline.description-no-data-message', 'Custom message to show when there is no data'),
+        category,
+        defaultValue: '',
+        settings: {
+          placeholder: t('state-timeline.placeholder-no-data-message', 'Data does not have a time field'),
+        },
       });
 
     commonOptionsBuilder.addLegendOptions(builder, false, true);

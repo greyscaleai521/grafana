@@ -18,6 +18,14 @@ export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui
    */
   colWidth?: number;
   /**
+   * Dynamic column width using field name
+   */
+  dynamicColumnWidthField?: string;
+  /**
+   * Custom message to show when there is no data
+   */
+  noDataMessage?: string;
+  /**
    * Enables pagination when > 0
    */
   perPage?: number;

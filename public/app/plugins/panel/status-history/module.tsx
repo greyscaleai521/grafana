@@ -108,6 +108,28 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
           step: 1,
           integer: true,
         },
+      })
+      .addFieldNamePicker({
+        path: 'dynamicColumnWidthField',
+        name: t('status-history.name-dynamic-column-width', 'Dynamic column width using'),
+        description: t(
+          'status-history.description-dynamic-column-width',
+          'Select a field to use for dynamic column width. If the field is a timestamp, bars stretch from from_time to the selected field value.'
+        ),
+        category,
+        settings: {
+          placeholderText: t('status-history.placeholder-dynamic-column-width', 'Choose'),
+        },
+      })
+      .addTextInput({
+        path: 'noDataMessage',
+        name: t('status-history.name-no-data-message', 'No data message'),
+        description: t('status-history.description-no-data-message', 'Custom message to show when there is no data'),
+        category,
+        defaultValue: '',
+        settings: {
+          placeholder: t('status-history.placeholder-no-data-message', 'Data does not have a time field'),
+        },
       });
 
     commonOptionsBuilder.addLegendOptions(builder, false, true);

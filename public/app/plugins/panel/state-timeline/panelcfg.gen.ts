@@ -22,6 +22,10 @@ export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui
    */
   mergeValues?: boolean;
   /**
+   * Custom message to show when there is no data
+   */
+  noDataMessage?: string;
+  /**
    * Enables pagination when > 0
    */
   perPage?: number;

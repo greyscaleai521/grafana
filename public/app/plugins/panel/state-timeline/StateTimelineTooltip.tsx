@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react';
 
-import { FieldType, type TimeRange, usePluginContext } from '@grafana/data';
+import { type DataFrame, type Field, FieldType, type TimeRange, usePluginContext } from '@grafana/data';
 import { SortOrder } from '@grafana/schema';
 import { TooltipDisplayMode } from '@grafana/ui';
 import {
@@ -20,6 +20,9 @@ import { isTooltipScrollable } from '../timeseries/utils';
 interface StateTimelineTooltipProps extends TimeSeriesTooltipProps {
   timeRange: TimeRange;
   withDuration: boolean;
+  toTimeFieldName?: string;
+  frames?: DataFrame[];
+  skipNullHover?: boolean;
 }
 
 export const StateTimelineTooltip = ({
@@ -32,6 +35,9 @@ export const StateTimelineTooltip = ({
   annotate,
   timeRange,
   withDuration,
+  toTimeFieldName,
+  frames,
+  skipNullHover,
   maxHeight,
   replaceVariables,
   dataLinks,
@@ -39,9 +45,35 @@ export const StateTimelineTooltip = ({
   const pluginContext = usePluginContext();
   const xField = series.fields[0];
 
-  const dataIdx = seriesIdx != null ? dataIdxs[seriesIdx] : dataIdxs.find((idx) => idx != null);
+  let dataIdx = seriesIdx != null ? dataIdxs[seriesIdx] : dataIdxs.find((idx) => idx != null);
 
-  const xVal = xField.display!(xField.values[dataIdx!]).text;
+  // Status History: if the hovered field value is null at this index, look for a non-null
+  // value at the same timestamp (multiple rows can share a timestamp with values on
+  // different fields), so the tooltip reflects the bar actually under the cursor
+  if (skipNullHover && seriesIdx != null && dataIdx != null) {
+    const field = series.fields[seriesIdx];
+    const value = field?.values[dataIdx];
+
+    if (value == null || value === '') {
+      const targetTime = xField.values[dataIdx];
+
+      for (let i = 0; i < xField.values.length; i++) {
+        if (xField.values[i] === targetTime) {
+          const candidateValue = field?.values[i];
+          if (candidateValue != null && candidateValue !== '') {
+            dataIdx = i;
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  if (dataIdx == null) {
+    return null;
+  }
+
+  const xVal = xField.display!(xField.values[dataIdx]).text;
 
   mode = isPinned ? TooltipDisplayMode.Single : mode;
 
@@ -51,22 +83,81 @@ export const StateTimelineTooltip = ({
   // append duration in single mode
   if (withDuration && mode === TooltipDisplayMode.Single) {
     const field = series.fields[seriesIdx!];
-    const nextStateIdx = findNextStateIndex(field, dataIdx!);
-    let nextStateTs;
-    if (nextStateIdx != null) {
-      nextStateTs = xField.values[nextStateIdx];
-    }
-
     const stateTs = xField.values[dataIdx!];
     let duration: string;
+    let toTime: number | null = null;
 
-    if (nextStateTs) {
-      duration = nextStateTs && fmtDuration(nextStateTs - stateTs);
-      endTime = nextStateTs;
+    // Try to resolve an explicit to_time field from the original frames when configured
+    if (toTimeFieldName && frames) {
+      const origin = field.state?.origin;
+      if (origin) {
+        const originalFrame = frames[origin.frameIndex];
+        const originalField = originalFrame?.fields[origin.fieldIndex];
+        const timeField = originalFrame?.fields.find((f) => f.type === FieldType.time);
+
+        if (originalFrame && originalField && timeField) {
+          let toTimeField: Field | undefined;
+          for (const f of originalFrame.fields) {
+            if (f.name === toTimeFieldName || f.state?.displayName === toTimeFieldName) {
+              toTimeField = f;
+              break;
+            }
+          }
+
+          if (!toTimeField) {
+            // Fallback: search all frames
+            for (const frame of frames) {
+              for (const f of frame.fields) {
+                if (f.name === toTimeFieldName || f.state?.displayName === toTimeFieldName) {
+                  toTimeField = f;
+                  break;
+                }
+              }
+              if (toTimeField) {
+                break;
+              }
+            }
+          }
+
+          if (toTimeField) {
+            // Match the row by timestamp and field value, then read its to_time
+            const fieldValue = field.values[dataIdx!];
+            for (let i = 0; i < timeField.values.length; i++) {
+              const timeVal = timeField.values[i];
+              const fieldVal = originalField.values[i];
+
+              if (timeVal === stateTs && fieldVal != null && fieldVal === fieldValue) {
+                const toTimeVal = toTimeField.values[i];
+                if (toTimeVal != null) {
+                  toTime = toTimeVal;
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (toTime != null) {
+      duration = fmtDuration(toTime - stateTs);
+      endTime = toTime;
     } else {
-      const to = timeRange.to.valueOf();
-      duration = fmtDuration(to - stateTs);
-      endTime = to;
+      // Fall back to the next state change, then the time range end
+      const nextStateIdx = findNextStateIndex(field, dataIdx!);
+      let nextStateTs;
+      if (nextStateIdx != null) {
+        nextStateTs = xField.values[nextStateIdx];
+      }
+
+      if (nextStateTs) {
+        duration = nextStateTs && fmtDuration(nextStateTs - stateTs);
+        endTime = nextStateTs;
+      } else {
+        const to = timeRange.to.valueOf();
+        duration = fmtDuration(to - stateTs);
+        endTime = to;
+      }
     }
 
     contentItems.push({ label: 'Duration', value: duration });

@@ -56,8 +56,8 @@ export const StatusHistoryPanel = ({
   const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
 
   const { frames, warn } = useMemo(
-    () => prepareTimelineFields(data.series, false, timeRange, theme),
-    [data.series, timeRange, theme]
+    () => prepareTimelineFields(data.series, false, timeRange, theme, options.noDataMessage),
+    [data.series, timeRange, theme, options.noDataMessage]
   );
 
   const { paginatedFrames, paginationRev, paginationElement, paginationHeight } = usePagination(
@@ -152,7 +152,10 @@ export const StatusHistoryPanel = ({
                         isPinned={isPinned}
                         timeRange={timeRange}
                         annotate={enableAnnotationCreation ? annotate : undefined}
-                        withDuration={false}
+                        withDuration={true}
+                        toTimeFieldName={options.dynamicColumnWidthField}
+                        frames={paginatedFrames}
+                        skipNullHover={true}
                         maxHeight={options.tooltip.maxHeight}
                         replaceVariables={replaceVariables}
                         dataLinks={dataLinks}

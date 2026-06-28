@@ -1,6 +1,6 @@
 import uPlot from 'uplot';
 
-import { getDefaultTimeRange, createTheme } from '@grafana/data';
+import { type DataFrame, FieldType, getDefaultTimeRange, createTheme } from '@grafana/data';
 import { VisibilityMode } from '@grafana/schema';
 
 import { getConfig, type TimelineCoreOptions, shouldDrawYValue } from './timeline';
@@ -206,6 +206,100 @@ describe('StateTimeline uPlot integration', () => {
           expect(rect).toHaveBeenCalledTimes(1);
         });
       });
+    });
+  });
+
+  describe('x-axis range', () => {
+    it('returns undefined for xSplits in Samples mode (Status History)', () => {
+      const config = getConfig(buildTestCoreOptions({ mode: TimelineMode.Samples }));
+      expect(config.xSplits).toBeUndefined();
+    });
+
+    it('returns undefined for xSplits in Changes mode (State Timeline)', () => {
+      const config = getConfig(buildTestCoreOptions({ mode: TimelineMode.Changes }));
+      expect(config.xSplits).toBeUndefined();
+    });
+
+    it('returns the full time range from getTimeRange without data-driven padding in Samples mode', () => {
+      const timeRange = getDefaultTimeRange();
+      const config = getConfig(
+        buildTestCoreOptions({ mode: TimelineMode.Samples, getTimeRange: jest.fn(() => timeRange) })
+      );
+
+      expect(config.xRange()).toEqual([timeRange.from.valueOf(), timeRange.to.valueOf()]);
+    });
+  });
+
+  describe('dynamic column width', () => {
+    const buildDynamicWidthFrames = (): DataFrame[] =>
+      [
+        {
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1000, 2000], config: {} },
+            { name: 'to_time', type: FieldType.time, values: [1500, 2500], config: {} },
+          ],
+          length: 2,
+        },
+      ] as unknown as DataFrame[];
+
+    it('returns a drawPaths function when a dynamicColumnWidthField is configured', () => {
+      const config = getConfig(
+        buildTestCoreOptions({
+          mode: TimelineMode.Samples,
+          formatValue: () => 'foo',
+          dynamicColumnWidthField: 'to_time',
+          allFrames: buildDynamicWidthFrames(),
+        })
+      );
+      expect(typeof config.drawPaths).toBe('function');
+    });
+
+    it('uses the to_time field values to size bars in Samples mode', () => {
+      const { drawClear, drawPaths } = getConfig(
+        buildTestCoreOptions({
+          mode: TimelineMode.Samples,
+          formatValue: () => 'foo',
+          dynamicColumnWidthField: 'to_time',
+          allFrames: buildDynamicWidthFrames(),
+        })
+      );
+
+      const mockUplot = buildMockUplotInstance([
+        [1000, 2000],
+        [1, 2],
+      ]);
+
+      drawClear(mockUplot);
+      drawPaths(mockUplot, 1, 0, 1);
+
+      const orientCallback = jest.mocked(uPlot.orient).mock.calls[jest.mocked(uPlot.orient).mock.calls.length - 1][2];
+      const calledXValues: number[] = [];
+      const valToPosX = (x: number) => {
+        calledXValues.push(x);
+        return 1;
+      };
+      orientCallback(
+        mockUplot.series[0],
+        mockUplot.data[0] as number[],
+        mockUplot.data[1] as number[],
+        mockUplot.scales.x,
+        mockUplot.scales.y,
+        valToPosX,
+        jest.fn(() => 1),
+        0,
+        0,
+        100,
+        100,
+        jest.fn(() => {}),
+        jest.fn(() => {}),
+        jest.fn(() => {}),
+        jest.fn(() => {}),
+        jest.fn(() => {})
+      );
+
+      // The dynamic-width path converts each row's to_time value via valToPosX.
+      expect(calledXValues).toContain(1500);
+      expect(calledXValues).toContain(2500);
     });
   });
 

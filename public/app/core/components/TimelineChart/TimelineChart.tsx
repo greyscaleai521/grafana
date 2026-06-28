@@ -9,10 +9,10 @@ import {
 } from '@grafana/schema';
 import { type UPlotConfigBuilder, VizLayout, VizLegend, type VizLegendItem } from '@grafana/ui';
 
-import { GraphNG, type GraphNGProps } from '../GraphNG/GraphNG';
+import { GraphNG, type GraphNGProps, type PropDiffFn } from '../GraphNG/GraphNG';
 import { getXAxisConfig } from '../TimeSeries/utils';
 
-import { preparePlotConfigBuilder, type TimelineMode } from './utils';
+import { preparePlotConfigBuilder, TimelineMode } from './utils';
 
 export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'> {
   mode: TimelineMode;
@@ -20,15 +20,26 @@ export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsT
   showValue: VisibilityMode;
   alignValue?: TimelineValueAlignment;
   colWidth?: number;
+  dynamicColumnWidthField?: string;
   legendItems?: VizLegendItem[];
   tooltip?: VizTooltipOptions;
   // Whenever `paginationRev` changes, the graph will be fully re-configured/rendered.
   paginationRev?: string;
 }
 
-const propsToDiff = [
+// Status History (Samples) must rebuild the config when frames change so the
+// dynamic-column-width mapping (captured at config-build time) is refreshed.
+// State Timeline (Changes) keeps the cheaper data-only update path.
+export const reconfigOnFramesChangeInSamples: PropDiffFn = (prev, next) => {
+  const isSamples = 'mode' in next && next.mode === TimelineMode.Samples;
+  const framesChanged = 'frames' in prev && 'frames' in next && prev.frames !== next.frames;
+  return !(isSamples && framesChanged);
+};
+
+const propsToDiff: Array<string | PropDiffFn> = [
   'rowHeight',
   'colWidth',
+  'dynamicColumnWidthField',
   'showValue',
   'mergeValues',
   'alignValue',
@@ -36,6 +47,7 @@ const propsToDiff = [
   'paginationRev',
   'annotationLanes',
   'theme',
+  reconfigOnFramesChangeInSamples,
 ];
 
 export const TimelineChart = (props: TimelineProps) => {
@@ -72,7 +84,9 @@ export const TimelineChart = (props: TimelineProps) => {
         rowHeight: alignedFrame.fields.length > 2 ? rowHeight : 1,
         getValueColor: getValueColor,
 
-        hoverMulti: tooltip?.mode === TooltipDisplayMode.Multi,
+        // For Samples mode (Status History), always use single hover so the cursor
+        // only highlights the bar being hovered, not all bars at the same x position
+        hoverMulti: props.mode === TimelineMode.Samples ? false : tooltip?.mode === TooltipDisplayMode.Multi,
         xAxisConfig: getXAxisConfig(props.annotationLanes),
       });
     },

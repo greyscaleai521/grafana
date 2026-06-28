@@ -40,6 +40,8 @@ composableKinds: PanelCfg: {
 					alignValue?: ui.TimelineValueAlignment & (*"left" | _)
 					//Enables pagination when > 0
 					perPage?: number & >=1 | *20
+					//Custom message to show when there is no data
+					noDataMessage?: string
 				} @cuetsy(kind="interface")
 				FieldConfig: {
 					ui.AxisConfig

@@ -54,6 +54,7 @@ interface UPlotConfigOptions {
   getValueColor: (frameIdx: number, fieldIdx: number, value: unknown) => string;
   hoverMulti: boolean;
   axisWidth?: number;
+  dynamicColumnWidthField?: string;
 }
 
 /**
@@ -94,6 +95,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   getValueColor,
   hoverMulti,
   xAxisConfig,
+  dynamicColumnWidthField,
+  allFrames,
 }) => {
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
@@ -140,6 +143,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     // hardcoded formatter for state values
     formatValue: (seriesIdx, value) => formattedValueToString(frame.fields[seriesIdx].display!(value)),
     hoverMulti,
+    dynamicColumnWidthField,
+    allFrames,
   };
 
   const coreConfig = getConfig(opts);
@@ -156,11 +161,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     isTime: true,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
-    range: (u) => {
+    range: () => {
       const state = builder.getState();
       if (state.isPanning) {
         if (state.isTimeRangePending) {
-          const propsRange = coreConfig.xRange(u);
+          const propsRange = coreConfig.xRange();
           const propsFrom = propsRange[0];
           const propsTo = propsRange[1];
 
@@ -179,7 +184,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
 
         return [state.min, state.max];
       }
-      return coreConfig.xRange(u);
+      return coreConfig.xRange();
     },
   });
 
@@ -198,7 +203,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     show: !xAxisHidden,
     scaleKey: xScaleKey,
     isTime: true,
-    splits: coreConfig.xSplits!,
+    splits: coreConfig.xSplits,
     placement: AxisPlacement.Bottom,
     timeZone: timeZones[0],
     theme,
@@ -338,7 +343,8 @@ export function prepareTimelineFields(
   series: DataFrame[] | undefined,
   mergeValues: boolean,
   timeRange: TimeRange,
-  theme: GrafanaTheme2
+  theme: GrafanaTheme2,
+  noDataMsg?: string
 ): { frames?: DataFrame[]; warn?: string } {
   // this allows PanelDataErrorView to show the default noValue message
   if (!series?.length) {
@@ -470,7 +476,7 @@ export function prepareTimelineFields(
   }
 
   if (!hasTimeseries) {
-    return { warn: t('timeline.missing-field.time', 'Data does not have a time field') };
+    return { warn: noDataMsg || t('timeline.missing-field.time', 'Data does not have a time field') };
   }
   if (!frames.length) {
     return { warn: t('timeline.missing-field.all', 'No graphable fields') };
