@@ -18,7 +18,6 @@ import {
   SceneVariableSet,
   ScopesVariable,
   SwitchVariable,
-  TextBoxVariable,
 } from '@grafana/scenes';
 import {
   type AdhocVariableKind,
@@ -81,6 +80,7 @@ import { getIntervalsFromQueryString } from '../utils/utils';
 
 import { transformV2ToV1AnnotationQuery } from './annotations';
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
+import { ValidatingTextBoxVariable } from './custom-variables/ValidatingTextBoxVariable';
 import { migrateGroupByVariablesV2 } from './groupByMigration';
 import { layoutDeserializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
 import { getDataSourceForQuery, getRuntimeVariableDataSource } from './layoutSerializers/utils';
@@ -495,7 +495,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       }
     }
 
-    return new TextBoxVariable({
+    return new ValidatingTextBoxVariable({
       ...commonProperties,
       value: val,
       skipUrlSync: variable.spec.skipUrlSync,

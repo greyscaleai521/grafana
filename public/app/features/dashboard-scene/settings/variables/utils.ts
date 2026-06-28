@@ -23,6 +23,7 @@ import {
 import { type DataSourceRef, VariableHide, type VariableType } from '@grafana/schema';
 import { type OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { ValidatingTextBoxVariable } from '../../serialization/custom-variables/ValidatingTextBoxVariable';
 import { getIntervalsQueryFromNewIntervalModel } from '../../utils/utils';
 
 import { AdHocFiltersVariableEditor, getAdHocFilterOptions } from './editors/AdHocFiltersVariableEditor';
@@ -215,7 +216,7 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
     case 'groupby':
       return new GroupByVariable(initialState);
     case 'textbox':
-      return new TextBoxVariable(initialState);
+      return new ValidatingTextBoxVariable(initialState);
     case 'switch':
       return new SwitchVariable(initialState);
   }

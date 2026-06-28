@@ -12,12 +12,12 @@ import {
   SceneVariableSet,
   ScopesVariable,
   SwitchVariable,
-  TextBoxVariable,
 } from '@grafana/scenes';
 import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
+import { ValidatingTextBoxVariable } from '../serialization/custom-variables/ValidatingTextBoxVariable';
 import { migrateGroupByVariablesV1 } from '../serialization/groupByMigration';
 import { createSceneVariableFromVariableModel as createSceneVariableFromVariableModelV2 } from '../serialization/transformSaveModelSchemaV2ToScene';
 
@@ -299,7 +299,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       }
     }
 
-    return new TextBoxVariable({
+    return new ValidatingTextBoxVariable({
       ...commonProperties,
       value: val,
       skipUrlSync: variable.skipUrlSync,
