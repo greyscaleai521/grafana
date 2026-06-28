@@ -47,6 +47,9 @@ export interface TimeSeriesTooltipProps {
   annotate?: () => void;
   maxHeight?: number;
 
+  // field names always shown in custom tooltip mode, in addition to the hovered series
+  fixedFields?: string[];
+
   replaceVariables?: InterpolateFunction;
   dataLinks: LinkModel[];
   hideZeros?: boolean;
@@ -73,6 +76,7 @@ export const TimeSeriesTooltip = ({
   canExecuteActions,
   compareDiffMs,
   filterByGroupedLabels,
+  fixedFields,
 }: TimeSeriesTooltipProps) => {
   const pluginContext = usePluginContext();
 
@@ -94,7 +98,8 @@ export const TimeSeriesTooltip = ({
     sortOrder,
     (field) => field.type === FieldType.number || field.type === FieldType.enum,
     hideZeros,
-    _rest
+    _rest,
+    fixedFields
   );
 
   let footer: ReactNode;

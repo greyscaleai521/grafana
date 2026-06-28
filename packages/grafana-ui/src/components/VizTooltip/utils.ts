@@ -113,7 +113,8 @@ export const getContentItems = (
   sortOrder: SortOrder,
   fieldFilter = (field: Field) => true,
   hideZeros = false,
-  _restFields?: Field[]
+  _restFields?: Field[],
+  fixedFields?: string[]
 ): VizTooltipItem[] => {
   let rows: VizTooltipItem[] = [];
 
@@ -133,6 +134,11 @@ export const getContentItems = (
 
     // in single mode, skip all but closest field
     if (mode === TooltipDisplayMode.Single && seriesIdx !== i) {
+      continue;
+    }
+
+    // in custom mode, skip all but the closest field and any explicitly fixed fields
+    if (mode === TooltipDisplayMode.Custom && seriesIdx !== i && !fixedFields?.includes(field.name)) {
       continue;
     }
 
@@ -170,7 +176,7 @@ export const getContentItems = (
       color: display.color ?? FALLBACK_COLOR,
       colorIndicator,
       colorPlacement,
-      isActive: mode === TooltipDisplayMode.Multi && seriesIdx === i,
+      isActive: (mode === TooltipDisplayMode.Multi || mode === TooltipDisplayMode.Custom) && seriesIdx === i,
       numeric,
       lineStyle: field.config.custom?.lineStyle,
     });

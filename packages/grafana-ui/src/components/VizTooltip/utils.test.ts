@@ -280,6 +280,62 @@ describe('utils', () => {
       expect(rows.length).toBe(1);
       expect(rows[0].value).toBe('5');
     });
+
+    it('displays only the hovered series in custom mode when no fixed fields are given', () => {
+      const rows = getContentItems(
+        fields,
+        xField,
+        dataIdxs,
+        2,
+        TooltipDisplayMode.Custom,
+        SortOrder.None,
+        undefined,
+        undefined,
+        undefined,
+        undefined
+      );
+      expect(rows.length).toBe(1);
+      expect(rows[0].label).toBe('B-series');
+      expect(rows[0].value).toBe('-26');
+      expect(rows[0].isActive).toBe(true);
+    });
+
+    it('displays the hovered series plus any fixed fields in custom mode', () => {
+      const rows = getContentItems(
+        fields,
+        xField,
+        dataIdxs,
+        2,
+        TooltipDisplayMode.Custom,
+        SortOrder.None,
+        undefined,
+        undefined,
+        undefined,
+        ['A-series']
+      );
+      expect(rows.length).toBe(2);
+      expect(rows.map((r) => r.label)).toEqual(['A-series', 'B-series']);
+      expect(rows.find((r) => r.label === 'A-series')?.isActive).toBe(false);
+      expect(rows.find((r) => r.label === 'B-series')?.isActive).toBe(true);
+    });
+
+    it('displays only the fixed fields in custom mode when no series is hovered', () => {
+      const rows = getContentItems(
+        fields,
+        xField,
+        dataIdxs,
+        null,
+        TooltipDisplayMode.Custom,
+        SortOrder.None,
+        undefined,
+        undefined,
+        undefined,
+        ['A-series']
+      );
+      expect(rows.length).toBe(1);
+      expect(rows[0].label).toBe('A-series');
+      expect(rows[0].value).toBe('20');
+    });
   });
 
   describe('it tests getContentItems with string values', () => {

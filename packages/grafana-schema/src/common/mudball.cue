@@ -234,7 +234,7 @@ VizTextDisplayOptions: {
 } @cuetsy(kind="interface")
 
 // TODO docs
-TooltipDisplayMode: "single" | "multi" | "none" @cuetsy(kind="enum")
+TooltipDisplayMode: "single" | "multi" | "none" | "custom" @cuetsy(kind="enum")
 
 // TODO docs
 SortOrder: "asc" | "desc" | "none" @cuetsy(kind="enum",memberNames="Ascending|Descending|None")
@@ -285,11 +285,12 @@ BarGaugeSizing: "auto" | "manual" @cuetsy(kind="enum")
 
 // TODO docs
 VizTooltipOptions: {
-	mode:       TooltipDisplayMode
-	sort:       SortOrder
-	maxWidth?:  number
-	maxHeight?: number
-	hideZeros?: bool
+	mode:        TooltipDisplayMode
+	sort:        SortOrder
+	maxWidth?:   number
+	maxHeight?:  number
+	hideZeros?:  bool
+	fixedFields?: string
 } @cuetsy(kind="interface")
 
 Labels: {
