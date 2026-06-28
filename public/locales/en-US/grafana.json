@@ -6877,6 +6877,10 @@
         }
       }
     },
+    "category-bar": {
+      "clear": "Clear",
+      "clear-all": "Clear All"
+    },
     "constant-variable-form": {
       "constant-options": "Constant options",
       "label-value": "Value",

@@ -18,6 +18,7 @@ import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel
 
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
 import { ValidatingTextBoxVariable } from '../serialization/custom-variables/ValidatingTextBoxVariable';
+import { recordVariableDefault } from '../serialization/custom-variables/variableDefaultsRegistry';
 import { migrateGroupByVariablesV1 } from '../serialization/groupByMigration';
 import { createSceneVariableFromVariableModel as createSceneVariableFromVariableModelV2 } from '../serialization/transformSaveModelSchemaV2ToScene';
 
@@ -30,7 +31,9 @@ export function createVariablesForDashboard(oldModel: DashboardModel, defaultVar
   const variableObjects = variables
     .map((v) => {
       try {
-        return createSceneVariableFromVariableModel(v);
+        const sv = createSceneVariableFromVariableModel(v);
+        recordVariableDefault(sv);
+        return sv;
       } catch (err) {
         console.error(err);
         return null;
@@ -43,7 +46,9 @@ export function createVariablesForDashboard(oldModel: DashboardModel, defaultVar
   const defaultVariableObjects = defaultVariables
     .map((v) => {
       try {
-        return createSceneVariableFromVariableModelV2(v);
+        const sv = createSceneVariableFromVariableModelV2(v);
+        recordVariableDefault(sv);
+        return sv;
       } catch (err) {
         console.error(err);
         return null;

@@ -81,6 +81,7 @@ import { getIntervalsFromQueryString } from '../utils/utils';
 import { transformV2ToV1AnnotationQuery } from './annotations';
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import { ValidatingTextBoxVariable } from './custom-variables/ValidatingTextBoxVariable';
+import { recordVariableDefault } from './custom-variables/variableDefaultsRegistry';
 import { migrateGroupByVariablesV2 } from './groupByMigration';
 import { layoutDeserializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
 import { getDataSourceForQuery, getRuntimeVariableDataSource } from './layoutSerializers/utils';
@@ -307,7 +308,9 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec, defaultVariable
   const variableObjects = variables
     .map((v) => {
       try {
-        return createSceneVariableFromVariableModel(v);
+        const sv = createSceneVariableFromVariableModel(v);
+        recordVariableDefault(sv);
+        return sv;
       } catch (err) {
         console.error(err);
         return null;
@@ -320,7 +323,9 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec, defaultVariable
   const defaultVariableObjects = defaultVariables
     .map((v) => {
       try {
-        return createSceneVariableFromVariableModel(v);
+        const sv = createSceneVariableFromVariableModel(v);
+        recordVariableDefault(sv);
+        return sv;
       } catch (err) {
         console.error(err);
         return null;

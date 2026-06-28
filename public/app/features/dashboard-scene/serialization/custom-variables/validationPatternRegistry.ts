@@ -13,6 +13,12 @@
  *     default keystroke gate for specific variables (e.g. numeric-only for
  *     range filters).
  *       { key: 'inputCharPatternsByName', value: { <variableName>: '<regex>' } }
+ *   - `defaultValues` (F4): global list of values treated as "default" by the
+ *     category non-default filter counter.
+ *       { key: 'filterDefaultValues', value: ['All', 'Production', ...] }
+ *   - `defaultValuesByName` (F4): per-variable default value override for the
+ *     counter.
+ *       { key: 'filterDefaultValuesByName', value: { <variableName>: '<value>' } }
  *
  * All are sent either proactively (on iframe load) or in response to our
  *   { key: 'requestValidationPatterns' }
@@ -31,11 +37,29 @@ export interface ValidationConfig {
   inputPatterns: PatternMap;
   /** Allowed-characters pattern applied to all textbox inputs while typing. */
   defaultInputPattern?: string;
+  /**
+   * F4 — global set of values considered "default" for the non-default filter
+   * counter (e.g. 'All', 'Production'). Business-specific values are owned by
+   * the host so Grafana stays generic. Beyond this set, empty/`$__all`/`All`
+   * are always treated as default.
+   */
+  defaultValues: string[];
+  /**
+   * F4 — per-variable (by name) default value override for the counter (e.g.
+   * `{ InspTarget: '1200' }`). A variable at this value is not counted.
+   */
+  defaultValuesByName: PatternMap;
 }
 
 // A single cached snapshot object; its reference only changes when data changes
 // so useSyncExternalStore stays stable (no render loops).
-let config: ValidationConfig = { patterns: {}, inputPatterns: {}, defaultInputPattern: undefined };
+let config: ValidationConfig = {
+  patterns: {},
+  inputPatterns: {},
+  defaultInputPattern: undefined,
+  defaultValues: [],
+  defaultValuesByName: {},
+};
 const listeners = new Set<() => void>();
 let initialized = false;
 
@@ -57,6 +81,16 @@ function setInputPatterns(next: PatternMap) {
 
 function setDefaultInputPattern(next: string | undefined) {
   config = { ...config, defaultInputPattern: next || undefined };
+  emit();
+}
+
+function setDefaultValues(next: string[]) {
+  config = { ...config, defaultValues: Array.isArray(next) ? next.map(String) : [] };
+  emit();
+}
+
+function setDefaultValuesByName(next: PatternMap) {
+  config = { ...config, defaultValuesByName: next ?? {} };
   emit();
 }
 
@@ -92,6 +126,10 @@ export function initValidationPatternBridge() {
       setInputPatterns(data.value);
     } else if (data.key === 'inputCharPattern' && (typeof data.value === 'string' || data.value == null)) {
       setDefaultInputPattern(data.value);
+    } else if (data.key === 'filterDefaultValues' && Array.isArray(data.value)) {
+      setDefaultValues(data.value);
+    } else if (data.key === 'filterDefaultValuesByName' && data.value && typeof data.value === 'object') {
+      setDefaultValuesByName(data.value);
     }
   });
 

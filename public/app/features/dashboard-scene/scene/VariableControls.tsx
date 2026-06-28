@@ -1,8 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useState, useSyncExternalStore } from 'react';
 
 import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
   ControlsLabel,
@@ -16,11 +17,18 @@ import {
   SceneVariableValueChangedEvent,
   useSceneObjectState,
 } from '@grafana/scenes';
-import { useElementSelection, useStyles2 } from '@grafana/ui';
+import { Button, useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { dashboardEditActions } from '../edit-pane/shared';
+import {
+  getValidationConfigSnapshot,
+  subscribeToValidationPatterns,
+} from '../serialization/custom-variables/validationPatternRegistry';
+import { clearVariableToDefault } from '../serialization/custom-variables/variableDefaultsRegistry';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
 
+import { CategoryBar } from './CategoryBar';
+import { isVariableActive, OTHER_CATEGORY, parseVariableCategory } from './categoryFilters';
 import { ControlActionsPopover, ControlEditActions } from './ControlActionsPopover';
 import { DashboardScene } from './DashboardScene';
 import { AddVariableButton } from './VariableControlsAddButton';
@@ -31,10 +39,23 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   const { isEditing } = dashboard.useState();
   const isEditingNewLayouts = isEditing && config.featureToggles.dashboardNewLayouts;
 
+  // Host-supplied default-value config (drives the non-default counter).
+  const filterConfig = useSyncExternalStore(
+    subscribeToValidationPatterns,
+    getValidationConfigSnapshot,
+    getValidationConfigSnapshot
+  );
+
+  // Recompute the per-category counter when any variable value changes (the
+  // variable set only re-renders us on add/remove, not on value change).
+  const [, forceRender] = useReducer((x: number) => x + 1, 0);
+  const [selectedCategory, setSelectedCategory] = useState(0);
+
   // Subscribe to variable value changes to track interactions
   useEffect(() => {
     const subscription = dashboard.subscribeToEvent(SceneVariableValueChangedEvent, () => {
       reportInteraction('grafana_dashboards_variable_changed');
+      forceRender();
     });
 
     return () => {
@@ -58,16 +79,67 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   const hasDrilldownControls = config.featureToggles.dashboardAdHocAndGroupByWrapper && adHocVar && groupByVar;
   const variablesToRender = hasDrilldownControls ? restVariables : visibleVariables;
 
+  // F4 — derive category tabs from each variable's `description`.
+  const parsed = variablesToRender.map((variable) => ({
+    variable,
+    category: parseVariableCategory(variable.state.description).category,
+  }));
+
+  const categories: string[] = [];
+  for (const { category } of parsed) {
+    if (category && !categories.includes(category)) {
+      categories.push(category);
+    }
+  }
+  const hasUncategorized = parsed.some(({ category }) => !category);
+  const showCategoryBar = categories.length > 0;
+  const tabs = hasUncategorized ? [...categories, OTHER_CATEGORY] : categories;
+  const selectedIndex = showCategoryBar ? Math.min(selectedCategory, tabs.length - 1) : 0;
+  const selectedTab = tabs[selectedIndex];
+
+  const filteredVariables = showCategoryBar
+    ? parsed
+        .filter(({ category }) => (selectedTab === OTHER_CATEGORY ? !category : category === selectedTab))
+        .map(({ variable }) => variable)
+    : variablesToRender;
+
+  const categoryFilterCounter: Record<string, number> = {};
+  if (showCategoryBar) {
+    for (const { variable, category } of parsed) {
+      if (isVariableActive(variable, filterConfig)) {
+        const tab = category ?? OTHER_CATEGORY;
+        categoryFilterCounter[tab] = (categoryFilterCounter[tab] ?? 0) + 1;
+      }
+    }
+  }
+
+  const onClearAll = () => variablesToRender.forEach(clearVariableToDefault);
+  const onClearCategory = () => filteredVariables.forEach(clearVariableToDefault);
+
   return (
     <>
-      {variablesToRender.length > 0 &&
-        variablesToRender.map((variable) => (
+      {showCategoryBar && (
+        <CategoryBar
+          categories={tabs}
+          selectedCategory={selectedIndex}
+          onCategoryChange={setSelectedCategory}
+          categoryFilterCounter={categoryFilterCounter}
+          onClearAll={onClearAll}
+        />
+      )}
+      {filteredVariables.length > 0 &&
+        filteredVariables.map((variable) => (
           <VariableValueSelectWrapper
             key={variable.state.key}
             variable={variable}
             isEditingNewLayouts={isEditingNewLayouts}
           />
         ))}
+      {showCategoryBar && filteredVariables.length > 0 && (
+        <Button onClick={onClearCategory} fill="text">
+          {t('dashboard-scene.category-bar.clear', 'Clear')}
+        </Button>
+      )}
       {config.featureToggles.dashboardNewLayouts ? <AddVariableButton dashboard={dashboard} /> : null}
     </>
   );
@@ -193,13 +265,12 @@ function VariableLabel({
 
   const labelOrName = state.label || state.name;
   const controlsLayout = layout ?? 'horizontal';
-  const descriptionSuffix =
-    state.description != null && state.description !== '' ? (
-      <VariableDescriptionTooltip
-        description={state.description}
-        placement={controlsLayout === 'vertical' ? 'top' : 'bottom'}
-      />
-    ) : undefined;
+  // F4 — the description may encode the category before an `@info:` token; only
+  // the part after it (if any) is shown in the tooltip.
+  const { info } = parseVariableCategory(state.description);
+  const descriptionSuffix = info ? (
+    <VariableDescriptionTooltip description={info} placement={controlsLayout === 'vertical' ? 'top' : 'bottom'} />
+  ) : undefined;
 
   return (
     <ControlsLabel
