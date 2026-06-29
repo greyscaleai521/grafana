@@ -59,6 +59,20 @@ export class ErrorBoundary extends PureComponent<Props, State> {
 
     this.setState({ error, errorInfo });
 
+    // Forward render errors to the embedding host so it can surface/report them.
+    // Serialize the error's fields explicitly: `JSON.stringify(new Error())` is
+    // `"{}"` because message/name/stack are non-enumerable, which would drop the
+    // message before it ever reaches the host.
+    const parentWindow = window.parent || window;
+    parentWindow.postMessage(
+      {
+        type: 'grafanaError',
+        error: JSON.stringify({ name: error.name, message: error.message, stack: error.stack }),
+        stack: JSON.stringify(errorInfo),
+      },
+      '*'
+    );
+
     if (this.props.onError) {
       this.props.onError(error);
     }

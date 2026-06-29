@@ -139,6 +139,29 @@ describe('PanelStateWrapper', () => {
         expect(await screen.findByText(scenario.expectedMessage)).toBeInTheDocument();
       });
     });
+
+    it('posts grafanaPanelErrors to the parent window when both error and errors are present', () => {
+      const postMessageSpy = jest.spyOn(window.parent, 'postMessage').mockImplementation(() => {});
+      const { props, subject } = setupTestContext({});
+      const errors = [{ message: 'boom!' }];
+
+      act(() => {
+        subject.next({ state: LoadingState.Loading, series: [], timeRange: getDefaultTimeRange() });
+        subject.next({
+          state: LoadingState.Error,
+          series: [],
+          error: { message: 'boom!' },
+          errors,
+          timeRange: getDefaultTimeRange(),
+        });
+      });
+
+      props.panel.refreshWhenInView = false;
+
+      expect(postMessageSpy).toHaveBeenCalledWith({ type: 'grafanaPanelErrors', errors: JSON.stringify(errors) }, '*');
+
+      postMessageSpy.mockRestore();
+    });
   });
 });
 
