@@ -204,7 +204,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     default: css({
       color: theme.colors.text.secondary,
       background: 'transparent',
-      border: `1px solid transparent`,
+      // GSAI override: drop default transparent border for a cleaner embedded toolbar
 
       '&:hover': {
         color: theme.colors.text.primary,

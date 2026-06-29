@@ -22,3 +22,6 @@ body {
 
 // ANGULAR
 @import 'angular';
+
+// GSAI custom theme/UI overrides (must stay last so it wins specificity ties)
+@import 'gsai-overrides';

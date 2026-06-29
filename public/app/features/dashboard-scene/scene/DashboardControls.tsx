@@ -469,7 +469,9 @@ function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
       gap: theme.spacing(1),
       width: '100%',
       marginBottom: theme.spacing(1),
-      [theme.breakpoints.down('sm')]: {
+      // GSAI override (responsive): wrap from the host breakpoint (<=768) instead
+      // of only the much-smaller sm breakpoint, so it tracks the host nav-hide.
+      [theme.breakpoints.down('md')]: {
         flexWrap: 'wrap',
       },
     }),
@@ -495,6 +497,14 @@ function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
       flexWrap: 'wrap',
       maxWidth: '100%',
       minWidth: 0,
+      // GSAI override (responsive): at <=768px (matches host nav-hide) stop
+      // floating the time picker so it takes its own row above the filter bar
+      // instead of overlapping the filter categories.
+      [theme.breakpoints.down('md')]: {
+        float: 'none',
+        width: '100%',
+        justifyContent: 'flex-end',
+      },
     }),
     // Modified rightControls for new layout
     rightControlsNewLayout: css({
@@ -503,6 +513,11 @@ function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
       alignItems: 'flex-start',
       flexWrap: 'wrap',
       flexShrink: 0,
+      // GSAI override (responsive): full-width row at <=768px to avoid overlap.
+      [theme.breakpoints.down('md')]: {
+        width: '100%',
+        justifyContent: 'flex-end',
+      },
     }),
     // Original fixedControls style
     fixedControls: css({

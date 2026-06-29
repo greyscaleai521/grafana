@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useEffect, useMemo, useReducer, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState, useSyncExternalStore } from 'react';
 
 import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -34,10 +34,49 @@ import { DashboardScene } from './DashboardScene';
 import { AddVariableButton } from './VariableControlsAddButton';
 import { VariableDescriptionTooltip } from './VariableDescriptionTooltip';
 
+// GSAI override (F10 responsive): matches the host left-nav breakpoint (<=768px).
+// Below this width, filter categories collapse into accordion tabs.
+const NARROW_QUERY = '(max-width: 768px)';
+
+function matchesNarrow(): boolean {
+  return typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+    ? window.matchMedia(NARROW_QUERY).matches
+    : false;
+}
+
+function useIsNarrow(): boolean {
+  const [isNarrow, setIsNarrow] = useState(matchesNarrow);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    // Re-read the media query on every event. We listen to BOTH the matchMedia
+    // `change` event and the window `resize` event: the latter fires reliably
+    // when the viewport is resized for testing / when the embedded iframe is
+    // resized, where the `change` event alone can be missed.
+    const update = () => setIsNarrow(matchesNarrow());
+    update();
+
+    const mql = typeof window.matchMedia === 'function' ? window.matchMedia(NARROW_QUERY) : undefined;
+    mql?.addEventListener('change', update);
+    window.addEventListener('resize', update);
+
+    return () => {
+      mql?.removeEventListener('change', update);
+      window.removeEventListener('resize', update);
+    };
+  }, []);
+
+  return isNarrow;
+}
+
 export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
+  const styles = useStyles2(getStyles);
   const { variables } = sceneGraph.getVariables(dashboard)!.useState();
   const { isEditing } = dashboard.useState();
   const isEditingNewLayouts = isEditing && config.featureToggles.dashboardNewLayouts;
+  const isNarrow = useIsNarrow();
 
   // Host-supplied default-value config (drives the non-default counter).
   const filterConfig = useSyncExternalStore(
@@ -49,7 +88,16 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   // Recompute the per-category counter when any variable value changes (the
   // variable set only re-renders us on add/remove, not on value change).
   const [, forceRender] = useReducer((x: number) => x + 1, 0);
-  const [selectedCategory, setSelectedCategory] = useState(0);
+  // -1 means "no category expanded" (collapsed). We start collapsed on narrow
+  // screens; categories are collapsible via the chevron on every device.
+  const [selectedCategory, setSelectedCategory] = useState(() => (matchesNarrow() ? -1 : 0));
+  // Remember the last expanded category so we can restore it when the viewport
+  // grows back above the breakpoint.
+  const lastExpandedRef = useRef(selectedCategory >= 0 ? selectedCategory : 0);
+  // Track the previous breakpoint so the effect below only reacts to a REAL
+  // narrow<->wide crossing and never re-expands a category the user just
+  // collapsed on a stable (large) screen.
+  const prevNarrowRef = useRef(isNarrow);
 
   // Subscribe to variable value changes to track interactions
   useEffect(() => {
@@ -62,6 +110,32 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
       subscription.unsubscribe();
     };
   }, [dashboard]);
+
+  // Keep track of the last expanded category (for restoring on viewport grow).
+  useEffect(() => {
+    if (selectedCategory >= 0) {
+      lastExpandedRef.current = selectedCategory;
+    }
+  }, [selectedCategory]);
+
+  // Only act when the viewport actually crosses the breakpoint:
+  //  - narrow:  collapse every category
+  //  - wide:    re-open the last expanded (or first) category if collapsed
+  // Guarding on the previous value keeps this from re-expanding a category the
+  // user manually collapsed while staying on the same (large) screen.
+  useEffect(() => {
+    if (prevNarrowRef.current === isNarrow) {
+      return;
+    }
+    const crossedToNarrow = isNarrow;
+    prevNarrowRef.current = isNarrow;
+    setSelectedCategory((cur) => {
+      if (crossedToNarrow) {
+        return -1;
+      }
+      return cur < 0 ? lastExpandedRef.current : cur;
+    });
+  }, [isNarrow]);
 
   const visibleVariables = variables.filter(
     (v: SceneVariable) =>
@@ -94,14 +168,29 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   const hasUncategorized = parsed.some(({ category }) => !category);
   const showCategoryBar = categories.length > 0;
   const tabs = hasUncategorized ? [...categories, OTHER_CATEGORY] : categories;
-  const selectedIndex = showCategoryBar ? Math.min(selectedCategory, tabs.length - 1) : 0;
-  const selectedTab = tabs[selectedIndex];
+  const selectedIndex = showCategoryBar
+    ? selectedCategory < 0
+      ? -1
+      : Math.min(selectedCategory, tabs.length - 1)
+    : 0;
+  const selectedTab = selectedIndex >= 0 ? tabs[selectedIndex] : undefined;
 
-  const filteredVariables = showCategoryBar
-    ? parsed
-        .filter(({ category }) => (selectedTab === OTHER_CATEGORY ? !category : category === selectedTab))
-        .map(({ variable }) => variable)
-    : variablesToRender;
+  // Chevron accordion on every device: clicking the expanded category collapses
+  // it, clicking another expands that one. Compare against the visible (clamped)
+  // index so the currently-open tab always toggles shut.
+  const onCategoryChange = (index: number) =>
+    setSelectedCategory((cur) => {
+      const curVisible = cur < 0 ? -1 : Math.min(cur, tabs.length - 1);
+      return curVisible === index ? -1 : index;
+    });
+
+  const filteredVariables = !showCategoryBar
+    ? variablesToRender
+    : selectedTab === undefined
+      ? []
+      : parsed
+          .filter(({ category }) => (selectedTab === OTHER_CATEGORY ? !category : category === selectedTab))
+          .map(({ variable }) => variable);
 
   const categoryFilterCounter: Record<string, number> = {};
   if (showCategoryBar) {
@@ -122,7 +211,7 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
         <CategoryBar
           categories={tabs}
           selectedCategory={selectedIndex}
-          onCategoryChange={setSelectedCategory}
+          onCategoryChange={onCategoryChange}
           categoryFilterCounter={categoryFilterCounter}
           onClearAll={onClearAll}
         />
@@ -136,7 +225,7 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
           />
         ))}
       {showCategoryBar && filteredVariables.length > 0 && (
-        <Button onClick={onClearCategory} fill="text">
+        <Button onClick={onClearCategory} fill="text" className={styles.clearButton}>
           {t('dashboard-scene.category-bar.clear', 'Clear')}
         </Button>
       )}
@@ -360,5 +449,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
   label: css({
     display: 'flex',
     alignItems: 'center',
+  }),
+  // F4/F10 — align the per-category Clear button with the filter input row
+  // (filters carry a bottom margin and are taller, so the bare button drifted up).
+  // GSAI override: brand-orange text + border to match the Clear All button.
+  clearButton: css({
+    alignSelf: 'center',
+    marginBottom: theme.spacing(1),
+    color: '#ff5300',
+    border: '1px solid #ff5300',
+    '&:hover': {
+      color: '#ff5300',
+    },
   }),
 });

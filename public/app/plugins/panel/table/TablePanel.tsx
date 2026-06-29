@@ -13,7 +13,8 @@ import {
   type Field,
   cacheFieldDisplayNames,
 } from '@grafana/data';
-import { config, PanelDataErrorView } from '@grafana/runtime';
+import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Select, usePanelContext, useTheme2 } from '@grafana/ui';
 import { type TableSortByFieldState } from '@grafana/ui/internal';
 import { TableNG } from '@grafana/ui/unstable';
@@ -35,7 +36,6 @@ export function TablePanel(props: Props) {
     width,
     options,
     fieldConfig,
-    id,
     timeRange,
     replaceVariables,
     transparent,
@@ -66,7 +66,8 @@ export function TablePanel(props: Props) {
   let tableHeight = height;
 
   if (!count || !hasFields) {
-    return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
+    // GSAI override: show a simple centered "No data" message instead of Grafana's error view
+    return <div className={tableStyles.noData}>{t('table.panel.no-data', 'No data')}</div>;
   }
 
   if (count > 1) {
@@ -238,5 +239,13 @@ const tableStyles = {
   }),
   selectWrapper: css({
     padding: '8px 8px 0px 8px',
+  }),
+  // GSAI override: centered placeholder for empty tables
+  noData: css({
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100%',
   }),
 };

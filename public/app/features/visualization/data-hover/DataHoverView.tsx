@@ -62,7 +62,7 @@ export function getDisplayValuesAndLinks(data: DataFrame, rowIndex: number, colu
   return { displayValues, links };
 }
 
-export const DataHoverView = ({ data, rowIndex, header, padding = 0 }: Props) => {
+export const DataHoverView = ({ data, rowIndex, columnIndex, header, padding = 0 }: Props) => {
   const styles = useStyles2(getStyles, padding);
 
   if (!data || rowIndex == null) {
@@ -87,7 +87,8 @@ export const DataHoverView = ({ data, rowIndex, header, padding = 0 }: Props) =>
       <table className={styles.infoWrap}>
         <tbody>
           {displayValues.map((displayValue, i) => (
-            <tr key={`${i}/${rowIndex}`}>
+            // GSAI override: highlight the row matching the hovered column
+            <tr key={`${i}/${rowIndex}`} className={i === columnIndex ? styles.highlight : ''}>
               <th>{displayValue.name}</th>
               <td>{renderValue(displayValue.valueString)}</td>
             </tr>
@@ -150,6 +151,10 @@ const getStyles = (theme: GrafanaTheme2, padding = 0) => {
     }),
     link: css({
       color: theme.colors.text.link,
+    }),
+    // GSAI override: highlight style for the hovered column row
+    highlight: css({
+      background: `${theme.colors.action.hover} !important`,
     }),
   };
 };

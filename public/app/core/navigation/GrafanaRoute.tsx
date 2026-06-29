@@ -4,12 +4,12 @@ import { Navigate, useLocation, useParams } from 'react-router-dom-v5-compat';
 import { config, locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
 import { ErrorBoundary } from '@grafana/ui';
 import { isFrontendService } from 'app/core/utils/isFrontendService';
+import { DashboardLoading } from 'app/features/dashboard/components/DashboardLoading/DashboardLoading';
 
 import { useGrafana } from '../context/GrafanaContext';
 import { contextSrv } from '../services/context_srv';
 
 import { GrafanaRouteError } from './GrafanaRouteError';
-import { GrafanaRouteLoading } from './GrafanaRouteLoading';
 import { type GrafanaRouteComponentProps, type RouteDescriptor } from './types';
 
 export interface Props extends Pick<GrafanaRouteComponentProps, 'route' | 'location'> {}
@@ -52,7 +52,7 @@ export function GrafanaRoute(props: Props) {
         }
 
         return (
-          <Suspense fallback={<GrafanaRouteLoading />}>
+          <Suspense fallback={<DashboardLoading />}>
             <props.route.component {...props} queryParams={locationSearchToObject(props.location.search)} />
           </Suspense>
         );

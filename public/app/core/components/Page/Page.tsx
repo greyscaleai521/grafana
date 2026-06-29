@@ -114,22 +114,20 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     pageInner: css({
       label: 'page-inner',
-      padding: theme.spacing(2),
+      // GSAI override: remove page padding so embedded dashboards fill the iframe
+      padding: '0px 0px 0px 0px',
       borderBottom: 'none',
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
       margin: theme.spacing(0, 0, 0, 0),
-
-      [theme.breakpoints.up('md')]: {
-        padding: theme.spacing(4),
-      },
     }),
     canvasContent: css({
       label: 'canvas-content',
       display: 'flex',
       flexDirection: 'column',
-      padding: theme.spacing(2),
+      // GSAI override: drop top padding for embedded dashboards
+      padding: `0 ${theme.spacing(2)} ${theme.spacing(2)} ${theme.spacing(2)}`,
       flexBasis: '100%',
       flexGrow: 1,
     }),

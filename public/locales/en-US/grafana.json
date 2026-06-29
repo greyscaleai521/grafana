@@ -15111,6 +15111,9 @@
     "name-wrap-header-text": "Wrap header text",
     "name-wrap-text": "Wrap text",
     "no-value-placeholder": "No rows",
+    "panel": {
+      "no-data": "No data"
+    },
     "placeholder-column-width": "auto",
     "placeholder-frozen-columns": "none",
     "placeholder-max-height": "none",

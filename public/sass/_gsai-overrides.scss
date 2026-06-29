@@ -1,0 +1,15 @@
+// =============================================================================
+// GSAI THEME / UI OVERRIDES (custom fork addition - F10)
+//
+// All global, brand-level CSS overrides for the embedded Grafana experience
+// live in this single file so that upstream Grafana upgrades surface conflicts
+// in ONE place instead of being scattered across vendored component SCSS.
+//
+// Component-internal (Emotion css-in-js) tweaks that cannot be expressed as a
+// stable global selector are kept inline in their components and tagged with a
+// `GSAI override` comment - search the codebase for that string to find them.
+// =============================================================================
+
+// Brand accent colour. Kept here as the single source of truth; the few
+// component-internal Emotion overrides reference the same literal value.
+$gsai-brand-orange: #ff5300;

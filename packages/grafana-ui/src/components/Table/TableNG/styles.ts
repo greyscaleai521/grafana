@@ -248,7 +248,8 @@ export const getLinkStyles = memoize((theme: GrafanaTheme2, canBeColorized: bool
             textDecoration: 'underline',
           }
         : {
-            color: theme.colors.text.link,
+            // GSAI override: brand accent for table cell links (see _gsai-overrides.scss)
+            color: '#ff5300',
             textDecoration: 'none',
             '&:hover': { textDecoration: 'underline' },
           }),

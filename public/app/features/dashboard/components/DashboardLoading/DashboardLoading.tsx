@@ -1,33 +1,24 @@
 import { css, keyframes } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
-import { Button, Spinner, Stack, useStyles2 } from '@grafana/ui';
+import { Stack, useStyles2 } from '@grafana/ui';
+import { LoadingSpinner } from 'app/core/components/Loaders/LoadingSpinner';
 import { type DashboardInitPhase } from 'app/types/dashboard';
 
 export interface Props {
-  initPhase: DashboardInitPhase;
+  initPhase?: DashboardInitPhase;
 }
 
-export const DashboardLoading = ({ initPhase }: Props) => {
+export const DashboardLoading = (_props: Props) => {
   const styles = useStyles2(getStyles);
-  const cancelVariables = () => {
-    locationService.push('/');
-  };
 
   return (
     <div className={styles.dashboardLoading}>
       <div className={styles.dashboardLoadingText}>
         <Stack direction="column" gap={2}>
           <Stack alignItems="center" justifyContent="center" gap={0.5}>
-            <Spinner inline={true} /> {initPhase}
+            <LoadingSpinner />
           </Stack>{' '}
-          <Stack alignItems="center" justifyContent="center">
-            <Button variant="secondary" size="md" icon="repeat" onClick={cancelVariables}>
-              <Trans i18nKey="dashboard.dashboard-loading.cancel-loading-dashboard">Cancel loading dashboard</Trans>
-            </Button>
-          </Stack>
         </Stack>
       </div>
     </div>
@@ -45,7 +36,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
 
   return {
     dashboardLoading: css({
-      height: '60vh',
+      height: '100%',
       display: 'flex',
       opacity: '0%',
       alignItems: 'center',
