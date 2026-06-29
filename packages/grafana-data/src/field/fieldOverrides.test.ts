@@ -1357,6 +1357,45 @@ describe('getLinksSupplier', () => {
     // check that onClick variable replacer has scoped vars bound to it
     expect(replaceSpy.mock.calls[1][1]).toHaveProperty('foo', { text: 'bar', value: 'bar' });
   });
+
+  it.each([
+    [{ targetTop: true }, '_top'],
+    [{ targetBlank: true }, '_blank'],
+    [{ targetTop: true, targetBlank: true }, '_top'],
+    [{}, undefined],
+  ])('resolves the link target from targetTop/targetBlank (%o -> %s)', (linkProps, expectedTarget) => {
+    locationUtil.initialize({
+      config: {} as GrafanaConfig,
+      getVariablesUrlParams: () => ({}),
+      getTimeRangeForUrl: () => ({ from: 'now-7d', to: 'now' }),
+    });
+
+    const f0 = createDataFrame({
+      name: 'A',
+      fields: [
+        {
+          name: 'message',
+          type: FieldType.string,
+          values: [10, 20],
+          config: {
+            links: [
+              {
+                url: 'http://example.com',
+                title: 'external',
+                ...linkProps,
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    const supplier = getLinksSupplier(f0, f0.fields[0], {}, (value) => value);
+    const links = supplier({});
+
+    expect(links.length).toBe(1);
+    expect(links[0].target).toBe(expectedTarget);
+  });
 });
 
 describe('applyRawFieldOverrides', () => {

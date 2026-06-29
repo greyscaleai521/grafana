@@ -28,7 +28,7 @@ import { DashboardInteractions } from 'app/features/dashboard-scene/utils/intera
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
-import { type KioskMode } from 'app/types/dashboard';
+import { KioskMode } from 'app/types/dashboard';
 import { DashboardMetaChangedEvent, ShowModalReactEvent } from 'app/types/events';
 
 import {
@@ -65,7 +65,7 @@ export function addCustomRightAction(content: DynamicDashNavButtonModel) {
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
-export const DashNav = memo<Props>((props) => {
+export const DashNav = memo<Props>((props: Props) => {
   // this ensures the component rerenders when the location changes
   useLocation();
   const forceUpdate = useForceUpdate();
@@ -285,6 +285,14 @@ export const DashNav = memo<Props>((props) => {
 
     return buttons;
   };
+
+  const { kioskMode } = props;
+
+  // In full kiosk (embedded) mode render only the right-hand controls (time
+  // picker etc.) instead of the full app-chrome toolbar.
+  if (kioskMode === KioskMode.Full) {
+    return <>{renderRightActions()}</>;
+  }
 
   return (
     <AppChromeUpdate

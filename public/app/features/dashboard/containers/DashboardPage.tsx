@@ -24,7 +24,6 @@ import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { KioskMode } from 'app/types/dashboard';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 import { type StoreState } from 'app/types/store';
 
@@ -199,6 +198,11 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       const prevUrlParams = prevProps.queryParams;
       const urlParams = this.props.queryParams;
 
+      if (this.props.location.search) {
+        const parentWindow = window.parent || window;
+        parentWindow.postMessage({ key: 'filterChanged', value: this.props.location.search }, '*');
+      }
+
       if (urlParams?.from !== prevUrlParams?.from || urlParams?.to !== prevUrlParams?.to) {
         getTimeSrv().updateTimeRangeFromUrl();
         this.updateLiveTimer();
@@ -372,9 +376,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     }
 
     const inspectPanel = this.getInspectPanel();
-    const showSubMenu = !editPanel && !kioskMode && !this.props.queryParams.editview && dashboard.isSubMenuVisible();
+    const showSubMenu = !editPanel && !this.props.queryParams.editview && dashboard.isSubMenuVisible();
 
-    const showToolbar = kioskMode !== KioskMode.Full && !queryParams.editview && !initError;
+    const showToolbar = !queryParams.editview && !initError;
 
     const pageClassName = cx({
       [styles.fullScreenPanel]: Boolean(viewPanel),

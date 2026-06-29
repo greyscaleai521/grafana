@@ -36,6 +36,10 @@ export const DataLinkEditor = memo(
       onChange(index, { ...value, targetBlank: !value.targetBlank });
     };
 
+    const onOpenInParentChanged = () => {
+      onChange(index, { ...value, targetTop: !value.targetTop });
+    };
+
     const onOneClickChanged = () => {
       onChange(index, { ...value, oneClick: !value.oneClick });
     };
@@ -57,6 +61,10 @@ export const DataLinkEditor = memo(
 
         <Field label={t('grafana-ui.data-link-editor.new-tab-label', 'Open in new tab')}>
           <Switch id="new-tab-toggle" value={value.targetBlank || false} onChange={onOpenInNewTabChanged} />
+        </Field>
+
+        <Field label={t('grafana-ui.data-link-editor.navigate-parent-label', 'Navigate Parent')}>
+          <Switch id="navigate-parent-toggle" value={value.targetTop || false} onChange={onOpenInParentChanged} />
         </Field>
 
         {showOneClick && (

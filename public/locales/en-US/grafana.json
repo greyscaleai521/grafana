@@ -10095,6 +10095,7 @@
     },
     "data-link-editor": {
       "info": "With data links you can reference data variables like series name, labels and values. Type CMD+Space, CTRL+Space, or $ to open variable suggestions.",
+      "navigate-parent-label": "Navigate Parent",
       "new-tab-label": "Open in new tab",
       "title-label": "Title",
       "title-placeholder": "Show details",

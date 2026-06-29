@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { type Params, useParams } from 'react-router-dom-v5-compat';
+import { type Params, useLocation, useParams } from 'react-router-dom-v5-compat';
 import { usePrevious } from 'react-use';
 
 import { PageLayoutType } from '@grafana/data';
@@ -43,6 +43,8 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
   const routeReloadCounter = (location.state as any)?.routeReloadCounter;
   const prevParams = useRef<Params<string>>(params);
+  const currentLocation = useLocation();
+  const previousSearch = usePrevious(currentLocation.search);
 
   useEffect(() => {
     if (route.routeName === DashboardRoutes.Normal && type === 'snapshot') {
@@ -101,6 +103,15 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       prevParams.current = { uid, slug: !slug ? prevParams.current.slug : slug };
     };
   }, [route, slug, type, uid]);
+
+  // Notify the embedding host whenever the dashboard query string (filters,
+  // time range, variables) changes, so the host can persist/sync iframe state.
+  useEffect(() => {
+    if (previousSearch !== undefined && previousSearch !== currentLocation.search && currentLocation.search) {
+      const parentWindow = window.parent || window;
+      parentWindow.postMessage({ key: 'filterChanged', value: currentLocation.search }, '*');
+    }
+  }, [currentLocation.search, previousSearch]);
 
   if (!dashboard) {
     let errorElement;

@@ -34,6 +34,7 @@ export enum DataLinkConfigOrigin {
 export interface DataLink<T extends DataQuery = any> {
   title: string;
   targetBlank?: boolean;
+  targetTop?: boolean;
 
   // 3: The URL if others did not set it first
   url: string;

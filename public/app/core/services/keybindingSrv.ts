@@ -173,7 +173,12 @@ export class KeybindingSrv {
 
     const { kioskMode } = this.chromeService.state.getValue();
     if (kioskMode) {
-      this.chromeService.exitKioskMode();
+      // Allow the embedding host to keep kiosk mode locked on Escape via
+      // ?removeKioskOnEscape=false (so users can't accidentally exit the embed).
+      const removeKioskOnEscape = search.removeKioskOnEscape === false;
+      if (!removeKioskOnEscape) {
+        this.chromeService.exitKioskMode();
+      }
     }
   }
 

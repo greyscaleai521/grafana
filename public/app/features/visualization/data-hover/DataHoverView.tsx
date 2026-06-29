@@ -77,6 +77,19 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, header, padding = 0
 
   const { displayValues, links } = dispValuesAndLinks;
 
+  // Parent-window navigation: when a data link is configured to navigate the
+  // parent (target '_top'), forward the URL to the embedding host instead of
+  // navigating inside the iframe.
+  const sendToParent = (link: LinkModel<Field>) => {
+    window.parent.postMessage(
+      {
+        key: 'navigateUrl',
+        value: link.href,
+      },
+      '*'
+    );
+  };
+
   return (
     <div className={styles.wrapper}>
       {header && (
@@ -99,9 +112,15 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, header, padding = 0
                 <Trans i18nKey="visualization.data-hover-view.link">Link</Trans>
               </th>
               <td colSpan={2}>
-                <TextLink href={link.href} external={link.target === '_blank'} weight={'medium'} inline={false}>
-                  {link.title}
-                </TextLink>
+                {link.target !== '_top' ? (
+                  <TextLink href={link.href} external={link.target === '_blank'} weight={'medium'} inline={false}>
+                    {link.title}
+                  </TextLink>
+                ) : (
+                  <TextLink target="_top" weight="medium" inline={false} onClick={() => sendToParent(link)} href={''}>
+                    {link.title}
+                  </TextLink>
+                )}
               </td>
             </tr>
           ))}
