@@ -16,6 +16,7 @@ import {
 import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
+import { patchAllValueUrlSync } from '../serialization/custom-variables/allValueUrlSync';
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
 import { ValidatingTextBoxVariable } from '../serialization/custom-variables/ValidatingTextBoxVariable';
 import { recordVariableDefault } from '../serialization/custom-variables/variableDefaultsRegistry';
@@ -33,6 +34,7 @@ export function createVariablesForDashboard(oldModel: DashboardModel, defaultVar
       try {
         const sv = createSceneVariableFromVariableModel(v);
         recordVariableDefault(sv);
+        patchAllValueUrlSync(sv);
         return sv;
       } catch (err) {
         console.error(err);
@@ -48,6 +50,7 @@ export function createVariablesForDashboard(oldModel: DashboardModel, defaultVar
       try {
         const sv = createSceneVariableFromVariableModelV2(v);
         recordVariableDefault(sv);
+        patchAllValueUrlSync(sv);
         return sv;
       } catch (err) {
         console.error(err);

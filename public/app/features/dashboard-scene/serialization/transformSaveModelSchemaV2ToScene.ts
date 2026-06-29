@@ -79,6 +79,7 @@ import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManag
 import { getIntervalsFromQueryString } from '../utils/utils';
 
 import { transformV2ToV1AnnotationQuery } from './annotations';
+import { patchAllValueUrlSync } from './custom-variables/allValueUrlSync';
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import { ValidatingTextBoxVariable } from './custom-variables/ValidatingTextBoxVariable';
 import { recordVariableDefault } from './custom-variables/variableDefaultsRegistry';
@@ -310,6 +311,7 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec, defaultVariable
       try {
         const sv = createSceneVariableFromVariableModel(v);
         recordVariableDefault(sv);
+        patchAllValueUrlSync(sv);
         return sv;
       } catch (err) {
         console.error(err);
@@ -325,6 +327,7 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec, defaultVariable
       try {
         const sv = createSceneVariableFromVariableModel(v);
         recordVariableDefault(sv);
+        patchAllValueUrlSync(sv);
         return sv;
       } catch (err) {
         console.error(err);

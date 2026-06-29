@@ -8,6 +8,7 @@ import { config, reportInteraction } from '@grafana/runtime';
 import {
   ControlsLabel,
   type ControlsLayout,
+  MultiValueVariable,
   sceneGraph,
   sceneUtils,
   type SceneVariable,
@@ -31,6 +32,7 @@ import { CategoryBar } from './CategoryBar';
 import { isVariableActive, OTHER_CATEGORY, parseVariableCategory } from './categoryFilters';
 import { ControlActionsPopover, ControlEditActions } from './ControlActionsPopover';
 import { DashboardScene } from './DashboardScene';
+import { ExclusiveMultiValueSelect } from './ExclusiveMultiValueSelect';
 import { AddVariableButton } from './VariableControlsAddButton';
 import { VariableDescriptionTooltip } from './VariableDescriptionTooltip';
 
@@ -263,6 +265,17 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
     [onClickDeleteVariable, onClickEditVariable]
   );
 
+  // GSAI override (F8): multi-value variables with an "All" option use a picker
+  // that keeps "All" and individual items mutually exclusive live in the menu.
+  const mvState = state as Partial<{ isMulti: boolean; includeAll: boolean }>;
+  const useExclusivePicker =
+    variable instanceof MultiValueVariable && Boolean(mvState.isMulti) && Boolean(mvState.includeAll);
+  const picker = useExclusivePicker ? (
+    <ExclusiveMultiValueSelect model={variable} />
+  ) : (
+    <variable.Component model={variable} />
+  );
+
   // UNSAFE_renderAsHidden variables (like ScopesVariable) should always render invisibly
   if (isHidden && variable.UNSAFE_renderAsHidden) {
     return <variable.Component model={variable} />;
@@ -313,7 +326,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
             layout={'vertical'}
             className={cx(isSelectable && styles.labelSelectable)}
           />
-          <variable.Component model={variable} />
+          {picker}
         </div>
       </ControlActionsPopover>
     );
@@ -330,7 +343,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
         data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
       >
         <VariableLabel variable={variable} className={cx(isSelectable && styles.labelSelectable, styles.label)} />
-        <variable.Component model={variable} />
+        {picker}
       </div>
     </ControlActionsPopover>
   );
