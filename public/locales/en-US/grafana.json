@@ -5439,6 +5439,7 @@
       "title-plugin-dashboard": "Plugin dashboard"
     },
     "controls": {
+      "filters": "Filters",
       "menu": {
         "aria-label": "",
         "title": ""
@@ -5457,9 +5458,6 @@
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "{{dashboardName}} dashboard",
       "label-no-dashboards-found": "No dashboards found"
-    },
-    "dashboard-loading": {
-      "cancel-loading-dashboard": "Cancel loading dashboard"
     },
     "dashboard-page-error": {
       "text": {
@@ -7653,6 +7651,9 @@
           "variables": "Variables"
         }
       }
+    },
+    "validating-text-box-variable": {
+      "invalid-format": "Value does not match the required format"
     },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "This variable is not referenced by any variable or dashboard.",
@@ -9918,6 +9919,13 @@
           },
           "name": "Volume"
         }
+      }
+    }
+  },
+  "grafana-scenes": {
+    "variables": {
+      "variable-value-input": {
+        "placeholder-enter-value": "Enter value"
       }
     }
   },

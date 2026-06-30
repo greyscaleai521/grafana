@@ -29,49 +29,13 @@ import { clearVariableToDefault } from '../serialization/custom-variables/variab
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
 
 import { CategoryBar } from './CategoryBar';
-import { isVariableActive, OTHER_CATEGORY, parseVariableCategory } from './categoryFilters';
 import { ControlActionsPopover, ControlEditActions } from './ControlActionsPopover';
 import { DashboardScene } from './DashboardScene';
 import { ExclusiveMultiValueSelect } from './ExclusiveMultiValueSelect';
 import { AddVariableButton } from './VariableControlsAddButton';
 import { VariableDescriptionTooltip } from './VariableDescriptionTooltip';
-
-// GSAI override (F10 responsive): matches the host left-nav breakpoint (<=768px).
-// Below this width, filter categories collapse into accordion tabs.
-const NARROW_QUERY = '(max-width: 768px)';
-
-function matchesNarrow(): boolean {
-  return typeof window !== 'undefined' && typeof window.matchMedia === 'function'
-    ? window.matchMedia(NARROW_QUERY).matches
-    : false;
-}
-
-function useIsNarrow(): boolean {
-  const [isNarrow, setIsNarrow] = useState(matchesNarrow);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-    // Re-read the media query on every event. We listen to BOTH the matchMedia
-    // `change` event and the window `resize` event: the latter fires reliably
-    // when the viewport is resized for testing / when the embedded iframe is
-    // resized, where the `change` event alone can be missed.
-    const update = () => setIsNarrow(matchesNarrow());
-    update();
-
-    const mql = typeof window.matchMedia === 'function' ? window.matchMedia(NARROW_QUERY) : undefined;
-    mql?.addEventListener('change', update);
-    window.addEventListener('resize', update);
-
-    return () => {
-      mql?.removeEventListener('change', update);
-      window.removeEventListener('resize', update);
-    };
-  }, []);
-
-  return isNarrow;
-}
+import { isVariableActive, OTHER_CATEGORY, parseVariableCategory } from './categoryFilters';
+import { useIsNarrow } from './useIsNarrow';
 
 export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   const styles = useStyles2(getStyles);
@@ -90,9 +54,10 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   // Recompute the per-category counter when any variable value changes (the
   // variable set only re-renders us on add/remove, not on value change).
   const [, forceRender] = useReducer((x: number) => x + 1, 0);
-  // -1 means "no category expanded" (collapsed). We start collapsed on narrow
-  // screens; categories are collapsible via the chevron on every device.
-  const [selectedCategory, setSelectedCategory] = useState(() => (matchesNarrow() ? -1 : 0));
+  // -1 means "no category expanded" (collapsed). The first category is open by
+  // default on every device (incl. mobile, where filters live in the Filters
+  // drawer); categories remain collapsible via the chevron.
+  const [selectedCategory, setSelectedCategory] = useState(0);
   // Remember the last expanded category so we can restore it when the viewport
   // grows back above the breakpoint.
   const lastExpandedRef = useRef(selectedCategory >= 0 ? selectedCategory : 0);
@@ -120,11 +85,11 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
     }
   }, [selectedCategory]);
 
-  // Only act when the viewport actually crosses the breakpoint:
-  //  - narrow:  collapse every category
-  //  - wide:    re-open the last expanded (or first) category if collapsed
-  // Guarding on the previous value keeps this from re-expanding a category the
-  // user manually collapsed while staying on the same (large) screen.
+  // Only act when the viewport actually crosses the breakpoint. In both
+  // directions we keep an expanded category: if nothing is open, open the first
+  // (narrow) or the last-expanded/first (wide). Guarding on the previous value
+  // keeps this from re-expanding a category the user manually collapsed while
+  // staying on the same screen.
   useEffect(() => {
     if (prevNarrowRef.current === isNarrow) {
       return;
@@ -132,10 +97,10 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
     const crossedToNarrow = isNarrow;
     prevNarrowRef.current = isNarrow;
     setSelectedCategory((cur) => {
-      if (crossedToNarrow) {
-        return -1;
+      if (cur >= 0) {
+        return cur;
       }
-      return cur < 0 ? lastExpandedRef.current : cur;
+      return crossedToNarrow ? 0 : lastExpandedRef.current;
     });
   }, [isNarrow]);
 
@@ -207,6 +172,45 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   const onClearAll = () => variablesToRender.forEach(clearVariableToDefault);
   const onClearCategory = () => filteredVariables.forEach(clearVariableToDefault);
 
+  const filterControls =
+    filteredVariables.length > 0
+      ? filteredVariables.map((variable) => (
+          <VariableValueSelectWrapper
+            key={variable.state.key}
+            variable={variable}
+            isEditingNewLayouts={isEditingNewLayouts}
+          />
+        ))
+      : null;
+
+  const clearCategoryButton =
+    showCategoryBar && filteredVariables.length > 0 ? (
+      isNarrow ? (
+        <div className={styles.clearActionsRow}>
+          <Button
+            onClick={onClearCategory}
+            fill="text"
+            className={cx(styles.clearButton, styles.clearButtonProminent)}
+          >
+            {t('dashboard-scene.category-bar.clear', 'Clear')}
+          </Button>
+        </div>
+      ) : (
+        <Button onClick={onClearCategory} fill="text" className={styles.clearButton}>
+          {t('dashboard-scene.category-bar.clear', 'Clear')}
+        </Button>
+      )
+    ) : null;
+
+  // Mobile true accordion: filters + Clear nest under the open category row.
+  const narrowExpandedContent =
+    isNarrow && filteredVariables.length > 0 ? (
+      <div className={styles.expandedFilters}>
+        {filterControls}
+        {clearCategoryButton}
+      </div>
+    ) : undefined;
+
   return (
     <>
       {showCategoryBar && (
@@ -216,20 +220,20 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
           onCategoryChange={onCategoryChange}
           categoryFilterCounter={categoryFilterCounter}
           onClearAll={onClearAll}
+          isNarrow={isNarrow}
+          expandedContent={narrowExpandedContent}
         />
       )}
-      {filteredVariables.length > 0 &&
-        filteredVariables.map((variable) => (
-          <VariableValueSelectWrapper
-            key={variable.state.key}
-            variable={variable}
-            isEditingNewLayouts={isEditingNewLayouts}
-          />
-        ))}
-      {showCategoryBar && filteredVariables.length > 0 && (
-        <Button onClick={onClearCategory} fill="text" className={styles.clearButton}>
-          {t('dashboard-scene.category-bar.clear', 'Clear')}
-        </Button>
+      {/* Desktop (and uncategorized): filters stay below the category strip. */}
+      {!(isNarrow && showCategoryBar) && filterControls}
+      {!(isNarrow && showCategoryBar) && clearCategoryButton}
+      {/* Mobile: Clear All always at the bottom of the Filters drawer list. */}
+      {showCategoryBar && isNarrow && (
+        <div className={styles.clearActionsRow}>
+          <Button onClick={onClearAll} fill="text" className={cx(styles.clearButton, styles.clearButtonProminent)}>
+            {t('dashboard-scene.category-bar.clear-all', 'Clear All')}
+          </Button>
+        </div>
       )}
       {config.featureToggles.dashboardNewLayouts ? <AddVariableButton dashboard={dashboard} /> : null}
     </>
@@ -267,9 +271,10 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
 
   // GSAI override (F8): multi-value variables with an "All" option use a picker
   // that keeps "All" and individual items mutually exclusive live in the menu.
-  const mvState = state as Partial<{ isMulti: boolean; includeAll: boolean }>;
   const useExclusivePicker =
-    variable instanceof MultiValueVariable && Boolean(mvState.isMulti) && Boolean(mvState.includeAll);
+    variable instanceof MultiValueVariable &&
+    Boolean(variable.state.isMulti) &&
+    Boolean(variable.state.includeAll);
   const picker = useExclusivePicker ? (
     <ExclusiveMultiValueSelect model={variable} />
   ) : (
@@ -463,16 +468,55 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     alignItems: 'center',
   }),
+  // GSAI override (mobile): filters nest under the open category in the accordion.
+  expandedFilters: css({
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'flex-start',
+    width: '100%',
+    padding: theme.spacing(1, 0.5, 0.5),
+    boxSizing: 'border-box',
+  }),
   // F4/F10 — align the per-category Clear button with the filter input row
   // (filters carry a bottom margin and are taller, so the bare button drifted up).
-  // GSAI override: brand-orange text + border to match the Clear All button.
+  // GSAI override: black text + neutral border; hover uses the host left-nav
+  // tint, matching the category tabs and Clear All.
   clearButton: css({
     alignSelf: 'center',
     marginBottom: theme.spacing(1),
-    color: '#ff5300',
-    border: '1px solid #ff5300',
-    '&:hover': {
-      color: '#ff5300',
+    color: theme.colors.text.primary,
+    border: `1px solid ${theme.colors.border.medium}`,
+    '&:hover, &:focus, &:focus-visible, &:active': {
+      color: theme.colors.text.primary,
+      backgroundColor: 'rgba(241, 91, 42, 0.06)',
+      boxShadow: 'none',
+    },
+  }),
+  // GSAI override (mobile): pin Clear / Clear All to their own centered row
+  // under the filters (flex parent wraps variables).
+  clearActionsRow: css({
+    flexBasis: '100%',
+    width: '100%',
+    display: 'flex',
+    justifyContent: 'center',
+    marginTop: theme.spacing(2.5),
+    marginBottom: theme.spacing(1),
+  }),
+  // GSAI override (mobile): make Clear / Clear All stand out from category
+  // rows and filter inputs (stronger border, solid surface, weight).
+  clearButtonProminent: css({
+    marginBottom: 0,
+    minWidth: theme.spacing(12),
+    justifyContent: 'center',
+    fontWeight: theme.typography.fontWeightMedium,
+    backgroundColor: theme.colors.background.primary,
+    border: `1px solid ${theme.colors.border.strong}`,
+    boxShadow: theme.shadows.z1,
+    '&:hover, &:focus, &:focus-visible, &:active': {
+      color: theme.colors.text.primary,
+      backgroundColor: 'rgba(241, 91, 42, 0.06)',
+      border: `1px solid ${theme.colors.border.strong}`,
+      boxShadow: theme.shadows.z1,
     },
   }),
 });

@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { useEffect, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2, VariableHide } from '@grafana/data';
@@ -19,7 +20,7 @@ import {
   type CancelActivationHandler,
   sceneUtils,
 } from '@grafana/scenes';
-import { Box, Button, ButtonGroup, useStyles2 } from '@grafana/ui';
+import { Box, Button, ButtonGroup, Drawer, Icon, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -41,6 +42,7 @@ import { EditDashboardSwitch } from './new-toolbar/actions/EditDashboardSwitch';
 import { MakeDashboardEditableButton } from './new-toolbar/actions/MakeDashboardEditableButton';
 import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
 import { ShareDashboardButton } from './new-toolbar/actions/ShareDashboardButton';
+import { useIsNarrow } from './useIsNarrow';
 
 export interface DashboardControlsState extends SceneObjectState {
   timePicker: SceneTimePicker;
@@ -173,11 +175,56 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   } = model.useState();
 
   const dashboard = getDashboardSceneFor(model);
-  const { links, editPanel, isEditing } = dashboard.useState();
+  const { links, editPanel, isEditing, title } = dashboard.useState();
   const isQueryEditorNext = Boolean(editPanel?.state.useQueryExperienceNext);
   const styles = useStyles2(getStyles, isQueryEditorNext);
   const showDebugger = window.location.search.includes('scene-debugger');
   const hasDashboardControls = useHasDashboardControls(dashboard);
+
+  // GSAI override (mobile): on narrow viewports the filter categories and the
+  // time/refresh picker move behind a single "Filters" button that opens a
+  // drawer overlay. Collapsed by default.
+  const isNarrow = useIsNarrow();
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  // The refresh-picker auto-refresh timer is tied to its component being
+  // mounted. On mobile, while the drawer is closed the picker is unmounted, so
+  // keep it activated (mirrors the `hideTimeControls` precedent in the
+  // constructor). activate() is ref-counted, so it is safe alongside the
+  // component's own activation when the drawer is open.
+  useEffect(() => {
+    if (!isNarrow || filtersOpen || hideTimeControls) {
+      return;
+    }
+    return refreshPicker.activate();
+  }, [isNarrow, filtersOpen, hideTimeControls, refreshPicker]);
+
+  // Show the mobile Filters trigger when narrow and there is something to put
+  // behind it (the time picker and/or the filter categories). Editing is a
+  // desktop flow, so keep the inline layout while editing.
+  const showMobileFilters = isNarrow && !editPanel && !isEditing && (!hideVariableControls || !hideTimeControls);
+
+  // Mobile controls bar: the Filters trigger sits on the left, the dashboard
+  // name fills the empty space on the right.
+  const mobileBar = showMobileFilters ? (
+    <div className={styles.mobileControlsBar}>
+      {title ? (
+        <div className={styles.mobileDashboardTitle} title={title}>
+          {title}
+        </div>
+      ) : null}
+      <MobileFiltersControl
+        dashboard={dashboard}
+        timePicker={timePicker}
+        refreshPicker={refreshPicker}
+        hideTimeControls={hideTimeControls}
+        hideVariableControls={hideVariableControls}
+        open={filtersOpen}
+        onOpen={() => setFiltersOpen(true)}
+        onClose={() => setFiltersOpen(false)}
+      />
+    </div>
+  ) : null;
 
   // Get adhoc and groupby variables for drilldown controls
   const { variables } = sceneGraph.getVariables(dashboard)?.useState() ?? { variables: [] };
@@ -229,30 +276,34 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
               <DrilldownControls adHocVar={adHocVar} groupByVar={groupByVar} isEditing={isEditing} />
             </div>
           )}
-          <div className={cx(styles.rightControlsNewLayout, editPanel && styles.rightControlsWrap)}>
-            {!hideTimeControls && (
-              <div className={styles.fixedControlsNewLayout}>
-                <timePicker.Component model={timePicker} />
-                <refreshPicker.Component model={refreshPicker} />
-              </div>
-            )}
-            {config.featureToggles.dashboardNewLayouts && (
-              <div className={styles.fixedControlsNewLayout}>
-                <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
-              </div>
-            )}
-            {(config.featureToggles.dashboardFiltersOverview ||
-              config.featureToggles.dashboardUnifiedDrilldownControls) &&
-              !config.featureToggles.dashboardNewLayouts && (
-                <div className={styles.fixedControls}>
-                  <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
+          {showMobileFilters ? (
+            mobileBar
+          ) : (
+            <div className={cx(styles.rightControlsNewLayout, editPanel && styles.rightControlsWrap)}>
+              {!hideTimeControls && (
+                <div className={styles.fixedControlsNewLayout}>
+                  <timePicker.Component model={timePicker} />
+                  <refreshPicker.Component model={refreshPicker} />
                 </div>
               )}
-          </div>
+              {config.featureToggles.dashboardNewLayouts && (
+                <div className={styles.fixedControlsNewLayout}>
+                  <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
+                </div>
+              )}
+              {(config.featureToggles.dashboardFiltersOverview ||
+                config.featureToggles.dashboardUnifiedDrilldownControls) &&
+                !config.featureToggles.dashboardNewLayouts && (
+                  <div className={styles.fixedControls}>
+                    <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
+                  </div>
+                )}
+            </div>
+          )}
         </div>
         {!hideVariableControls && (
           <>
-            <VariableControls dashboard={dashboard} />
+            {!showMobileFilters && <VariableControls dashboard={dashboard} />}
             <DashboardDataLayerControls dashboard={dashboard} />
           </>
         )}
@@ -275,31 +326,36 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       data-testid={selectors.pages.Dashboard.Controls}
       className={cx(styles.controls, editPanel && styles.controlsPanelEdit)}
     >
-      <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
-        {!hideTimeControls && (
-          <div className={styles.fixedControls}>
-            <timePicker.Component model={timePicker} />
-            <refreshPicker.Component model={refreshPicker} />
-          </div>
-        )}
-        {config.featureToggles.dashboardNewLayouts && (
-          <div className={styles.fixedControls}>
-            <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
-          </div>
-        )}
-        {(config.featureToggles.dashboardFiltersOverview || config.featureToggles.dashboardUnifiedDrilldownControls) &&
-          !config.featureToggles.dashboardNewLayouts && (
+      {showMobileFilters ? (
+        mobileBar
+      ) : (
+        <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
+          {!hideTimeControls && (
             <div className={styles.fixedControls}>
-              <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
+              <timePicker.Component model={timePicker} />
+              <refreshPicker.Component model={refreshPicker} />
             </div>
           )}
-      </div>
+          {config.featureToggles.dashboardNewLayouts && (
+            <div className={styles.fixedControls}>
+              <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
+            </div>
+          )}
+          {(config.featureToggles.dashboardFiltersOverview ||
+            config.featureToggles.dashboardUnifiedDrilldownControls) &&
+            !config.featureToggles.dashboardNewLayouts && (
+              <div className={styles.fixedControls}>
+                <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
+              </div>
+            )}
+        </div>
+      )}
       {config.featureToggles.scopeFilters && !editPanel && (
         <ContextualNavigationPaneToggle className={styles.contextualNavToggle} hideWhenOpen={true} />
       )}
       {!hideVariableControls && (
         <>
-          <VariableControls dashboard={dashboard} />
+          {!showMobileFilters && <VariableControls dashboard={dashboard} />}
           <DashboardDataLayerControls dashboard={dashboard} />
         </>
       )}
@@ -313,6 +369,64 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       {editPanel && <PanelEditControls panelEditor={editPanel} />}
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
     </div>
+  );
+}
+
+/**
+ * GSAI override (mobile): renders the "Filters" trigger button plus the drawer
+ * overlay that holds the time/refresh picker and the filter categories on
+ * narrow viewports. The drawer is collapsed by default.
+ */
+function MobileFiltersControl({
+  dashboard,
+  timePicker,
+  refreshPicker,
+  hideTimeControls,
+  hideVariableControls,
+  open,
+  onOpen,
+  onClose,
+}: {
+  dashboard: DashboardScene;
+  timePicker: SceneTimePicker;
+  refreshPicker: SceneRefreshPicker;
+  hideTimeControls?: boolean;
+  hideVariableControls?: boolean;
+  open: boolean;
+  onOpen: () => void;
+  onClose: () => void;
+}) {
+  const styles = useStyles2(getStyles, false);
+  const title = t('dashboard.controls.filters', 'Filters');
+
+  return (
+    <>
+      <ToolbarButton
+        variant="canvas"
+        onClick={onOpen}
+        className={cx(styles.filtersButton, open && styles.filtersButtonOpen)}
+      >
+        <Icon name="angle-left" className={styles.filtersArrow} />
+        {title}
+      </ToolbarButton>
+      {open && (
+        <Drawer title={title} size="md" onClose={onClose}>
+          <div className={styles.mobileFiltersBody}>
+            {!hideTimeControls && (
+              <div className={styles.mobileFiltersTimeRow}>
+                <timePicker.Component model={timePicker} />
+                <refreshPicker.Component model={refreshPicker} />
+              </div>
+            )}
+            {!hideVariableControls && (
+              <div className={styles.mobileFiltersVariables}>
+                <VariableControls dashboard={dashboard} />
+              </div>
+            )}
+          </div>
+        </Drawer>
+      )}
+    </>
   );
 }
 
@@ -553,6 +667,86 @@ function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
     contextualNavToggleNewLayout: css({
       display: 'inline-flex',
       flexShrink: 0,
+    }),
+    // GSAI override (mobile): full-width bar with the Filters trigger on the
+    // left and the dashboard name filling the space on the right.
+    mobileControlsBar: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: theme.spacing(1),
+      width: '100%',
+      flexBasis: '100%',
+      marginBottom: theme.spacing(1),
+    }),
+    mobileDashboardTitle: css({
+      flex: 1,
+      minWidth: 0,
+      marginRight: 'auto',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      textAlign: 'left',
+      fontSize: theme.typography.h5.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      color: theme.colors.text.primary,
+    }),
+    // GSAI override (mobile): Filters trigger — white at rest; brand tint while
+    // the drawer is open. `&&` beats ToolbarButton `canvas` (secondary.main grey).
+    filtersButton: css({
+      flexShrink: 0,
+      display: 'inline-flex',
+      alignItems: 'center',
+      border: '1px solid #e0e0e0',
+      borderRadius: theme.shape.radius.default,
+      boxShadow: 'none',
+      fontFamily: 'Roboto, sans-serif',
+      fontWeight: theme.typography.fontWeightRegular,
+      fontSize: 'clamp(0.6875rem, 3.6vw, 0.8125rem)',
+      color: '#000',
+      '&&': {
+        background: '#fff',
+        '&:hover, &:focus, &:focus-visible': {
+          background: 'rgba(0, 0, 0, 0.04)',
+          border: '1px solid #e0e0e0',
+          color: '#000',
+          boxShadow: 'none',
+        },
+      },
+    }),
+    // Same light brand tint as active category rows while the Filters drawer is open.
+    filtersButtonOpen: css({
+      '&&': {
+        background: 'rgba(241, 91, 42, 0.06)',
+        '&:hover, &:focus, &:focus-visible, &:active': {
+          background: 'rgba(241, 91, 42, 0.1)',
+          border: '1px solid #e0e0e0',
+          color: '#000',
+          boxShadow: 'none',
+        },
+      },
+    }),
+    filtersArrow: css({
+      color: '#ff5300',
+      marginRight: theme.spacing(0.5),
+      alignSelf: 'center',
+    }),
+    // GSAI override (mobile): layout for the Filters drawer contents.
+    mobileFiltersBody: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(2),
+    }),
+    mobileFiltersTimeRow: css({
+      display: 'flex',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+      gap: theme.spacing(1),
+    }),
+    mobileFiltersVariables: css({
+      display: 'flex',
+      flexWrap: 'wrap',
+      alignItems: 'flex-start',
     }),
   };
 }
