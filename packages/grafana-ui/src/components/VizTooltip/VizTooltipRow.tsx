@@ -20,6 +20,9 @@ interface VizTooltipRowProps extends Omit<VizTooltipItem, 'value'> {
   isPinned: boolean;
   showValueScroll?: boolean;
   isHiddenFromViz?: boolean;
+  // GSAI override: left-aligned 2-col layout, optional active-row highlight, no color swatches
+  compact?: boolean;
+  hideColorIndicator?: boolean;
 }
 
 enum LabelValueTypes {
@@ -45,8 +48,12 @@ export const VizTooltipRow = ({
   lineStyle,
   showValueScroll,
   isHiddenFromViz,
+  compact = false,
+  hideColorIndicator = false,
 }: VizTooltipRowProps) => {
-  const styles = useStyles2(getStyles, justify, marginRight);
+  const styles = useStyles2(getStyles, justify, marginRight, compact);
+
+  const showColor = Boolean(color) && !hideColorIndicator && !compact;
 
   const innerValueScrollStyle: CSSProperties = showValueScroll
     ? {
@@ -131,9 +138,11 @@ export const VizTooltipRow = ({
     label = label.replaceAll('{', '{\n  ').replaceAll('}', '\n}').replaceAll(', ', ',\n  ');
   }
 
+  const highlightCell = compact && isActive;
+
   return (
     <div className={styles.contentWrapper}>
-      {color && colorPlacement === ColorPlacement.first && (
+      {showColor && colorPlacement === ColorPlacement.first && (
         <div className={styles.colorWrapper}>
           <VizTooltipColorIndicator
             color={color}
@@ -144,9 +153,9 @@ export const VizTooltipRow = ({
         </div>
       )}
       {label && (
-        <div className={styles.labelWrapper}>
+        <div className={clsx(styles.labelWrapper, highlightCell && styles.highlight)}>
           {!isPinned ? (
-            <div className={clsx(styles.label, isActive ? styles.activeSeries : '')}>{label}</div>
+            <div className={clsx(styles.label, isActive && !compact ? styles.activeSeries : '')}>{label}</div>
           ) : (
             <>
               <Tooltip content={label} interactive={false} show={showLabelTooltip}>
@@ -158,7 +167,11 @@ export const VizTooltipRow = ({
                   )}
                   {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions */}
                   <div
-                    className={clsx(styles.label, isActive ? styles.activeSeries : '', CAN_COPY ? styles.copy : '')}
+                    className={clsx(
+                      styles.label,
+                      isActive && !compact ? styles.activeSeries : '',
+                      CAN_COPY ? styles.copy : ''
+                    )}
                     onMouseEnter={onMouseEnterLabel}
                     onMouseLeave={onMouseLeaveLabel}
                     onClick={() => copyToClipboard(label, LabelValueTypes.label)}
@@ -173,8 +186,8 @@ export const VizTooltipRow = ({
         </div>
       )}
 
-      <div className={styles.valueWrapper}>
-        {color && colorPlacement === ColorPlacement.leading && (
+      <div className={clsx(styles.valueWrapper, highlightCell && styles.highlight)}>
+        {showColor && colorPlacement === ColorPlacement.leading && (
           <VizTooltipColorIndicator
             color={color}
             colorIndicator={colorIndicator}
@@ -206,7 +219,7 @@ export const VizTooltipRow = ({
           </>
         )}
 
-        {color && colorPlacement === ColorPlacement.trailing && (
+        {showColor && colorPlacement === ColorPlacement.trailing && (
           <VizTooltipColorIndicator
             color={color}
             colorIndicator={colorIndicator}
@@ -219,38 +232,66 @@ export const VizTooltipRow = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string) => ({
+const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string, compact = false) => ({
   contentWrapper: css({
-    display: 'flex',
+    display: compact ? 'table-row' : 'flex',
     maxWidth: '100%',
     alignItems: 'start',
     justifyContent: justify,
-    columnGap: theme.spacing(0.75),
+    columnGap: compact ? undefined : theme.spacing(0.75),
+  }),
+  // GSAI override: lighter grey highlight for the hovered metric row in compact tooltips
+  highlight: css({
+    background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
   }),
   label: css({ display: 'inline' }),
   value: css({
     fontWeight: 500,
     textOverflow: 'ellipsis',
     overflow: 'hidden',
+    color: theme.colors.text.primary,
   }),
   colorWrapper: css({
     alignSelf: 'center',
     flexShrink: 0,
   }),
-  labelWrapper: css({
-    flexGrow: 1,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    color: theme.colors.text.secondary,
-    fontWeight: 400,
-  }),
-  valueWrapper: css({
-    display: 'flex',
-    alignItems: 'center',
-    flexShrink: 0,
-    alignSelf: 'center',
-    marginRight,
-  }),
+  labelWrapper: css(
+    compact
+      ? {
+          display: 'table-cell',
+          verticalAlign: 'middle',
+          padding: theme.spacing(0.25, 2, 0.25, 0),
+          // GSAI override: near-black grey for compact field labels
+          color: `color-mix(in srgb, ${theme.colors.text.secondary} 15%, ${theme.colors.text.primary} 85%)`,
+          fontWeight: 400,
+          whiteSpace: 'nowrap',
+          borderBottom: `1px solid ${theme.colors.border.weak}`,
+        }
+      : {
+          flexGrow: 1,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          color: theme.colors.text.secondary,
+          fontWeight: 400,
+        }
+  ),
+  valueWrapper: css(
+    compact
+      ? {
+          display: 'table-cell',
+          verticalAlign: 'middle',
+          padding: theme.spacing(0.25, 0),
+          color: theme.colors.text.primary,
+          borderBottom: `1px solid ${theme.colors.border.weak}`,
+        }
+      : {
+          display: 'flex',
+          alignItems: 'center',
+          flexShrink: 0,
+          alignSelf: 'center',
+          marginRight,
+        }
+  ),
   activeSeries: css({
     fontWeight: theme.typography.fontWeightBold,
     color: theme.colors.text.maxContrast,

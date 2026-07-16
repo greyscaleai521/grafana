@@ -57,6 +57,8 @@ export interface TimeSeriesTooltipProps {
   filterByGroupedLabels?: FilterByGroupedLabelsModel;
   canExecuteActions?: boolean;
   compareDiffMs?: number[];
+  // GSAI override: compact left-aligned tooltip (bar chart / status history / state timeline)
+  compact?: boolean;
 }
 
 export const TimeSeriesTooltip = ({
@@ -77,6 +79,7 @@ export const TimeSeriesTooltip = ({
   compareDiffMs,
   filterByGroupedLabels,
   fixedFields,
+  compact = false,
 }: TimeSeriesTooltipProps) => {
   const pluginContext = usePluginContext();
 
@@ -132,14 +135,18 @@ export const TimeSeriesTooltip = ({
     value: xDisp,
   };
 
+  // GSAI override: in compact mode merge header into content so columns align in one table
+  const items = compact && (headerItem.label || headerItem.value) ? [headerItem, ...contentItems] : contentItems;
+
   return (
     <VizTooltipWrapper>
-      {headerItem != null && <VizTooltipHeader item={headerItem} isPinned={isPinned} />}
+      {!compact && headerItem != null && <VizTooltipHeader item={headerItem} isPinned={isPinned} />}
       <VizTooltipContent
-        items={contentItems}
+        items={items}
         isPinned={isPinned}
         scrollable={isTooltipScrollable({ mode, maxHeight })}
         maxHeight={maxHeight}
+        compact={compact}
       />
       {footer}
     </VizTooltipWrapper>

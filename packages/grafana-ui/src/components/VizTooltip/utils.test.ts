@@ -441,27 +441,27 @@ describe('utils', () => {
       expect(result.numeric).toBeNaN();
     });
 
-    it('returns JSON.stringify for non-empty arrays', () => {
+    it('joins non-empty arrays without JSON brackets', () => {
       const value = [1, 2, 3];
       const result = getTooltipDisplayValue(value, mockField);
-      expect(result.text).toBe('[1,2,3]');
+      expect(result.text).toBe('1, 2, 3');
       expect(result.numeric).toBeNaN();
     });
 
-    it('returns JSON.stringify for arrays of objects', () => {
+    it('formats arrays of objects as readable key = value pairs', () => {
       const value = [
         { key: 'foo', value: 'bar' },
         { key: 'baz', value: 'qux' },
       ];
       const result = getTooltipDisplayValue(value, mockField);
-      expect(result.text).toBe('[{"key":"foo","value":"bar"},{"key":"baz","value":"qux"}]');
+      expect(result.text).toBe('foo = bar, baz = qux');
       expect(result.numeric).toBeNaN();
     });
 
-    it('returns JSON.stringify for objects', () => {
+    it('formats objects as readable key = value pairs', () => {
       const value = { refType: 'EXTERNAL', spanID: '123', tags: [{ key: 'service', value: 'api' }] };
       const result = getTooltipDisplayValue(value, mockField);
-      expect(result.text).toBe('{"refType":"EXTERNAL","spanID":"123","tags":[{"key":"service","value":"api"}]}');
+      expect(result.text).toBe('refType = EXTERNAL, spanID = 123, tags = service = api');
       expect(result.numeric).toBeNaN();
     });
 
@@ -510,13 +510,19 @@ describe('utils', () => {
       expect(result.color).toBe('#000');
     });
 
-    it('handles arrays with nested arrays', () => {
+    it('joins nested arrays without JSON brackets', () => {
       const value = [
         [1, 2],
         [3, 4],
       ];
       const result = getTooltipDisplayValue(value, mockField);
-      expect(result.text).toBe('[[1,2],[3,4]]');
+      expect(result.text).toBe('1, 2, 3, 4');
+      expect(result.numeric).toBeNaN();
+    });
+
+    it('formats single-element string arrays without brackets', () => {
+      const result = getTooltipDisplayValue(['Sedalia, MO = 305856'], mockField);
+      expect(result.text).toBe('Sedalia, MO = 305856');
       expect(result.numeric).toBeNaN();
     });
   });

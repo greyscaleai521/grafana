@@ -145,6 +145,7 @@ export const StateTimelinePanel = ({
                         replaceVariables={replaceVariables}
                         dataLinks={dataLinks}
                         canExecuteActions={userCanExecuteActions}
+                        compact
                       />
                     );
                   }}

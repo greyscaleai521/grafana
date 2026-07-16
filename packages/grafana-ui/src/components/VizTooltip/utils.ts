@@ -80,6 +80,39 @@ const numberCmp = (a: VizTooltipItem, b: VizTooltipItem) => a.numeric! - b.numer
 const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
 const stringCmp = (a: VizTooltipItem, b: VizTooltipItem) => collator.compare(`${a.value}`, `${b.value}`);
 
+/** Formats nested arrays/objects into readable tooltip text (no JSON brackets). */
+export const formatComplexTooltipValue = (value: unknown): string => {
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      return '';
+    }
+    return value.map(formatComplexTooltipValue).filter(Boolean).join(', ');
+  }
+
+  if (value && typeof value === 'object') {
+    // Common Grafana tag shape: { key, value }
+    if ('key' in value && 'value' in value && Object.keys(value).length <= 2) {
+      const keyText = formatComplexTooltipValue(value.key);
+      const valueText = formatComplexTooltipValue(value.value);
+      return valueText ? `${keyText} = ${valueText}` : keyText;
+    }
+
+    return Object.entries(value)
+      .map(([key, nested]) => {
+        const nestedText = formatComplexTooltipValue(nested);
+        return nestedText ? `${key} = ${nestedText}` : key;
+      })
+      .filter(Boolean)
+      .join(', ');
+  }
+
+  if (value == null) {
+    return '';
+  }
+
+  return String(value);
+};
+
 export const getTooltipDisplayValue = (
   value: unknown,
   field: Field
@@ -88,16 +121,9 @@ export const getTooltipDisplayValue = (
   numeric: number;
   color?: string;
 } => {
-  if (Array.isArray(value)) {
-    if (value.length === 0) {
-      return { text: '', numeric: NaN };
-    }
-
-    return { text: JSON.stringify(value), numeric: NaN };
-  }
-
-  if (value && typeof value === 'object') {
-    return { text: JSON.stringify(value), numeric: NaN };
+  // GSAI override: render arrays/objects as readable text instead of JSON.stringify
+  if (Array.isArray(value) || (value && typeof value === 'object')) {
+    return { text: formatComplexTooltipValue(value), numeric: NaN };
   }
 
   const display = field.display!(value); // super expensive :(
@@ -176,7 +202,8 @@ export const getContentItems = (
       color: display.color ?? FALLBACK_COLOR,
       colorIndicator,
       colorPlacement,
-      isActive: (mode === TooltipDisplayMode.Multi || mode === TooltipDisplayMode.Custom) && seriesIdx === i,
+      // GSAI override: mark hovered series active in all modes so compact tooltips can highlight it
+      isActive: seriesIdx === i,
       numeric,
       lineStyle: field.config.custom?.lineStyle,
     });

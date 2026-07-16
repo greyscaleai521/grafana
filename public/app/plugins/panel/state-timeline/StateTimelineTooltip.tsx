@@ -41,6 +41,7 @@ export const StateTimelineTooltip = ({
   maxHeight,
   replaceVariables,
   dataLinks,
+  compact = false,
 }: StateTimelineTooltipProps) => {
   const pluginContext = usePluginContext();
   const xField = series.fields[0];
@@ -183,14 +184,18 @@ export const StateTimelineTooltip = ({
     value: endTime ? xVal + ' - \n' + xField.display!(endTime).text : xVal,
   };
 
+  // GSAI override: in compact mode merge header into content so columns align in one table
+  const items = compact && (headerItem.label || headerItem.value) ? [headerItem, ...contentItems] : contentItems;
+
   return (
     <VizTooltipWrapper>
-      <VizTooltipHeader item={headerItem} isPinned={isPinned} />
+      {!compact && <VizTooltipHeader item={headerItem} isPinned={isPinned} />}
       <VizTooltipContent
-        items={contentItems}
+        items={items}
         isPinned={isPinned}
         scrollable={isTooltipScrollable({ mode, maxHeight })}
         maxHeight={maxHeight}
+        compact={compact}
       />
       {footer}
     </VizTooltipWrapper>
