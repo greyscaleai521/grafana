@@ -12,11 +12,21 @@ export const DataLinksCell = ({ field, rowIdx }: DataLinksCellProps) => {
     return null;
   }
 
-  return links.map((link, idx) => (
-    <a key={idx} onClick={link.onClick} href={link.href} target={link.target}>
-      {link.title}
-    </a>
-  ));
+  return links.map((link, idx) =>
+    // GSAI override: '_top' (navigate-parent) links must navigate the parent frame via
+    // postMessage (host listens for 'navigateUrl'); direct _top navigation is blocked
+    // cross-origin. Mirrors DataLinksContextMenu.
+    link.target === '_top' ? (
+      // eslint-disable-next-line jsx-a11y/anchor-is-valid, jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+      <a key={idx} onClick={() => window.parent.postMessage({ key: 'navigateUrl', value: link.href }, '*')}>
+        {link.title}
+      </a>
+    ) : (
+      <a key={idx} onClick={link.onClick} href={link.href} target={link.target}>
+        {link.title}
+      </a>
+    )
+  );
 };
 
 export const getStyles: TableCellStyles = memoize(

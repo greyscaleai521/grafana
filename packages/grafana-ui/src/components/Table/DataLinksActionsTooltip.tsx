@@ -97,6 +97,23 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
 };
 
 export const renderSingleLink = (link: LinkModel, children: ReactNode, className?: string): ReactNode => {
+  // GSAI override: '_top' (navigate-parent) links inside the embedding iframe must navigate the
+  // parent frame via postMessage (the host listens for 'navigateUrl'). Direct _top navigation is
+  // blocked cross-origin, so clicking the cell otherwise does nothing. Mirrors DataLinksContextMenu.
+  if (link.target === '_top') {
+    return (
+      // eslint-disable-next-line jsx-a11y/anchor-is-valid, jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+      <a
+        onClick={() => window.parent.postMessage({ key: 'navigateUrl', value: link.href }, '*')}
+        title={link.title}
+        data-testid={selectors.components.DataLinksContextMenu.singleLink}
+        className={className}
+      >
+        {children}
+      </a>
+    );
+  }
+
   return (
     <a
       href={link.href}

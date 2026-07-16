@@ -14,7 +14,11 @@ import {
 import { findNextStateIndex, fmtDuration } from 'app/core/components/TimelineChart/utils';
 
 import { getFieldActions } from '../status-history/utils';
-import { type TimeSeriesTooltipProps } from '../timeseries/TimeSeriesTooltip';
+import {
+  getCompactLinkRows,
+  getCompactLinks,
+  type TimeSeriesTooltipProps,
+} from '../timeseries/TimeSeriesTooltip';
 import { isTooltipScrollable } from '../timeseries/utils';
 
 interface StateTimelineTooltipProps extends TimeSeriesTooltipProps {
@@ -166,6 +170,11 @@ export const StateTimelineTooltip = ({
 
   let footer: ReactNode;
 
+  // GSAI override: in compact mode, render data links inline as "Link" rows (shared with the
+  // bar-chart tooltip) so they show on hover and carry an explicit "Link" field name.
+  const compactLinkRows =
+    compact && seriesIdx != null ? getCompactLinkRows(getCompactLinks(series, seriesIdx, dataIdxs, dataLinks), isPinned) : null;
+
   if (seriesIdx != null) {
     const field = series.fields[seriesIdx];
     const hasOneClickLink = dataLinks.some((dataLink) => dataLink.oneClick === true);
@@ -175,7 +184,8 @@ export const StateTimelineTooltip = ({
       const dataIdx = dataIdxs[seriesIdx]!;
       const actions = getFieldActions(series, field, replaceVariables!, dataIdx, visualizationType);
 
-      footer = <VizTooltipFooter dataLinks={dataLinks} actions={actions} annotate={annotate} />;
+      // GSAI override: compact tooltips render links inline instead of in the footer
+      footer = <VizTooltipFooter dataLinks={compact ? [] : dataLinks} actions={actions} annotate={annotate} />;
     }
   }
 
@@ -196,7 +206,9 @@ export const StateTimelineTooltip = ({
         scrollable={isTooltipScrollable({ mode, maxHeight })}
         maxHeight={maxHeight}
         compact={compact}
-      />
+      >
+        {compactLinkRows}
+      </VizTooltipContent>
       {footer}
     </VizTooltipWrapper>
   );
