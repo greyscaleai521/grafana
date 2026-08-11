@@ -526,6 +526,67 @@ func TestMacroEngine(t *testing.T) {
 		})
 
 	})
+
+	t.Run("Macro: $__constructLikePredicate", func(t *testing.T) {
+
+		t.Run("without arguments should return True", func(t *testing.T) {
+			result, err := engine.Interpolate(query, backend.TimeRange{}, "$__constructLikePredicate()")
+
+			require.NoError(t, err)
+			require.Equal(t, "true", result)
+		})
+
+		t.Run("should return true if value is in exclude_values", func(t *testing.T) {
+			result, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructLikePredicate("exclude_values: NULL","var1: var-var1=NULL")`)
+
+			require.NoError(t, err)
+			require.Equal(t, "true", result)
+		})
+
+		t.Run("single value - should construct like predicate", func(t *testing.T) {
+			result, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructLikePredicate("var1: var-var1=abc")`)
+
+			require.NoError(t, err)
+			require.Equal(t, `(var1 like '%abc%')`, result)
+		})
+
+		t.Run("multiple values - should construct or-joined like predicates", func(t *testing.T) {
+			result, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructLikePredicate(
+			"exclude_values: NULL,All",
+			"factory_location: var-FactoryLocation=Boardman&var-FactoryLocation=Richland"
+			)`)
+
+			require.NoError(t, err)
+			require.Equal(t, `(factory_location like '%Boardman%' or factory_location like '%Richland%')`, result)
+		})
+
+		t.Run("multiple values - should exclude excluded values", func(t *testing.T) {
+			result, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructLikePredicate("exclude_values: NULL,All,","var1: var-var1=abc&var-var1=NULL&var-var1=All&var-var1=123")`)
+
+			require.NoError(t, err)
+			require.Equal(t, `(var1 like '%abc%' or var1 like '%123%')`, result)
+		})
+
+		t.Run("should SQL escape single quotes", func(t *testing.T) {
+			result, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructLikePredicate("var1: var-var1=a%27%20bc")`)
+
+			require.NoError(t, err)
+			require.Equal(t, `(var1 like '%a'' bc%')`, result)
+		})
+
+		t.Run("multiple params - should and-join like predicate groups", func(t *testing.T) {
+			result, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructLikePredicate("var1: var-var1=abc&var-var1=123", "var2: var-var2=def")`)
+
+			require.NoError(t, err)
+			require.Equal(t, `(var1 like '%abc%' or var1 like '%123%') and (var2 like '%def%')`, result)
+		})
+
+		t.Run("without arguments wrapped in key:value format it should return error", func(t *testing.T) {
+			_, err := engine.Interpolate(query, backend.TimeRange{}, `$__constructLikePredicate(var-var1=123&var-var1=343)`)
+
+			require.EqualError(t, err, "error in parsing argument: var-var1=123&var-var1=343 not in key value pair format")
+		})
+	})
 }
 
 func TestMacroEngineConcurrency(t *testing.T) {

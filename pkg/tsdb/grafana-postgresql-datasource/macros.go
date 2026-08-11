@@ -372,6 +372,47 @@ func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *
 			return "true", nil
 		}
 		return strings.Join(filtersList, " and "), nil
+	case "__constructLikePredicate":
+		if len(args) == 1 && args[0] == "" {
+			return "true", nil
+		}
+		var excludedValues []string
+		type Pair struct {
+			Key   string
+			Query string
+		}
+		var macroArguments []Pair
+		for _, arg := range args {
+			argList := strings.Split(arg, ":")
+			macrosLogger.Debug("splitting args", "argList", fmt.Sprintf("%v", argList))
+			if len(argList) != 2 {
+				return "", fmt.Errorf("error in parsing argument: %s not in key value pair format", arg)
+			}
+			keyName := strings.TrimSpace(argList[0])
+			valuesString := strings.TrimSpace(argList[1])
+			if keyName == "exclude_values" {
+				excludedValues = strings.Split(valuesString, ",")
+			} else {
+				macroArguments = append(macroArguments, Pair{keyName, valuesString})
+			}
+		}
+		var filtersList []string
+		for _, macroArgument := range macroArguments {
+			values, err := url.ParseQuery(macroArgument.Query)
+			if err != nil {
+				return "", fmt.Errorf("error while parsing query params: %w", err)
+			}
+			for _, value := range values {
+				includeValues := m.removeFromSlice(value, excludedValues)
+				if len(includeValues) != 0 {
+					filtersList = append(filtersList, m.formatLikePredicates(macroArgument.Key, includeValues))
+				}
+			}
+		}
+		if len(filtersList) == 0 {
+			return "true", nil
+		}
+		return strings.Join(filtersList, " and "), nil
 	case "__constructRangePredicate":
 		if len(args) != 3 {
 			return "", fmt.Errorf("expecting field name, value and conversion factor to be passed: passed arguments are %v", args)
@@ -438,4 +479,15 @@ func (m *postgresMacroEngine) escapeSqlSingleQuotes(values []string) string {
 		values[i] = fmt.Sprintf(`'%s'`, values[i])
 	}
 	return strings.Join(values, ",")
+}
+
+func (m *postgresMacroEngine) formatLikePredicates(column string, values []string) string {
+	var parts []string
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		value = strings.Trim(value, `'`)
+		value = strings.ReplaceAll(value, `'`, `''`)
+		parts = append(parts, fmt.Sprintf("%s like '%%%s%%'", column, value))
+	}
+	return "(" + strings.Join(parts, " or ") + ")"
 }
