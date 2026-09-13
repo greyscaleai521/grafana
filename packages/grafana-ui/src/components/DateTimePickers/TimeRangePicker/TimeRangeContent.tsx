@@ -164,6 +164,9 @@ export const TimeRangeContent = (props: Props) => {
 
   const hasOtherErrors = (from.invalid && !from.hiResInvalid) || (to.invalid && !to.hiResInvalid);
   const showFixAndApply = Boolean((from.hiResInvalid || to.hiResInvalid) && !hasOtherErrors);
+  const hourOnly =
+    enforceHiResTimestamps && shouldBlockHiResMinutes(from.value, to.value, timeZone, fiscalYearStartMonth);
+  const showUtcHourNote = hourOnly && hasFractionalHourOffset(timeZone);
 
   const submitOnEnter = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
@@ -269,6 +272,16 @@ export const TimeRangeContent = (props: Props) => {
         </Field>
         {fyTooltip}
       </div>
+      {showUtcHourNote && (
+        <div className={style.utcHourNote}>
+          <Icon name="info-circle" size="sm" />
+          <span>
+            <Trans i18nKey="time-picker.range-content.utc-hour-snap-note">
+              HiRes off snaps hours in UTC. In this timezone that shows as :30 or :29.
+            </Trans>
+          </span>
+        </div>
+      )}
       <div className={style.buttonsContainer}>
         <Button
           data-testid={selectors.components.TimePicker.copyTimeRange}
@@ -331,6 +344,24 @@ function isRangeInvalid(from: string, to: string, timezone?: string): boolean {
   return !valid;
 }
 
+function utcMinutesSeconds(value: DateTime | string, timeZone?: TimeZone): string {
+  if (isDateTime(value)) {
+    return dateTimeFormat(value, { timeZone: 'utc', format: 'mmss' });
+  }
+
+  const parsed = dateTimeParse(value, { timeZone, format: commonFormat });
+  if (!parsed.isValid()) {
+    return '';
+  }
+
+  return dateTimeFormat(parsed, { timeZone: 'utc', format: 'mmss' });
+}
+
+function hasFractionalHourOffset(timeZone?: TimeZone): boolean {
+  const offsetMinutes = dateTimeParse(Date.now(), { timeZone }).utcOffset();
+  return offsetMinutes % 60 !== 0;
+}
+
 function snapAbsoluteTime(value: string, timeZone: TimeZone | undefined, bound: 'start' | 'end'): string {
   if (dateMath.isMathString(value)) {
     return value;
@@ -341,25 +372,26 @@ function snapAbsoluteTime(value: string, timeZone: TimeZone | undefined, bound: 
     return value;
   }
 
+  const utcTime = parsed.utc();
   let snapped;
   if (bound === 'start') {
-    // 13:59:59 is the end of an hour; the hour-only start is 13:00:00.000.
-    snapped = parsed.startOf('hour');
-  } else if (parsed.format('mmss') === '0000') {
-    // 14:00:00.000 is the start of an hour; the hour-only end is 13:59:59.999.
-    snapped = parsed.subtract(1, 'millisecond');
+    // UTC 13:59:59 is the end of an hour; the hour-only start is 13:00:00.000Z.
+    snapped = utcTime.startOf('hour');
+  } else if (utcTime.format('mmss') === '0000') {
+    // UTC 14:00:00.000 is the start of an hour; the hour-only end is 13:59:59.999Z.
+    snapped = utcTime.subtract(1, 'millisecond');
   } else {
-    snapped = parsed.endOf('hour'); // 14:59:59.999
+    snapped = utcTime.endOf('hour');
   }
 
   return dateTimeFormat(snapped, { timeZone, format: commonFormat });
 }
 
 function applyHourBoundaryMillis(range: TimeRange): TimeRange {
-  if (!dateMath.isMathString(range.raw.from) && range.from.format('mmss') === '0000') {
+  if (!dateMath.isMathString(range.raw.from) && utcMinutesSeconds(range.from) === '0000') {
     range.from.set('millisecond', 0);
   }
-  if (!dateMath.isMathString(range.raw.to) && range.to.format('mmss') === '5959') {
+  if (!dateMath.isMathString(range.raw.to) && utcMinutesSeconds(range.to) === '5959') {
     range.to.set('millisecond', 999);
   }
   return range;
@@ -370,13 +402,12 @@ function isDisallowedWhenHourOnly(value: string, timeZone: TimeZone | undefined,
     return false;
   }
 
-  const parsed = dateTimeParse(value, { timeZone, format: commonFormat });
-  if (!parsed.isValid()) {
+  const minutesAndSeconds = utcMinutesSeconds(value, timeZone);
+  if (!minutesAndSeconds) {
     return false;
   }
 
-  const minutesAndSeconds = parsed.format('mmss');
-  // To must end at :59:59. From must start at :00:00.
+  // To must end at UTC :59:59. From must start at UTC :00:00.
   if (bound === 'to') {
     return minutesAndSeconds !== '5959';
   }
@@ -471,6 +502,15 @@ function getStyles(theme: GrafanaTheme2) {
     tooltip: css({
       paddingLeft: theme.spacing(1),
       paddingTop: theme.spacing(3),
+    }),
+    utcHourNote: css({
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: theme.spacing(0.5),
+      marginTop: theme.spacing(1),
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
+      lineHeight: theme.typography.bodySmall.lineHeight,
     }),
   };
 }

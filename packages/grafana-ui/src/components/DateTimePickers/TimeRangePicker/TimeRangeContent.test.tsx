@@ -576,6 +576,46 @@ describe('TimeRangeForm', () => {
       expect(applied.to.format('YYYY-MM-DD HH:mm:ss.SSS')).toBe('2020-01-03 23:59:59.999');
     });
 
+    it('snaps hour bounds in UTC for fractional-hour timezones', async () => {
+      const range: TimeRange = {
+        from: dateTimeParse('2026-08-03 18:00:00', { timeZone: 'Asia/Kolkata' }),
+        to: dateTimeParse('2026-08-05 18:59:59', { timeZone: 'Asia/Kolkata' }),
+        raw: {
+          from: '2026-08-03 18:00:00',
+          to: '2026-08-05 18:59:59',
+        },
+      };
+      setup(range, 'Asia/Kolkata', { enabled: false });
+
+      expect(
+        screen.getByText('HiRes off snaps hours in UTC. In this timezone that shows as :30 or :29.')
+      ).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Fix & Apply time range' })).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Fix & Apply time range' }));
+
+      expect(mockOnApply).toHaveBeenCalled();
+      const applied = mockOnApply.mock.lastCall?.[0] as TimeRange;
+      expect(applied.from.toISOString()).toBe('2026-08-03T12:00:00.000Z');
+      expect(applied.to.toISOString()).toBe('2026-08-05T13:59:59.999Z');
+    });
+
+    it('does not show the UTC hour note for whole-hour timezones', () => {
+      const range: TimeRange = {
+        from: dateTimeParse('2020-01-01 14:32:08', { timeZone: 'utc' }),
+        to: dateTimeParse('2020-01-03 23:56:59', { timeZone: 'utc' }),
+        raw: {
+          from: '2020-01-01 14:32:08',
+          to: '2020-01-03 23:56:59',
+        },
+      };
+      setup(range, 'utc', { enabled: false });
+
+      expect(
+        screen.queryByText('HiRes off snaps hours in UTC. In this timezone that shows as :30 or :29.')
+      ).not.toBeInTheDocument();
+    });
+
     it('allows relative ranges', async () => {
       const relativeRange: TimeRange = {
         from: dateTimeParse('now-90d', { timeZone: 'utc' }),
