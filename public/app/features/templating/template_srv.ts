@@ -2,7 +2,9 @@ import { escape, isString } from 'lodash';
 
 import {
   deprecationWarning,
+  REAL_TIME_THRESHOLD_IN_DAYS_VARIABLE,
   resolveHiResTimestampsEnabled,
+  resolveRealTimeThresholdDays,
   type ScopedVars,
   type TimeRange,
   type AdHocVariableFilter,
@@ -107,7 +109,12 @@ export class TemplateSrv implements BaseTemplateSrv {
     if (this.timeRange) {
       const from = this.timeRange.from.valueOf().toString();
       const to = this.timeRange.to.valueOf().toString();
-      const hiResTimestamps = resolveHiResTimestampsEnabled(this.timeRange) ? 'true' : 'false';
+      const thresholdDays = resolveRealTimeThresholdDays(
+        this.index[REAL_TIME_THRESHOLD_IN_DAYS_VARIABLE]?.current?.value
+      );
+      const hiResTimestamps = resolveHiResTimestampsEnabled(this.timeRange, Date.now(), thresholdDays)
+        ? 'true'
+        : 'false';
 
       this.index = {
         ...this.index,

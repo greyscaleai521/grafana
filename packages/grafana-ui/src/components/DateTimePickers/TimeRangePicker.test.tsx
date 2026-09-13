@@ -65,6 +65,24 @@ describe('TimePicker', () => {
     expect(openButton).toContainElement(hiRes);
   });
 
+  it('shows the resolved real-time threshold in the HiRes hover', async () => {
+    render(
+      <HiResTimestampsProvider value={{ enabled: true, interactive: false, onToggle: jest.fn(), thresholdDays: 7 }}>
+        <TimeRangePicker
+          onChangeTimeZone={() => {}}
+          onChange={(value) => {}}
+          value={value}
+          onMoveBackward={() => {}}
+          onMoveForward={() => {}}
+          onZoom={() => {}}
+        />
+      </HiResTimestampsProvider>
+    );
+
+    await userEvent.hover(screen.getByTestId(selectors.hiResTimestamps));
+    expect(await screen.findByText(/within 7 days of now/)).toBeInTheDocument();
+  });
+
   it('renders HiRes as text only, not a button', () => {
     const onToggle = jest.fn();
     render(

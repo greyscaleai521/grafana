@@ -1,4 +1,8 @@
-import { resolveHiResTimestampsEnabled } from '@grafana/data';
+import {
+  REAL_TIME_THRESHOLD_IN_DAYS_VARIABLE,
+  resolveHiResTimestampsEnabled,
+  resolveRealTimeThresholdDays,
+} from '@grafana/data';
 import { type FormatVariable, sceneGraph, type SceneObject } from '@grafana/scenes';
 
 export class HiResTimestampsMacro implements FormatVariable {
@@ -12,7 +16,10 @@ export class HiResTimestampsMacro implements FormatVariable {
 
   public getValue() {
     const timeRange = sceneGraph.getTimeRange(this._sceneObject);
-    return resolveHiResTimestampsEnabled(timeRange.state.value) ? 'true' : 'false';
+    const thresholdDays = resolveRealTimeThresholdDays(
+      sceneGraph.lookupVariable(REAL_TIME_THRESHOLD_IN_DAYS_VARIABLE, this._sceneObject)?.getValue()
+    );
+    return resolveHiResTimestampsEnabled(timeRange.state.value, Date.now(), thresholdDays) ? 'true' : 'false';
   }
 
   public getValueText?(): string {

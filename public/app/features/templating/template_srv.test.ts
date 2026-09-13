@@ -669,6 +669,20 @@ describe('templateSrv', () => {
       expect(_templateSrv.replace('$__hires_timestamps')).toBe('true');
     });
 
+    it('uses $RealTimeThresholdInDays when present on the dashboard', () => {
+      const now = dateTime();
+      _templateSrv = initTemplateSrv(
+        key,
+        [{ type: 'constant', name: 'RealTimeThresholdInDays', current: { value: '7', text: '7' } }],
+        {
+          from: dateTime(now).subtract(10, 'day'),
+          to: dateTime(now).subtract(8, 'day'),
+          raw: { from: 'now-10d', to: 'now-8d' },
+        }
+      );
+      expect(_templateSrv.replace('$__hires_timestamps')).toBe('false');
+    });
+
     it('is false when from or to is beyond 30 days and the span is over 24h', () => {
       _templateSrv = initTemplateSrv(key, [], {
         from: dateTime(1594671549254),

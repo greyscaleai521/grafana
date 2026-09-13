@@ -419,8 +419,11 @@ export {
 export { type DateTimeOptionsWhenParsing, dateTimeParse } from './datetime/parser';
 export {
   type HiResTimestampsRuleState,
+  REAL_TIME_THRESHOLD_IN_DAYS_VARIABLE,
+  HIRES_TIMESTAMPS_DEFAULT_THRESHOLD_DAYS,
   getHiResTimestampsState,
   resolveHiResTimestampsEnabled,
+  resolveRealTimeThresholdDays,
 } from './datetime/hiResTimestamps';
 export {
   intervalToAbbreviatedDurationString,

@@ -8,6 +8,7 @@ import {
   dateTimeFormat,
   dateTimeParse,
   type GrafanaTheme2,
+  HIRES_TIMESTAMPS_DEFAULT_THRESHOLD_DAYS,
   isDateTime,
   rangeUtil,
   type RawTimeRange,
@@ -69,12 +70,14 @@ export const TimeRangeContent = (props: Props) => {
   } = props;
   const hiResTimestamps = useHiResTimestamps();
   const enforceHiResTimestamps = Boolean(hiResTimestamps);
+  const thresholdDays = hiResTimestamps?.thresholdDays ?? HIRES_TIMESTAMPS_DEFAULT_THRESHOLD_DAYS;
   const [fromValue, toValue] = valueToState(
     value.raw.from,
     value.raw.to,
     timeZone,
     fiscalYearStartMonth,
-    enforceHiResTimestamps
+    enforceHiResTimestamps,
+    thresholdDays
   );
   const style = useStyles2(getStyles);
 
@@ -92,11 +95,12 @@ export const TimeRangeContent = (props: Props) => {
       value.raw.to,
       timeZone,
       fiscalYearStartMonth,
-      enforceHiResTimestamps
+      enforceHiResTimestamps,
+      thresholdDays
     );
     setFrom(fromValue);
     setTo(toValue);
-  }, [value.raw.from, value.raw.to, timeZone, fiscalYearStartMonth, enforceHiResTimestamps]);
+  }, [value.raw.from, value.raw.to, timeZone, fiscalYearStartMonth, enforceHiResTimestamps, thresholdDays]);
 
   const onOpen = useCallback(
     (event: FormEvent<HTMLElement>) => {
@@ -112,7 +116,8 @@ export const TimeRangeContent = (props: Props) => {
       to.value,
       timeZone,
       fiscalYearStartMonth,
-      enforceHiResTimestamps
+      enforceHiResTimestamps,
+      thresholdDays
     );
     setFrom(nextFrom);
     setTo(nextTo);
@@ -127,7 +132,7 @@ export const TimeRangeContent = (props: Props) => {
     );
 
     onApplyFromProps(timeRange);
-  }, [enforceHiResTimestamps, from.value, onApplyFromProps, timeZone, to.value, fiscalYearStartMonth]);
+  }, [enforceHiResTimestamps, from.value, onApplyFromProps, thresholdDays, timeZone, to.value, fiscalYearStartMonth]);
 
   const onFixAndApply = useCallback(() => {
     const fixedFrom = snapAbsoluteTime(from.value, timeZone, 'start');
@@ -137,7 +142,8 @@ export const TimeRangeContent = (props: Props) => {
       fixedTo,
       timeZone,
       fiscalYearStartMonth,
-      enforceHiResTimestamps
+      enforceHiResTimestamps,
+      thresholdDays
     );
     setFrom(nextFrom);
     setTo(nextTo);
@@ -151,21 +157,29 @@ export const TimeRangeContent = (props: Props) => {
       rangeUtil.convertRawToRange(raw, timeZone, fiscalYearStartMonth, commonFormat)
     );
     onApplyFromProps(timeRange);
-  }, [enforceHiResTimestamps, from.value, onApplyFromProps, timeZone, to.value, fiscalYearStartMonth]);
+  }, [enforceHiResTimestamps, from.value, onApplyFromProps, thresholdDays, timeZone, to.value, fiscalYearStartMonth]);
 
   const onChange = useCallback(
     (from: DateTime | string, to: DateTime | string) => {
-      const [fromValue, toValue] = valueToState(from, to, timeZone, fiscalYearStartMonth, enforceHiResTimestamps);
+      const [fromValue, toValue] = valueToState(
+        from,
+        to,
+        timeZone,
+        fiscalYearStartMonth,
+        enforceHiResTimestamps,
+        thresholdDays
+      );
       setFrom(fromValue);
       setTo(toValue);
     },
-    [enforceHiResTimestamps, fiscalYearStartMonth, timeZone]
+    [enforceHiResTimestamps, fiscalYearStartMonth, thresholdDays, timeZone]
   );
 
   const hasOtherErrors = (from.invalid && !from.hiResInvalid) || (to.invalid && !to.hiResInvalid);
   const showFixAndApply = Boolean((from.hiResInvalid || to.hiResInvalid) && !hasOtherErrors);
   const hourOnly =
-    enforceHiResTimestamps && shouldBlockHiResMinutes(from.value, to.value, timeZone, fiscalYearStartMonth);
+    enforceHiResTimestamps &&
+    shouldBlockHiResMinutes(from.value, to.value, timeZone, fiscalYearStartMonth, thresholdDays);
   const showUtcHourNote = hourOnly && hasFractionalHourOffset(timeZone);
 
   const submitOnEnter = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -202,7 +216,8 @@ export const TimeRangeContent = (props: Props) => {
       range.to,
       timeZone,
       fiscalYearStartMonth,
-      enforceHiResTimestamps
+      enforceHiResTimestamps,
+      thresholdDays
     );
     setFrom(fromValue);
     setTo(toValue);
@@ -419,7 +434,8 @@ function shouldBlockHiResMinutes(
   fromValue: string,
   toValue: string,
   timeZone?: TimeZone,
-  fiscalYearStartMonth?: number
+  fiscalYearStartMonth?: number,
+  thresholdDays = HIRES_TIMESTAMPS_DEFAULT_THRESHOLD_DAYS
 ): boolean {
   if (!isValid(fromValue, false, timeZone) || !isValid(toValue, true, timeZone)) {
     return false;
@@ -435,7 +451,7 @@ function shouldBlockHiResMinutes(
     return false;
   }
 
-  return !resolveHiResTimestampsEnabled(timeRange);
+  return !resolveHiResTimestampsEnabled(timeRange, Date.now(), thresholdDays);
 }
 
 function valueToState(
@@ -443,7 +459,8 @@ function valueToState(
   rawTo: DateTime | string,
   timeZone?: TimeZone,
   fiscalYearStartMonth?: number,
-  enforceHiResTimestamps = false
+  enforceHiResTimestamps = false,
+  thresholdDays = HIRES_TIMESTAMPS_DEFAULT_THRESHOLD_DAYS
 ): [InputState, InputState] {
   const fromValue = valueAsString(rawFrom, timeZone);
   const toValue = valueAsString(rawTo, timeZone);
@@ -452,7 +469,8 @@ function valueToState(
   // If "To" is invalid, we should not check the range anyways
   const rangeInvalid = isRangeInvalid(fromValue, toValue, timeZone) && !toInvalid;
   const blockMinutes =
-    enforceHiResTimestamps && shouldBlockHiResMinutes(fromValue, toValue, timeZone, fiscalYearStartMonth);
+    enforceHiResTimestamps &&
+    shouldBlockHiResMinutes(fromValue, toValue, timeZone, fiscalYearStartMonth, thresholdDays);
   const fromHiResInvalid = blockMinutes && !fromInvalid && isDisallowedWhenHourOnly(fromValue, timeZone, 'from');
   const toHiResInvalid = blockMinutes && !toInvalid && isDisallowedWhenHourOnly(toValue, timeZone, 'to');
 

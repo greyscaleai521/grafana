@@ -1,6 +1,8 @@
 import { type TimeRange } from '../types/time';
 
-export const HIRES_TIMESTAMPS_BEYOND_MS = 30 * 24 * 60 * 60 * 1000;
+export const REAL_TIME_THRESHOLD_IN_DAYS_VARIABLE = 'RealTimeThresholdInDays';
+export const HIRES_TIMESTAMPS_DEFAULT_THRESHOLD_DAYS = 30;
+export const HIRES_TIMESTAMPS_BEYOND_MS = HIRES_TIMESTAMPS_DEFAULT_THRESHOLD_DAYS * 24 * 60 * 60 * 1000;
 export const HIRES_TIMESTAMPS_SHORT_RANGE_MS = 24 * 60 * 60 * 1000;
 
 export interface HiResTimestampsRuleState {
@@ -8,14 +10,27 @@ export interface HiResTimestampsRuleState {
   interactive: boolean;
 }
 
-export function getHiResTimestampsState(range: TimeRange, now = Date.now()): HiResTimestampsRuleState {
+export function resolveRealTimeThresholdDays(raw?: unknown): number {
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  const days = typeof value === 'number' ? value : Number.parseFloat(String(value ?? ''));
+  if (!Number.isFinite(days) || days <= 0) {
+    return HIRES_TIMESTAMPS_DEFAULT_THRESHOLD_DAYS;
+  }
+  return days;
+}
+
+export function getHiResTimestampsState(
+  range: TimeRange,
+  now = Date.now(),
+  thresholdDays = HIRES_TIMESTAMPS_DEFAULT_THRESHOLD_DAYS
+): HiResTimestampsRuleState {
   const fromMs = range.from.valueOf();
   const toMs = range.to.valueOf();
-  const beyond30Days =
-    Math.abs(fromMs - now) > HIRES_TIMESTAMPS_BEYOND_MS || Math.abs(toMs - now) > HIRES_TIMESTAMPS_BEYOND_MS;
+  const beyondThreshold =
+    isOutsideRealTimeThreshold(fromMs, now, thresholdDays) || isOutsideRealTimeThreshold(toMs, now, thresholdDays);
   const spanMs = Math.abs(toMs - fromMs);
 
-  if (!beyond30Days) {
+  if (!beyondThreshold) {
     return { defaultOn: true, interactive: false };
   }
 
@@ -26,6 +41,16 @@ export function getHiResTimestampsState(range: TimeRange, now = Date.now()): HiR
   return { defaultOn: false, interactive: false };
 }
 
-export function resolveHiResTimestampsEnabled(range: TimeRange, now = Date.now()): boolean {
-  return getHiResTimestampsState(range, now).defaultOn;
+/** True once a timestamp is a full extra day past the inclusive N-day window. */
+function isOutsideRealTimeThreshold(ts: number, now: number, thresholdDays: number): boolean {
+  const days = resolveRealTimeThresholdDays(thresholdDays);
+  return Math.abs(ts - now) >= (days + 1) * 24 * 60 * 60 * 1000;
+}
+
+export function resolveHiResTimestampsEnabled(
+  range: TimeRange,
+  now = Date.now(),
+  thresholdDays = HIRES_TIMESTAMPS_DEFAULT_THRESHOLD_DAYS
+): boolean {
+  return getHiResTimestampsState(range, now, thresholdDays).defaultOn;
 }

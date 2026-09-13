@@ -14,6 +14,7 @@ import {
   type TimeZone,
   dateMath,
   getTimeZoneInfo,
+  HIRES_TIMESTAMPS_DEFAULT_THRESHOLD_DAYS,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
@@ -157,9 +158,11 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
 
   const currentTimeRange = formattedRange(value, timeZone, quickRanges);
   const hiResTimestamps = useHiResTimestamps();
+  const thresholdDays = hiResTimestamps?.thresholdDays ?? HIRES_TIMESTAMPS_DEFAULT_THRESHOLD_DAYS;
   const hiResTimestampsLabel = t(
     'time-picker.range-picker.hires-timestamps',
-    'HiRes enables minute and second precision. Available when the range is 24 hours or less, or when both From and To are within 30 days of now.'
+    'HiRes enables minute and second precision. Available when the range is 24 hours or less, or when both From and To are within {{thresholdDays}} days of now.',
+    { thresholdDays }
   );
 
   return (

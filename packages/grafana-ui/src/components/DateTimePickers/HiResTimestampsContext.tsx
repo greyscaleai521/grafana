@@ -4,6 +4,7 @@ export interface HiResTimestampsContextValue {
   enabled: boolean;
   interactive: boolean;
   onToggle: () => void;
+  thresholdDays?: number;
 }
 
 const HiResTimestampsContext = createContext<HiResTimestampsContextValue | undefined>(undefined);

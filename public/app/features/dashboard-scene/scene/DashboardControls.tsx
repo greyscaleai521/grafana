@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { type GrafanaTheme2, VariableHide } from '@grafana/data';
+import { type GrafanaTheme2, REAL_TIME_THRESHOLD_IN_DAYS_VARIABLE, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -143,7 +143,7 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
    */
   private _onAnyVariableChanged(): void {
     const dashboard = getDashboardSceneFor(this);
-    if (dashboard.state.links?.length > 0) {
+    if (dashboard.state.links?.length > 0 || sceneGraph.lookupVariable(REAL_TIME_THRESHOLD_IN_DAYS_VARIABLE, this)) {
       this.forceRender();
     }
   }
