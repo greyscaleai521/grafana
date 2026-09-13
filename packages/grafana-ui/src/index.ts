@@ -49,6 +49,11 @@ export { StatsPicker, type StatsPickerProps } from './components/StatsPicker/Sta
 export { RefreshPicker, defaultIntervals } from './components/RefreshPicker/RefreshPicker';
 export { TimeRangePicker, type TimeRangePickerProps } from './components/DateTimePickers/TimeRangePicker';
 export { TimeRangeProvider } from './components/DateTimePickers/TimeRangeContext';
+export {
+  HiResTimestampsProvider,
+  useHiResTimestamps,
+  type HiResTimestampsContextValue,
+} from './components/DateTimePickers/HiResTimestampsContext';
 export { TimePickerTooltip } from './components/DateTimePickers/TimeRangePicker';
 export { TimeRangeLabel } from './components/DateTimePickers/TimeRangePicker/TimeRangeLabel';
 export { TimeOfDayPicker } from './components/DateTimePickers/TimeOfDayPicker';

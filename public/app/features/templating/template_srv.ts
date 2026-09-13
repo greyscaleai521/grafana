@@ -2,6 +2,7 @@ import { escape, isString } from 'lodash';
 
 import {
   deprecationWarning,
+  resolveHiResTimestampsEnabled,
   type ScopedVars,
   type TimeRange,
   type AdHocVariableFilter,
@@ -106,6 +107,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     if (this.timeRange) {
       const from = this.timeRange.from.valueOf().toString();
       const to = this.timeRange.to.valueOf().toString();
+      const hiResTimestamps = resolveHiResTimestampsEnabled(this.timeRange) ? 'true' : 'false';
 
       this.index = {
         ...this.index,
@@ -114,6 +116,9 @@ export class TemplateSrv implements BaseTemplateSrv {
         },
         ['__to']: {
           current: { value: to, text: to },
+        },
+        ['__hires_timestamps']: {
+          current: { value: hiResTimestamps, text: hiResTimestamps },
         },
       };
     }

@@ -658,6 +658,27 @@ describe('templateSrv', () => {
     });
   });
 
+  describe('$__hires_timestamps', () => {
+    it('is true when from and to are within 30 days of now', () => {
+      const now = dateTime();
+      _templateSrv = initTemplateSrv(key, [], {
+        from: dateTime(now).subtract(6, 'hour'),
+        to: now,
+        raw: { from: 'now-6h', to: 'now' },
+      });
+      expect(_templateSrv.replace('$__hires_timestamps')).toBe('true');
+    });
+
+    it('is false when from or to is beyond 30 days and the span is over 24h', () => {
+      _templateSrv = initTemplateSrv(key, [], {
+        from: dateTime(1594671549254),
+        to: dateTime(1595237229747),
+        raw: { from: dateTime(1594671549254), to: dateTime(1595237229747) },
+      });
+      expect(_templateSrv.replace('$__hires_timestamps')).toBe('false');
+    });
+  });
+
   describe('handle objects gracefully', () => {
     beforeEach(() => {
       _templateSrv = initTemplateSrv(key, [{ type: 'query', name: 'test', current: { value: { test: 'A' } } }]);

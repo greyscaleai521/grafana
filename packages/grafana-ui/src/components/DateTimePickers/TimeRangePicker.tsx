@@ -21,11 +21,13 @@ import { t, Trans } from '@grafana/i18n';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFeatureToggle } from '../../utils/featureToggle';
 import { ButtonGroup } from '../Button/ButtonGroup';
+import { Icon } from '../Icon/Icon';
 import { getModalStyles } from '../Modal/getModalStyles';
 import { getPortalContainer } from '../Portal/Portal';
 import { ToolbarButton } from '../ToolbarButton/ToolbarButton';
 import { Tooltip } from '../Tooltip/Tooltip';
 
+import { useHiResTimestamps } from './HiResTimestampsContext';
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { TimeZoneDescription } from './TimeZonePicker/TimeZoneDescription';
 import { type WeekStart } from './WeekStartPicker';
@@ -154,6 +156,11 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
   const timePickerIcon = isFromAfterTo ? 'exclamation-triangle' : 'clock-nine';
 
   const currentTimeRange = formattedRange(value, timeZone, quickRanges);
+  const hiResTimestamps = useHiResTimestamps();
+  const hiResTimestampsLabel = t(
+    'time-picker.range-picker.hires-timestamps',
+    'HiRes enables minute and second precision. Available when the range is 24 hours or less, or when both From and To are within 30 days of now.'
+  );
 
   return (
     <ButtonGroup className={styles.container}>
@@ -183,7 +190,26 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
           })}
           aria-controls="TimePickerContent"
           onClick={onToolbarButtonSwitch}
-          icon={timePickerIcon}
+          icon={
+            <span className={styles.timePickerLeading}>
+              {hiResTimestamps && (
+                <Tooltip content={hiResTimestampsLabel} placement="bottom">
+                  <span
+                    data-testid={selectors.components.TimePicker.hiResTimestamps}
+                    className={cx(styles.hiRes, hiResTimestamps.enabled ? styles.hiResOn : styles.hiResOff)}
+                  >
+                    <span>
+                      <Trans i18nKey="time-picker.range-picker.hi">Hi</Trans>
+                    </span>
+                    <span>
+                      <Trans i18nKey="time-picker.range-picker.res">Res</Trans>
+                    </span>
+                  </span>
+                </Tooltip>
+              )}
+              <Icon name={timePickerIcon} size="lg" />
+            </span>
+          }
           isOpen={isOpen}
           type="button"
           variant={variant}
@@ -341,6 +367,29 @@ const getStyles = (theme: GrafanaTheme2) => {
         transform: 'translate(50%, -50%)',
         zIndex: theme.zIndex.modal,
       },
+    }),
+    timePickerLeading: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      maxHeight: '100%',
+    }),
+    hiRes: css({
+      display: 'inline-flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: theme.spacing(0.5),
+      lineHeight: 1.1,
+      fontSize: theme.typography.size.xs,
+      fontWeight: theme.typography.fontWeightMedium,
+      cursor: 'default',
+      userSelect: 'none',
+    }),
+    hiResOn: css({
+      color: theme.colors.text.primary,
+    }),
+    hiResOff: css({
+      color: theme.colors.text.disabled,
     }),
   };
 };

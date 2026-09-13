@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { dateTime, makeTimeRange, type TimeRange, type BootData } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 
+import { HiResTimestampsProvider } from './HiResTimestampsContext';
 import { TimeRangeProvider } from './TimeRangeContext';
 import { TimePickerTooltip, TimeRangePicker } from './TimeRangePicker';
 
@@ -38,6 +39,82 @@ describe('TimePicker', () => {
     );
 
     expect(screen.getByLabelText(/Time range selected/i)).toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.hiResTimestamps)).not.toBeInTheDocument();
+  });
+
+  it('renders HiRes in two lines to the left of the clock icon', () => {
+    render(
+      <HiResTimestampsProvider value={{ enabled: true, interactive: false, onToggle: jest.fn() }}>
+        <TimeRangePicker
+          onChangeTimeZone={() => {}}
+          onChange={(value) => {}}
+          value={value}
+          onMoveBackward={() => {}}
+          onMoveForward={() => {}}
+          onZoom={() => {}}
+        />
+      </HiResTimestampsProvider>
+    );
+
+    const hiRes = screen.getByTestId(selectors.hiResTimestamps);
+    const openButton = screen.getByTestId(selectors.openButton);
+    expect(hiRes).toHaveTextContent('HiRes');
+    expect(hiRes).toHaveTextContent('Hi');
+    expect(hiRes).toHaveTextContent('Res');
+    expect(hiRes.tagName).toBe('SPAN');
+    expect(openButton).toContainElement(hiRes);
+  });
+
+  it('renders HiRes as text only, not a button', () => {
+    const onToggle = jest.fn();
+    render(
+      <HiResTimestampsProvider value={{ enabled: true, interactive: false, onToggle }}>
+        <TimeRangePicker
+          onChangeTimeZone={() => {}}
+          onChange={(value) => {}}
+          value={value}
+          onMoveBackward={() => {}}
+          onMoveForward={() => {}}
+          onZoom={() => {}}
+        />
+      </HiResTimestampsProvider>
+    );
+
+    const hiRes = screen.getByTestId(selectors.hiResTimestamps);
+    expect(hiRes.tagName).toBe('SPAN');
+    expect(screen.queryByRole('button', { name: /HiRes/ })).not.toBeInTheDocument();
+  });
+
+  it('renders HiRes on and off styles', () => {
+    const { rerender } = render(
+      <HiResTimestampsProvider value={{ enabled: false, interactive: false, onToggle: jest.fn() }}>
+        <TimeRangePicker
+          onChangeTimeZone={() => {}}
+          onChange={(value) => {}}
+          value={value}
+          onMoveBackward={() => {}}
+          onMoveForward={() => {}}
+          onZoom={() => {}}
+        />
+      </HiResTimestampsProvider>
+    );
+
+    expect(screen.getByTestId(selectors.hiResTimestamps)).toHaveTextContent('HiRes');
+
+    rerender(
+      <HiResTimestampsProvider value={{ enabled: true, interactive: false, onToggle: jest.fn() }}>
+        <TimeRangePicker
+          onChangeTimeZone={() => {}}
+          onChange={(value) => {}}
+          value={value}
+          onMoveBackward={() => {}}
+          onMoveForward={() => {}}
+          onZoom={() => {}}
+        />
+      </HiResTimestampsProvider>
+    );
+
+    expect(screen.getByTestId(selectors.hiResTimestamps)).toHaveTextContent('HiRes');
   });
 
   it('renders move buttons with relative range', () => {

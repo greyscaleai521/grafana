@@ -5,6 +5,7 @@ import { t } from '@grafana/i18n';
 import { reportInteraction, TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { defaultIntervals, isWeekStart, RefreshPicker } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
+import { DashboardHiResTimestampsProvider } from 'app/core/components/TimePicker/DashboardHiResTimestampsProvider';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
 import { AutoRefreshInterval } from 'app/core/services/context_srv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -106,21 +107,23 @@ export function DashNavTimeControls({
 
   return (
     <>
-      <TimePickerWithHistory
-        value={timePickerValue}
-        onChange={onChangeTimePicker}
-        timeZone={timeZone}
-        fiscalYearStartMonth={fiscalYearStartMonth}
-        onMoveBackward={onMoveBack}
-        onMoveForward={onMoveForward}
-        onZoom={onZoom}
-        onChangeTimeZone={handleChangeTimeZone}
-        onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
-        isOnCanvas={isOnCanvas}
-        onToolbarTimePickerClick={onToolbarTimePickerClick}
-        weekStart={isWeekStart(weekStart) ? weekStart : undefined}
-        quickRanges={quick_ranges}
-      />
+      <DashboardHiResTimestampsProvider timeRange={timePickerValue} onRefresh={() => getTimeSrv().refreshTimeModel()}>
+        <TimePickerWithHistory
+          value={timePickerValue}
+          onChange={onChangeTimePicker}
+          timeZone={timeZone}
+          fiscalYearStartMonth={fiscalYearStartMonth}
+          onMoveBackward={onMoveBack}
+          onMoveForward={onMoveForward}
+          onZoom={onZoom}
+          onChangeTimeZone={handleChangeTimeZone}
+          onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
+          isOnCanvas={isOnCanvas}
+          onToolbarTimePickerClick={onToolbarTimePickerClick}
+          weekStart={isWeekStart(weekStart) ? weekStart : undefined}
+          quickRanges={quick_ranges}
+        />
+      </DashboardHiResTimestampsProvider>
       <RefreshPicker
         onIntervalChanged={onChangeRefreshInterval}
         onRefresh={onRefreshClick}

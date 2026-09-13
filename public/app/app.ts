@@ -87,6 +87,7 @@ import { initAlerting } from './features/alerting/unified/initAlerting';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
 import { DashboardLevelTimeMacro } from './features/dashboard-scene/scene/DashboardLevelTimeMacro';
+import { HiResTimestampsMacro } from './features/dashboard-scene/scene/HiResTimestampsMacro';
 import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
@@ -310,6 +311,8 @@ export class GrafanaApp {
         sceneUtils.registerVariableMacro('__from', DashboardLevelTimeMacro, true);
         sceneUtils.registerVariableMacro('__to', DashboardLevelTimeMacro, true);
       }
+
+      sceneUtils.registerVariableMacro('__hires_timestamps', HiResTimestampsMacro, true);
 
       const root = createRoot(document.getElementById('reactRoot')!);
       root.render(createElement(AppWrapper, { context: this.context }));

@@ -418,6 +418,11 @@ export {
 } from './datetime/formatter';
 export { type DateTimeOptionsWhenParsing, dateTimeParse } from './datetime/parser';
 export {
+  type HiResTimestampsRuleState,
+  getHiResTimestampsState,
+  resolveHiResTimestampsEnabled,
+} from './datetime/hiResTimestamps';
+export {
   intervalToAbbreviatedDurationString,
   parseDuration,
   reverseParseDuration,

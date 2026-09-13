@@ -21,6 +21,7 @@ import {
   sceneUtils,
 } from '@grafana/scenes';
 import { Box, Button, ButtonGroup, Drawer, Icon, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { DashboardHiResTimestampsProvider } from 'app/core/components/TimePicker/DashboardHiResTimestampsProvider';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -163,7 +164,18 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
   }
 }
 
-function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardControls>) {
+function DashboardControlsRenderer(props: SceneComponentProps<DashboardControls>) {
+  const sceneTimeRange = sceneGraph.getTimeRange(props.model);
+  const { value: timeRange } = sceneTimeRange.useState();
+
+  return (
+    <DashboardHiResTimestampsProvider timeRange={timeRange} onRefresh={() => sceneTimeRange.onRefresh()}>
+      <DashboardControlsView {...props} />
+    </DashboardHiResTimestampsProvider>
+  );
+}
+
+function DashboardControlsView({ model }: SceneComponentProps<DashboardControls>) {
   const {
     refreshPicker,
     timePicker,

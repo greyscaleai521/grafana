@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { dateTimeParse, type FeatureToggles, systemDateFormats, type TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
+import { HiResTimestampsProvider } from '../HiResTimestampsContext';
 import * as commonFormatModule from '../commonFormat';
 
 import { TimeRangeContent } from './TimeRangeContent';
@@ -53,9 +54,19 @@ beforeEach(() => {
   mockOnApply.mockClear();
 });
 
-function setup(initial: TimeRange = defaultTimeRange, timeZone = 'utc') {
+function setup(initial: TimeRange = defaultTimeRange, timeZone = 'utc', hiResTimestamps?: { enabled: boolean }) {
+  const content = <TimeRangeContent isFullscreen={true} value={initial} onApply={mockOnApply} timeZone={timeZone} />;
+
   return {
-    ...render(<TimeRangeContent isFullscreen={true} value={initial} onApply={mockOnApply} timeZone={timeZone} />),
+    ...render(
+      hiResTimestamps ? (
+        <HiResTimestampsProvider value={{ enabled: hiResTimestamps.enabled, interactive: false, onToggle: () => {} }}>
+          {content}
+        </HiResTimestampsProvider>
+      ) : (
+        content
+      )
+    ),
     getCalendarDayByLabelText: (label: string) => {
       const item = screen.getByLabelText(label);
       return item?.parentElement as HTMLButtonElement;
@@ -401,6 +412,184 @@ describe('TimeRangeForm', () => {
       expect(error).toHaveLength(1);
       expect(error[0]).toBeVisible();
       expect(error[0]).toHaveTextContent('Please enter a past date or "now"');
+    });
+  });
+
+  describe('when HiRes timestamps are off', () => {
+    it('blocks apply for absolute times with minutes or seconds', async () => {
+      const hourRange: TimeRange = {
+        from: dateTimeParse('2020-01-01 14:00:00', { timeZone: 'utc' }),
+        to: dateTimeParse('2020-01-03 15:59:59', { timeZone: 'utc' }),
+        raw: {
+          from: '2020-01-01 14:00:00',
+          to: '2020-01-03 15:59:59',
+        },
+      };
+      setup(hourRange, 'utc', { enabled: false });
+
+      const fromInput = screen.getByLabelText('From');
+      await user.clear(fromInput);
+      await user.type(fromInput, '2020-01-01 14:32:08');
+
+      expect(screen.getByRole('alert')).toHaveTextContent('HiRes timerange not allowed for this period');
+      expect(screen.getByRole('button', { name: 'Fix & Apply time range' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Apply time range' })).not.toBeInTheDocument();
+    });
+
+    it('allows apply for hour-only absolute times', async () => {
+      const hourRange: TimeRange = {
+        from: dateTimeParse('2020-01-01 14:00:00', { timeZone: 'utc' }),
+        to: dateTimeParse('2020-01-01 15:00:00', { timeZone: 'utc' }),
+        raw: {
+          from: '2020-01-01 14:00:00',
+          to: '2020-01-01 15:00:00',
+        },
+      };
+      setup(hourRange, 'utc', { enabled: false });
+
+      await user.click(screen.getByRole('button', { name: 'Apply time range' }));
+
+      expect(mockOnApply).toHaveBeenCalled();
+    });
+
+    it('allows apply when minutes and seconds are 59:59', async () => {
+      const endOfHourRange: TimeRange = {
+        from: dateTimeParse('2026-07-22 00:00:00', { timeZone: 'utc' }),
+        to: dateTimeParse('2026-07-24 23:59:59', { timeZone: 'utc' }),
+        raw: {
+          from: '2026-07-22 00:00:00',
+          to: '2026-07-24 23:59:59',
+        },
+      };
+      setup(endOfHourRange, 'utc', { enabled: false });
+
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Apply time range' }));
+
+      expect(mockOnApply).toHaveBeenCalled();
+      const applied = mockOnApply.mock.lastCall?.[0] as TimeRange;
+      expect(applied.from.format('YYYY-MM-DD HH:mm:ss.SSS')).toBe('2026-07-22 00:00:00.000');
+      expect(applied.to.format('YYYY-MM-DD HH:mm:ss.SSS')).toBe('2026-07-24 23:59:59.999');
+    });
+
+    it('revalidates on edit when the draft range requires hour-only', async () => {
+      const recentRange: TimeRange = {
+        from: dateTimeParse('now-6h', { timeZone: 'utc' }),
+        to: dateTimeParse('now', { timeZone: 'utc' }),
+        raw: {
+          from: 'now-6h',
+          to: 'now',
+        },
+      };
+      setup(recentRange, 'utc', { enabled: true });
+
+      const fromInput = screen.getByLabelText('From');
+      const toInput = screen.getByLabelText('To');
+      await user.clear(fromInput);
+      await user.type(fromInput, '2020-01-01 14:32:08');
+      await user.clear(toInput);
+      await user.type(toInput, '2020-01-03 15:59:59');
+
+      expect(screen.getByRole('alert')).toHaveTextContent('HiRes timerange not allowed for this period');
+      expect(screen.getByRole('button', { name: 'Fix & Apply time range' })).toBeInTheDocument();
+    });
+
+    it('always revalidates when applying from and to', async () => {
+      const hourRange: TimeRange = {
+        from: dateTimeParse('2020-01-01 14:00:00', { timeZone: 'utc' }),
+        to: dateTimeParse('2020-01-03 16:59:59', { timeZone: 'utc' }),
+        raw: {
+          from: '2020-01-01 14:00:00',
+          to: '2020-01-03 16:59:59',
+        },
+      };
+      setup(hourRange, 'utc', { enabled: false });
+
+      const fromInput = screen.getByLabelText('From');
+      await user.clear(fromInput);
+      await user.type(fromInput, '2020-01-01 14:15:00');
+
+      expect(screen.getByRole('alert')).toHaveTextContent('HiRes timerange not allowed for this period');
+      expect(screen.getByRole('button', { name: 'Fix & Apply time range' })).toBeInTheDocument();
+    });
+
+    it('shows Fix & Apply when From is 59:59 and snaps From to 00:00.000', async () => {
+      const range: TimeRange = {
+        from: dateTimeParse('2026-08-03 13:59:59', { timeZone: 'utc' }),
+        to: dateTimeParse('2026-08-04 14:59:59', { timeZone: 'utc' }),
+        raw: {
+          from: '2026-08-03 13:59:59',
+          to: '2026-08-04 14:59:59',
+        },
+      };
+      setup(range, 'utc', { enabled: false });
+
+      expect(screen.getByRole('alert')).toHaveTextContent('HiRes timerange not allowed for this period');
+      expect(screen.getByRole('button', { name: 'Fix & Apply time range' })).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Fix & Apply time range' }));
+
+      expect(mockOnApply).toHaveBeenCalled();
+      const applied = mockOnApply.mock.lastCall?.[0] as TimeRange;
+      expect(applied.from.format('YYYY-MM-DD HH:mm:ss.SSS')).toBe('2026-08-03 13:00:00.000');
+      expect(applied.to.format('YYYY-MM-DD HH:mm:ss.SSS')).toBe('2026-08-04 14:59:59.999');
+    });
+
+    it('shows Fix & Apply when To is 00:00 and snaps To to the previous second', async () => {
+      const range: TimeRange = {
+        from: dateTimeParse('2020-01-01 14:00:00', { timeZone: 'utc' }),
+        to: dateTimeParse('2020-01-03 15:00:00', { timeZone: 'utc' }),
+        raw: {
+          from: '2020-01-01 14:00:00',
+          to: '2020-01-03 15:00:00',
+        },
+      };
+      setup(range, 'utc', { enabled: false });
+
+      expect(screen.getByRole('alert')).toHaveTextContent('HiRes timerange not allowed for this period');
+      expect(screen.getByRole('button', { name: 'Fix & Apply time range' })).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Fix & Apply time range' }));
+
+      expect(mockOnApply).toHaveBeenCalled();
+      const applied = mockOnApply.mock.lastCall?.[0] as TimeRange;
+      expect(applied.from.format('YYYY-MM-DD HH:mm:ss.SSS')).toBe('2020-01-01 14:00:00.000');
+      expect(applied.to.format('YYYY-MM-DD HH:mm:ss.SSS')).toBe('2020-01-03 14:59:59.999');
+    });
+
+    it('Fix & Apply rounds from to 00:00.000 and to to 59:59.999', async () => {
+      const range: TimeRange = {
+        from: dateTimeParse('2020-01-01 14:32:08', { timeZone: 'utc' }),
+        to: dateTimeParse('2020-01-03 23:56:59', { timeZone: 'utc' }),
+        raw: {
+          from: '2020-01-01 14:32:08',
+          to: '2020-01-03 23:56:59',
+        },
+      };
+      setup(range, 'utc', { enabled: false });
+
+      await user.click(screen.getByRole('button', { name: 'Fix & Apply time range' }));
+
+      expect(mockOnApply).toHaveBeenCalled();
+      const applied = mockOnApply.mock.lastCall?.[0] as TimeRange;
+      expect(applied.from.format('YYYY-MM-DD HH:mm:ss.SSS')).toBe('2020-01-01 14:00:00.000');
+      expect(applied.to.format('YYYY-MM-DD HH:mm:ss.SSS')).toBe('2020-01-03 23:59:59.999');
+    });
+
+    it('allows relative ranges', async () => {
+      const relativeRange: TimeRange = {
+        from: dateTimeParse('now-90d', { timeZone: 'utc' }),
+        to: dateTimeParse('now', { timeZone: 'utc' }),
+        raw: {
+          from: 'now-90d',
+          to: 'now',
+        },
+      };
+      setup(relativeRange, 'utc', { enabled: false });
+
+      await user.click(screen.getByRole('button', { name: 'Apply time range' }));
+
+      expect(mockOnApply).toHaveBeenCalled();
     });
   });
 });
