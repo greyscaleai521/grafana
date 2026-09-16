@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useState, type MutableRefObject } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import {
   type DateTime,
@@ -44,7 +44,6 @@ interface Props {
   isReversed?: boolean;
   onError?: (error?: string) => void;
   weekStart?: WeekStart;
-  applyRef?: MutableRefObject<(() => void) | undefined>;
 }
 
 interface InputState {
@@ -72,7 +71,6 @@ export const TimeRangeContent = (props: Props) => {
     fiscalYearStartMonth,
     onError,
     weekStart,
-    applyRef,
   } = props;
   const hiResTimestamps = useHiResTimestamps();
   const enforceHiResTimestamps = Boolean(hiResTimestamps);
@@ -171,16 +169,6 @@ export const TimeRangeContent = (props: Props) => {
     to.value,
     fiscalYearStartMonth,
   ]);
-
-  useEffect(() => {
-    if (!applyRef) {
-      return;
-    }
-    applyRef.current = onApply;
-    return () => {
-      applyRef.current = undefined;
-    };
-  }, [applyRef, onApply]);
 
   const onChange = useCallback(
     (from: DateTime | string, to: DateTime | string) => {

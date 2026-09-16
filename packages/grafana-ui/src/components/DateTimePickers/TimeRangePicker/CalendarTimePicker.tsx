@@ -1,11 +1,13 @@
 import { css, cx } from '@emotion/css';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 
 import { type DateTime, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
+import { Icon } from '../../Icon/Icon';
+import { Tooltip } from '../../Tooltip/Tooltip';
 
 export type CalendarTimeBound = 'from' | 'to';
 
@@ -20,6 +22,7 @@ interface Props {
   to: DateTime;
   activeBound: CalendarTimeBound;
   hourOnly?: boolean;
+  calendar?: ReactNode;
   onActiveBoundChange: (bound: CalendarTimeBound) => void;
   onTimeChange: (next: TimeOfDayParts) => void;
 }
@@ -34,6 +37,7 @@ export function CalendarTimePicker({
   to,
   activeBound,
   hourOnly = false,
+  calendar,
   onActiveBoundChange,
   onTimeChange,
 }: Props) {
@@ -61,6 +65,7 @@ export function CalendarTimePicker({
           onSelect={onActiveBoundChange}
         />
       </div>
+      {calendar}
       <div className={styles.wheels}>
         <div className={styles.highlight} />
         <TimeWheel
@@ -218,7 +223,16 @@ function TimeWheel({ label, values, value, disabled, onChange }: TimeWheelProps)
 
   return (
     <div className={cx(styles.wheel, disabled && styles.wheelDisabled)} aria-disabled={disabled || undefined}>
-      <div className={styles.wheelLabel}>{label}</div>
+      <div className={styles.wheelLabel}>
+        <span>{label}</span>
+        {disabled && (
+          <Tooltip content={t('time-picker.calendar.wheel-disabled', 'Disabled')}>
+            <span className={styles.wheelInfo} aria-label={t('time-picker.calendar.wheel-disabled', 'Disabled')}>
+              <Icon name="info-circle" size="sm" />
+            </span>
+          </Tooltip>
+        )}
+      </div>
       <div
         ref={scrollerRef}
         className={cx(styles.scroller, disabled && styles.scrollerDisabled)}
@@ -341,10 +355,18 @@ function getStyles(theme: GrafanaTheme2) {
       opacity: 0.45,
     }),
     wheelLabel: css({
-      textAlign: 'center',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: theme.spacing(0.25),
       color: theme.colors.text.secondary,
       fontSize: theme.typography.bodySmall.fontSize,
       lineHeight: theme.spacing(2.5),
+    }),
+    wheelInfo: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      cursor: 'help',
     }),
     scroller: css({
       height: wheelHeight,

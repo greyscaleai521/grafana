@@ -100,5 +100,6 @@ describe('CalendarTimePicker', () => {
     expect(screen.getByRole('button', { name: 'Sec 08' })).toBeDisabled();
     expect(screen.getByTestId('calendar-time-wheel-min')).toHaveStyle({ overflow: 'hidden', pointerEvents: 'none' });
     expect(screen.getByTestId('calendar-time-wheel-sec')).toHaveStyle({ overflow: 'hidden', pointerEvents: 'none' });
+    expect(screen.getAllByLabelText('Disabled')).toHaveLength(2);
   });
 });

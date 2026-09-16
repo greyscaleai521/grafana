@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Calendar, { type CalendarType } from 'react-calendar';
 
 import {
@@ -36,37 +37,60 @@ export function Body({
   hourOnly,
   onRangeDayClick,
   inline,
+  isCalendarOpen = true,
+  onToggleCalendar,
 }: TimePickerCalendarProps) {
   const value = inputToValue(from, to, new Date(), timeZone);
   const [activeStartDate, setActiveStartDate] = useState<Date | undefined>();
   const onCalendarChange = useOnCalendarChange(onChange, from, to, timeZone, hourOnly, setActiveStartDate);
   const styles = useStyles2(getBodyStyles);
   const weekStartValue = getWeekStart(weekStart);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [navEl, setNavEl] = useState<HTMLElement | null>(null);
+
+  useLayoutEffect(() => {
+    setNavEl(wrapRef.current?.querySelector<HTMLElement>('.react-calendar__navigation') ?? null);
+  }, []);
+
+  const toggle = onToggleCalendar ? (
+    <button
+      type="button"
+      className={styles.headerToggle}
+      aria-expanded={isCalendarOpen}
+      aria-label={t('time-picker.calendar.toggle', 'Calendar')}
+      onClick={onToggleCalendar}
+    >
+      <Icon name={isCalendarOpen ? 'angle-up' : 'angle-down'} />
+    </button>
+  ) : null;
 
   return (
-    <Calendar
-      selectRange={true}
-      next2Label={null}
-      prev2Label={null}
-      className={cx(styles.body, inline && styles.bodyFit)}
-      tileClassName={styles.title}
-      value={value}
-      {...(activeStartDate ? { activeStartDate } : {})}
-      onActiveStartDateChange={({ action, activeStartDate: next }) => {
-        if (!next || action === 'onChange') {
-          return;
-        }
-        setActiveStartDate(next);
-      }}
-      nextLabel={<Icon name="angle-right" />}
-      nextAriaLabel={t('time-picker.calendar.next-month', 'Next month')}
-      prevLabel={<Icon name="angle-left" />}
-      prevAriaLabel={t('time-picker.calendar.previous-month', 'Previous month')}
-      onChange={onCalendarChange}
-      onClickDay={onRangeDayClick}
-      locale="en"
-      calendarType={weekStartMap[weekStartValue]}
-    />
+    <div ref={wrapRef} className={cx(styles.wrap, !isCalendarOpen && styles.collapsed, onToggleCalendar && styles.withToggle)}>
+      <Calendar
+        selectRange={true}
+        next2Label={null}
+        prev2Label={null}
+        className={cx(styles.body, inline && styles.bodyFit)}
+        tileClassName={styles.title}
+        value={value}
+        {...(activeStartDate ? { activeStartDate } : {})}
+        onActiveStartDateChange={({ action, activeStartDate: next }) => {
+          if (!next || action === 'onChange') {
+            return;
+          }
+          setActiveStartDate(next);
+        }}
+        nextLabel={<Icon name="angle-right" />}
+        nextAriaLabel={t('time-picker.calendar.next-month', 'Next month')}
+        prevLabel={<Icon name="angle-left" />}
+        prevAriaLabel={t('time-picker.calendar.previous-month', 'Previous month')}
+        onChange={onCalendarChange}
+        onClickDay={onRangeDayClick}
+        locale="en"
+        calendarType={weekStartMap[weekStartValue]}
+      />
+      {navEl && toggle ? createPortal(toggle, navEl) : null}
+    </div>
   );
 }
 
@@ -184,6 +208,45 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
         color: theme.colors.action.disabledText,
         cursor: 'not-allowed',
       },
+    }),
+    wrap: css({
+      position: 'relative',
+      width: '100%',
+    }),
+    withToggle: css({
+      '.react-calendar__navigation': {
+        display: 'flex',
+        alignItems: 'center',
+        paddingTop: 0,
+      },
+      '.react-calendar__navigation .react-calendar__navigation__label, .react-calendar__navigation .react-calendar__navigation__arrow':
+        {
+          paddingTop: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+    }),
+    collapsed: css({
+      '.react-calendar__viewContainer': {
+        display: 'none',
+      },
+      '.react-calendar__navigation__arrow': {
+        visibility: 'hidden',
+      },
+    }),
+    headerToggle: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      alignSelf: 'center',
+      flexShrink: 0,
+      width: 28,
+      padding: 0,
+      border: 'none',
+      background: 'transparent',
+      color: theme.colors.text.secondary,
+      cursor: 'pointer',
     }),
     bodyFit: css({
       width: '100%',

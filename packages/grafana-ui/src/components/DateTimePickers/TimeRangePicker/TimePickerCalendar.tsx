@@ -45,7 +45,7 @@ export const getStyles = (theme: GrafanaTheme2, isReversed = false) => {
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
-      marginTop: theme.spacing(1),
+      marginTop: 0,
       flex: 1,
       width: '100%',
       minWidth: 0,
@@ -85,6 +85,8 @@ export interface TimePickerCalendarProps {
   onRangeDayClick?: () => void;
   /** Render the calendar and time wheels in-place instead of a popup. */
   inline?: boolean;
+  isCalendarOpen?: boolean;
+  onToggleCalendar?: () => void;
 }
 
 function TimePickerCalendar(props: TimePickerCalendarProps) {
@@ -95,6 +97,7 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
   const ref = createRef<HTMLElement>();
   const [activeBound, setActiveBound] = useState<CalendarTimeBound>('from');
   const [pickingStart, setPickingStart] = useState(true);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(true);
   const { dialogProps } = useDialog(
     {
       'aria-label': selectors.components.TimePicker.calendar.label,
@@ -114,6 +117,7 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
     if (isOpen || inline) {
       setActiveBound('from');
       setPickingStart(true);
+      setIsCalendarOpen(true);
     }
   }, [inline, isOpen]);
 
@@ -123,6 +127,8 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
       setPickingStart(false);
     } else {
       setPickingStart(true);
+      setActiveBound('from');
+      setIsCalendarOpen(false);
     }
   }, [pickingStart]);
 
@@ -151,6 +157,14 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
       to={to}
       activeBound={activeBound}
       hourOnly={hourOnly}
+      calendar={
+        <Body
+          {...props}
+          onRangeDayClick={onRangeDayClick}
+          isCalendarOpen={isCalendarOpen}
+          onToggleCalendar={() => setIsCalendarOpen((open) => !open)}
+        />
+      }
       onActiveBoundChange={setActiveBound}
       onTimeChange={onTimeChange}
     />
@@ -163,7 +177,6 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
         data-testid={selectors.components.TimePicker.calendar.label}
         aria-label={selectors.components.TimePicker.calendar.label}
       >
-        <Body {...props} onRangeDayClick={onRangeDayClick} />
         {timePicker}
       </section>
     );
@@ -182,7 +195,6 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
       data-testid={selectors.components.TimePicker.calendar.label}
     >
       <Header {...props} />
-      <Body {...props} onRangeDayClick={onRangeDayClick} />
       {timePicker}
       {showInModal && <Footer {...props} />}
     </section>

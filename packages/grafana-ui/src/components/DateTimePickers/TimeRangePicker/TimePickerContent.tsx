@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { memo, useMemo, useRef, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 
 import {
   type GrafanaTheme2,
@@ -16,7 +16,6 @@ import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { getFocusStyles } from '../../../themes/mixins';
-import { Button } from '../../Button/Button';
 import { FilterInput } from '../../FilterInput/FilterInput';
 import { Icon } from '../../Icon/Icon';
 import { TextLink } from '../../Link/TextLink';
@@ -24,7 +23,7 @@ import { type WeekStart } from '../WeekStartPicker';
 
 import { TimePickerFooter } from './TimePickerFooter';
 import { TimePickerTitle } from './TimePickerTitle';
-import { getOrangeApplyStyle, TimeRangeContent } from './TimeRangeContent';
+import { TimeRangeContent } from './TimeRangeContent';
 import { TimeRangeList } from './TimeRangeList';
 import { mapOptionToTimeRange, mapRangeToTimeOption } from './mapper';
 
@@ -149,24 +148,9 @@ export const TimePickerContent = (props: Props) => {
   return <TimePickerContentWithScreenSize {...props} isFullscreen={isFullscreen} />;
 };
 
-function AbsoluteApplyButton({ onApply }: { onApply: () => void }) {
-  const styles = useStyles2(getHeaderApplyStyles);
-
-  return (
-    <Button size="sm" type="button" variant="secondary" className={styles.orangeApply} onClick={onApply}>
-      <Trans i18nKey="time-picker.range-content.apply-short">Apply</Trans>
-    </Button>
-  );
-}
-
-const getHeaderApplyStyles = (theme: GrafanaTheme2) => ({
-  orangeApply: getOrangeApplyStyle(theme),
-});
-
 const NarrowScreenForm = (props: FormProps) => {
   const { value, hideQuickRanges, onChange, timeZone, historyOptions = [], showHistory, onError, weekStart } = props;
   const styles = useStyles2(getNarrowScreenStyles);
-  const applyRef = useRef<(() => void) | undefined>(undefined);
   const isAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
   const [collapsedFlag, setCollapsedFlag] = useState(!isAbsolute);
   const collapsed = hideQuickRanges ? false : collapsedFlag;
@@ -195,7 +179,6 @@ const NarrowScreenForm = (props: FormProps) => {
           </TimePickerTitle>
           {!hideQuickRanges && <Icon name={!collapsed ? 'angle-up' : 'angle-down'} />}
         </button>
-        {!collapsed && <AbsoluteApplyButton onApply={() => applyRef.current?.()} />}
       </div>
       {!collapsed && (
         <div className={styles.body} id="expanded-timerange">
@@ -207,7 +190,6 @@ const NarrowScreenForm = (props: FormProps) => {
               isFullscreen={false}
               onError={onError}
               weekStart={weekStart}
-              applyRef={applyRef}
             />
           </div>
           {showHistory && (
@@ -227,7 +209,6 @@ const NarrowScreenForm = (props: FormProps) => {
 const FullScreenForm = (props: FormProps) => {
   const { onChange, value, timeZone, fiscalYearStartMonth, isReversed, historyOptions, onError, weekStart } = props;
   const styles = useStyles2(getFullScreenStyles, props.hideQuickRanges);
-  const applyRef = useRef<(() => void) | undefined>(undefined);
   const onChangeTimeOption = (timeOption: TimeOption) => {
     return onChange(mapOptionToTimeRange(timeOption, timeZone));
   };
@@ -239,7 +220,6 @@ const FullScreenForm = (props: FormProps) => {
           <TimePickerTitle>
             <Trans i18nKey="time-picker.absolute.title">Absolute time range</Trans>
           </TimePickerTitle>
-          <AbsoluteApplyButton onApply={() => applyRef.current?.()} />
         </div>
         <TimeRangeContent
           value={value}
@@ -250,7 +230,6 @@ const FullScreenForm = (props: FormProps) => {
           isReversed={isReversed}
           onError={onError}
           weekStart={weekStart}
-          applyRef={applyRef}
         />
       </div>
       {props.showHistory && (
@@ -405,7 +384,7 @@ const getFullScreenStyles = (theme: GrafanaTheme2, hideQuickRanges?: boolean) =>
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: theme.spacing(1),
-    marginBottom: '11px',
+    marginBottom: theme.spacing(0.5),
   }),
   recent: css({
     flexGrow: 1,

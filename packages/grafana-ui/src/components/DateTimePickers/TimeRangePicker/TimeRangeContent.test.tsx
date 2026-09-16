@@ -356,18 +356,26 @@ describe('TimeRangeForm', () => {
 
     expectBound('From', '2021-06-18', '00:00:00');
     expectBound('To', '2021-06-20', '23:59:59');
+    expect(screen.getByRole('tab', { name: /From/ })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.queryByRole('button', { name: 'Next month' })).not.toBeInTheDocument();
   });
 
-  it('keeps showing the to date month after a range is selected', async () => {
+  it('collapses the calendar after a range is selected and keeps the to month', async () => {
     const { getCalendarDayByLabelText } = setup();
 
     await user.click(getCalendarDayByLabelText('June 18, 2021'));
     await user.click(screen.getByRole('button', { name: 'Next month' }));
     await user.click(getCalendarDayByLabelText('July 5, 2021'));
 
-    expect(screen.getByText('July 2021')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Calendar' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('button', { name: 'Next month' })).not.toBeInTheDocument();
     expectBound('From', '2021-06-18', '00:00:00');
     expectBound('To', '2021-07-05', '23:59:59');
+
+    await user.click(screen.getByRole('button', { name: 'Calendar' }));
+
+    expect(screen.getByRole('button', { name: 'Calendar' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('July 2021')).toBeInTheDocument();
   });
 
   it('updates From time from the hour wheel', async () => {
@@ -484,6 +492,7 @@ describe('TimeRangeForm', () => {
       expect(screen.getByRole('button', { name: 'Hour 15' })).toBeEnabled();
       expect(screen.getByRole('button', { name: 'Min 32' })).toBeDisabled();
       expect(screen.getByRole('button', { name: 'Sec 08' })).toBeDisabled();
+      expect(screen.getAllByLabelText('Disabled')).toHaveLength(2);
     });
 
     it('allows apply for hour-only absolute times', async () => {

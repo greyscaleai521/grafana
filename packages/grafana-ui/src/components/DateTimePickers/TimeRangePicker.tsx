@@ -162,7 +162,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
   const thresholdDays = hiResTimestamps?.thresholdDays ?? HIRES_TIMESTAMPS_DEFAULT_THRESHOLD_DAYS;
   const hiResTimestampsLabel = t(
     'time-picker.range-picker.hires-timestamps',
-    'Orange highlight means minute and second precision for time is on. Available when the range is 24 hours or less, or both From and To are within {{thresholdDays}} days of now.',
+    'Minute and second precision for time is only available when the range is 24 hours or less, or both From and To are within {{thresholdDays}} days of now. An orange clock means it is on.',
     { thresholdDays }
   );
   const onChangeRef = useRef(onChange);

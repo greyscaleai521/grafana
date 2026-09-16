@@ -43,12 +43,6 @@ describe('TimePickerContent', () => {
       expect(screen.getByText(/Last 5 minutes/i)).toBeInTheDocument();
     });
 
-    it('renders apply next to the absolute time range title', () => {
-      renderComponent({ value: absoluteValue, showHistory: false });
-      expect(screen.getByRole('button', { name: 'Apply' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Apply time range' })).toBeInTheDocument();
-    });
-
     it('renders without relative picker', () => {
       renderComponent({ value: absoluteValue, hideQuickRanges: true });
       expect(screen.queryByText(/Last 5 minutes/i)).not.toBeInTheDocument();
@@ -103,12 +97,6 @@ describe('TimePickerContent', () => {
     it('renders with absolute picker when absolute value and quick ranges are visible', () => {
       renderComponent({ value: absoluteValue, isFullscreen: false });
       expect(screen.getByRole('tab', { name: /From/ })).toBeInTheDocument();
-    });
-
-    it('renders apply next to the absolute time range title', () => {
-      renderComponent({ value: absoluteValue, isFullscreen: false, showHistory: false });
-      expect(screen.getByRole('button', { name: 'Apply' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Apply time range' })).toBeInTheDocument();
     });
 
     it('renders with absolute picker when absolute value and quick ranges are hidden', () => {
