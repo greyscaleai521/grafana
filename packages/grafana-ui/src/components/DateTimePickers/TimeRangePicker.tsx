@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import { memo, createRef, useCallback, useLayoutEffect, useMemo, useRef, useState, useEffect, type JSX } from 'react';
+import { memo, createRef, useRef, useState, useEffect, type JSX } from 'react';
 
 import {
   rangeUtil,
@@ -22,15 +22,13 @@ import { t, Trans } from '@grafana/i18n';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFeatureToggle } from '../../utils/featureToggle';
 import { ButtonGroup } from '../Button/ButtonGroup';
-import { FieldValidationMessage } from '../Forms/FieldValidationMessage';
 import { Icon } from '../Icon/Icon';
-import { IconButton } from '../IconButton/IconButton';
 import { getModalStyles } from '../Modal/getModalStyles';
 import { getPortalContainer } from '../Portal/Portal';
 import { ToolbarButton } from '../ToolbarButton/ToolbarButton';
 import { Tooltip } from '../Tooltip/Tooltip';
 
-import { HiResFormatToolbarProvider, useHiResTimestamps } from './HiResTimestampsContext';
+import { useHiResTimestamps } from './HiResTimestampsContext';
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { formatHiResTimeRange, rangeNeedsHiResFormat } from './TimeRangePicker/hiResHourBounds';
 import { TimeZoneDescription } from './TimeZonePicker/TimeZoneDescription';
@@ -167,121 +165,21 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     'HiRes enables minute and second precision. Available when the range is 24 hours or less, or when both From and To are within {{thresholdDays}} days of now.',
     { thresholdDays }
   );
-  const formatDraftRef = useRef<(() => void) | undefined>(undefined);
-  const pickerRef = useRef<HTMLDivElement>(null);
-  const formatWrapRef = useRef<HTMLDivElement>(null);
-  const [formatCaretLeft, setFormatCaretLeft] = useState<number>();
-  const [draftNeedsFormat, setDraftNeedsFormat] = useState<boolean | null>(null);
-  const [draftRangeKey, setDraftRangeKey] = useState<string | null>(null);
-  const formatToolbarApi = useMemo(
-    () => ({
-      setDraftNeedsFormat: (needsFormat: boolean, rangeKey?: string) => {
-        setDraftNeedsFormat(needsFormat);
-        if (rangeKey !== undefined) {
-          setDraftRangeKey(rangeKey);
-        }
-      },
-      registerFormat: (format: (() => void) | undefined) => {
-        formatDraftRef.current = format;
-      },
-    }),
-    []
-  );
-  const appliedNeedsFormat = Boolean(
-    hiResTimestamps && rangeNeedsHiResFormat(value, timeZone, fiscalYearStartMonth, thresholdDays)
-  );
-  const canFormat = draftNeedsFormat ?? appliedNeedsFormat;
-  const [formatAlertDismissed, setFormatAlertDismissed] = useState(false);
-  const showFormatAlert = canFormat && !formatAlertDismissed;
-  const formatTooltip = t(
-    'time-picker.range-content.format-apply-tooltip',
-    'Format updates From time to hour start and To time to hour end.'
-  );
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
   useEffect(() => {
-    if (!isOpen) {
-      setDraftNeedsFormat(null);
-      setDraftRangeKey(null);
-      formatDraftRef.current = undefined;
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    setFormatAlertDismissed(false);
-  }, [
-    canFormat,
-    draftRangeKey,
-    thresholdDays,
-    value.from.valueOf(),
-    value.to.valueOf(),
-    String(value.raw.from),
-    String(value.raw.to),
-  ]);
-
-  useLayoutEffect(() => {
-    if (!showFormatAlert) {
+    if (!hiResTimestamps) {
       return;
     }
-
-    const updateCaret = () => {
-      const picker = pickerRef.current;
-      const formatWrap = formatWrapRef.current;
-      if (!picker || !formatWrap) {
-        return;
-      }
-
-      const pickerRect = picker.getBoundingClientRect();
-      const formatRect = formatWrap.getBoundingClientRect();
-      setFormatCaretLeft(formatRect.left + formatRect.width / 2 - pickerRect.left);
-    };
-
-    updateCaret();
-    const observer = new ResizeObserver(updateCaret);
-    if (pickerRef.current) {
-      observer.observe(pickerRef.current);
-    }
-    window.addEventListener('resize', updateCaret);
-    return () => {
-      observer.disconnect();
-      window.removeEventListener('resize', updateCaret);
-    };
-  }, [showFormatAlert, currentTimeRange]);
-
-  const onFormatTimeRange = useCallback(() => {
-    if (formatDraftRef.current) {
-      formatDraftRef.current();
+    if (!rangeNeedsHiResFormat(value, timeZone, fiscalYearStartMonth, thresholdDays)) {
       return;
     }
-
-    onChange(formatHiResTimeRange(value, timeZone, fiscalYearStartMonth));
-  }, [fiscalYearStartMonth, onChange, timeZone, value]);
+    onChangeRef.current(formatHiResTimeRange(value, timeZone, fiscalYearStartMonth));
+  }, [fiscalYearStartMonth, hiResTimestamps, thresholdDays, timeZone, value]);
 
   return (
-    <ButtonGroup
-      ref={pickerRef}
-      className={styles.container}
-      style={{ ['--format-caret-left' as string]: formatCaretLeft ? `${formatCaretLeft}px` : '50%' }}
-    >
-      {showFormatAlert && (
-        <FieldValidationMessage className={styles.formatAlert}>
-          <span className={styles.formatAlertMessage}>
-            {t(
-              'time-picker.range-picker.format-alert',
-              'This range includes partial hours. Format it for a consistent hourly view.'
-            )}
-          </span>
-          <IconButton
-            className={styles.formatAlertDismiss}
-            name="times"
-            size="sm"
-            tooltip={t('time-picker.range-picker.dismiss-format-alert', 'Dismiss')}
-            onClick={(event) => {
-              event.stopPropagation();
-              setFormatAlertDismissed(true);
-            }}
-          />
-        </FieldValidationMessage>
-      )}
+    <ButtonGroup className={styles.container}>
       <ToolbarButton
         variant={variant}
         onClick={onMoveBackward}
@@ -340,42 +238,23 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
           <div role="presentation" className={cx(modalBackdrop, styles.backdrop)} {...underlayProps} />
           <FocusScope contain autoFocus restoreFocus>
             <section className={styles.content} ref={overlayRef} {...overlayProps} {...dialogProps}>
-              <HiResFormatToolbarProvider value={formatToolbarApi}>
-                <TimePickerContent
-                  timeZone={timeZone}
-                  fiscalYearStartMonth={fiscalYearStartMonth}
-                  value={value}
-                  onChange={onChange}
-                  quickOptions={quickRanges || getQuickOptions()}
-                  history={history}
-                  showHistory
-                  widthOverride={widthOverride}
-                  onChangeTimeZone={onChangeTimeZone}
-                  onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
-                  hideQuickRanges={hideQuickRanges}
-                  onError={onError}
-                  weekStart={weekStart}
-                />
-              </HiResFormatToolbarProvider>
+              <TimePickerContent
+                timeZone={timeZone}
+                fiscalYearStartMonth={fiscalYearStartMonth}
+                value={value}
+                onChange={onChange}
+                quickOptions={quickRanges || getQuickOptions()}
+                history={history}
+                showHistory
+                widthOverride={widthOverride}
+                onChangeTimeZone={onChangeTimeZone}
+                onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
+                hideQuickRanges={hideQuickRanges}
+                onError={onError}
+                weekStart={weekStart}
+              />
             </section>
           </FocusScope>
-        </div>
-      )}
-
-      {hiResTimestamps && (
-        <div ref={formatWrapRef} className={cx('button-group', styles.formatWrap)}>
-          <ToolbarButton
-            type="button"
-            variant={variant}
-            icon="history"
-            aria-disabled={!canFormat}
-            onClick={canFormat ? onFormatTimeRange : undefined}
-            tooltip={formatTooltip}
-            data-testid={selectors.components.TimePicker.formatTimeRange}
-            className={canFormat ? styles.formatOn : styles.formatOff}
-          >
-            <Trans i18nKey="time-picker.range-picker.format">Format</Trans>
-          </ToolbarButton>
         </div>
       )}
 
@@ -523,81 +402,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       userSelect: 'none',
     }),
     hiResOn: css({
-      color: theme.colors.text.primary,
+      color: theme.v1.palette.orange,
     }),
     hiResOff: css({
       color: theme.colors.text.disabled,
-    }),
-    formatOn: css({
-      color: theme.colors.text.primary,
-      '&:hover, &:focus': {
-        color: theme.colors.text.primary,
-      },
-    }),
-    formatOff: css({
-      color: theme.colors.text.disabled,
-      '&:hover, &:focus': {
-        color: theme.colors.text.disabled,
-      },
-    }),
-    formatWrap: css({
-      position: 'relative',
-      display: 'flex',
-    }),
-    formatAlert: css({
-      position: 'absolute',
-      left: 0,
-      right: 0,
-      top: 'calc(100% + 5px)',
-      bottom: 'auto',
-      zIndex: theme.zIndex.dropdown,
-      display: 'flex',
-      alignItems: 'flex-start',
-      gap: theme.spacing(1),
-      boxSizing: 'border-box',
-      alignSelf: 'stretch',
-      width: '100%',
-      maxWidth: '100%',
-      color: '#111',
-      background: '#fff',
-      border: `1px solid ${theme.colors.border.medium}`,
-      margin: 0,
-      paddingRight: theme.spacing(3),
-      whiteSpace: 'normal',
-      a: {
-        color: '#111',
-      },
-      '&:before': {
-        left: 'calc(var(--format-caret-left, 50%) - 5px)',
-        right: 'auto',
-        top: '-6px',
-        bottom: 'auto',
-        borderWidth: '0 5px 6px 5px',
-        borderColor: `transparent transparent ${theme.colors.border.medium} transparent`,
-      },
-      '&:after': {
-        content: '""',
-        position: 'absolute',
-        left: 'calc(var(--format-caret-left, 50%) - 4px)',
-        right: 'auto',
-        top: '-5px',
-        bottom: 'auto',
-        width: 0,
-        height: 0,
-        borderWidth: '0 4px 5px 4px',
-        borderStyle: 'solid',
-        borderColor: 'transparent transparent #fff transparent',
-      },
-    }),
-    formatAlertMessage: css({
-      flex: 1,
-      minWidth: 0,
-    }),
-    formatAlertDismiss: css({
-      position: 'absolute',
-      top: theme.spacing(0.25),
-      right: theme.spacing(0.25),
-      color: '#111',
     }),
   };
 };

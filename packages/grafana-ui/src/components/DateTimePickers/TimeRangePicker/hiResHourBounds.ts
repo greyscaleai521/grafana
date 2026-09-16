@@ -122,6 +122,16 @@ export function shouldBlockHiResMinutes(
   return !resolveHiResTimestampsEnabled(timeRange, Date.now(), thresholdDays);
 }
 
+export function rangeNeedsHourSnap(range: TimeRange, timeZone?: TimeZone): boolean {
+  const fromValue = valueAsString(range.raw.from, timeZone);
+  const toValue = valueAsString(range.raw.to, timeZone);
+  if (!isValid(fromValue, false, timeZone) || !isValid(toValue, true, timeZone)) {
+    return false;
+  }
+
+  return isDisallowedWhenHourOnly(fromValue, timeZone, 'from') || isDisallowedWhenHourOnly(toValue, timeZone, 'to');
+}
+
 export function rangeNeedsHiResFormat(
   range: TimeRange,
   timeZone?: TimeZone,
@@ -138,7 +148,7 @@ export function rangeNeedsHiResFormat(
     return false;
   }
 
-  return isDisallowedWhenHourOnly(fromValue, timeZone, 'from') || isDisallowedWhenHourOnly(toValue, timeZone, 'to');
+  return rangeNeedsHourSnap(range, timeZone);
 }
 
 export function formatHiResTimeRange(

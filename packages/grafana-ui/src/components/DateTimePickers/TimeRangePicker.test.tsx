@@ -40,7 +40,6 @@ describe('TimePicker', () => {
 
     expect(screen.getByLabelText(/Time range selected/i)).toBeInTheDocument();
     expect(screen.queryByTestId(selectors.hiResTimestamps)).not.toBeInTheDocument();
-    expect(screen.queryByTestId(selectors.formatTimeRange)).not.toBeInTheDocument();
   });
 
   it('renders HiRes in two lines to the left of the clock icon', () => {
@@ -136,36 +135,7 @@ describe('TimePicker', () => {
     expect(screen.getByTestId(selectors.hiResTimestamps)).toHaveTextContent('HiRes');
   });
 
-  it('renders Format left of move forward, disabled when there is no From/To alert', () => {
-    render(
-      <HiResTimestampsProvider value={{ enabled: true, interactive: false, onToggle: jest.fn() }}>
-        <TimeRangePicker
-          onChangeTimeZone={() => {}}
-          onChange={(value) => {}}
-          value={relativeValue}
-          onMoveBackward={() => {}}
-          onMoveForward={() => {}}
-          onZoom={() => {}}
-        />
-      </HiResTimestampsProvider>
-    );
-
-    const format = screen.getByTestId(selectors.formatTimeRange);
-    const openButton = screen.getByTestId(selectors.openButton);
-    const moveForward = screen.getByTestId(selectors.moveForwardButton);
-
-    expect(format).toHaveTextContent('Format');
-    expect(format.querySelector('svg')).toBeInTheDocument();
-    expect(format).toHaveAttribute('aria-disabled', 'true');
-    expect(format).toBeEnabled();
-    expect(
-      screen.queryByText('This range includes partial hours. Format it for a consistent hourly view.')
-    ).not.toBeInTheDocument();
-    expect(openButton.compareDocumentPosition(format) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(format.compareDocumentPosition(moveForward) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  });
-
-  it('enables Format and applies hour bounds when From/To need formatting', async () => {
+  it('auto-formats hour bounds when From/To would alert', () => {
     const onChange = jest.fn();
     const hourRange: TimeRange = {
       from: dateTimeParse('2020-01-01 14:32:08', { timeZone: 'utc' }),
@@ -182,26 +152,13 @@ describe('TimePicker', () => {
           onChangeTimeZone={() => {}}
           onChange={onChange}
           value={hourRange}
+          timeZone="utc"
           onMoveBackward={() => {}}
           onMoveForward={() => {}}
           onZoom={() => {}}
         />
       </HiResTimestampsProvider>
     );
-
-    const format = screen.getByTestId(selectors.formatTimeRange);
-    expect(format).toHaveAttribute('aria-disabled', 'false');
-    expect(
-      screen.getByText('This range includes partial hours. Format it for a consistent hourly view.')
-    ).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
-    expect(
-      screen.queryByText('This range includes partial hours. Format it for a consistent hourly view.')
-    ).not.toBeInTheDocument();
-    expect(onChange).not.toHaveBeenCalled();
-
-    await userEvent.click(format);
 
     expect(onChange).toHaveBeenCalled();
     const applied = onChange.mock.lastCall?.[0] as TimeRange;
@@ -209,30 +166,24 @@ describe('TimePicker', () => {
     expect(applied.to.format('YYYY-MM-DD HH:mm:ss.SSS')).toBe('2020-01-03 23:59:59.999');
   });
 
-  it('shows the Format alert again after a time range change even if it was dismissed', async () => {
-    const hourRange: TimeRange = {
+  it('does not auto-format when HiRes is on', () => {
+    const onChange = jest.fn();
+    const shortRange: TimeRange = {
       from: dateTimeParse('2020-01-01 14:32:08', { timeZone: 'utc' }),
-      to: dateTimeParse('2020-01-03 23:56:59', { timeZone: 'utc' }),
+      to: dateTimeParse('2020-01-01 16:45:12', { timeZone: 'utc' }),
       raw: {
         from: '2020-01-01 14:32:08',
-        to: '2020-01-03 23:56:59',
-      },
-    };
-    const nextRange: TimeRange = {
-      from: dateTimeParse('2020-02-01 10:15:00', { timeZone: 'utc' }),
-      to: dateTimeParse('2020-02-03 18:45:00', { timeZone: 'utc' }),
-      raw: {
-        from: '2020-02-01 10:15:00',
-        to: '2020-02-03 18:45:00',
+        to: '2020-01-01 16:45:12',
       },
     };
 
-    const { rerender } = render(
-      <HiResTimestampsProvider value={{ enabled: false, interactive: false, onToggle: jest.fn() }}>
+    render(
+      <HiResTimestampsProvider value={{ enabled: true, interactive: false, onToggle: jest.fn() }}>
         <TimeRangePicker
           onChangeTimeZone={() => {}}
-          onChange={() => {}}
-          value={hourRange}
+          onChange={onChange}
+          value={shortRange}
+          timeZone="utc"
           onMoveBackward={() => {}}
           onMoveForward={() => {}}
           onZoom={() => {}}
@@ -240,17 +191,19 @@ describe('TimePicker', () => {
       </HiResTimestampsProvider>
     );
 
-    await userEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
-    expect(
-      screen.queryByText('This range includes partial hours. Format it for a consistent hourly view.')
-    ).not.toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
+  });
 
-    rerender(
+  it('does not auto-format relative ranges', () => {
+    const onChange = jest.fn();
+
+    render(
       <HiResTimestampsProvider value={{ enabled: false, interactive: false, onToggle: jest.fn() }}>
         <TimeRangePicker
           onChangeTimeZone={() => {}}
-          onChange={() => {}}
-          value={nextRange}
+          onChange={onChange}
+          value={relativeValue}
+          timeZone="utc"
           onMoveBackward={() => {}}
           onMoveForward={() => {}}
           onZoom={() => {}}
@@ -258,9 +211,7 @@ describe('TimePicker', () => {
       </HiResTimestampsProvider>
     );
 
-    expect(
-      screen.getByText('This range includes partial hours. Format it for a consistent hourly view.')
-    ).toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it('renders move buttons with relative range', () => {

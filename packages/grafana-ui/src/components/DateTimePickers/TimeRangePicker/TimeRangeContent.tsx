@@ -22,7 +22,7 @@ import { FieldValidationMessage } from '../../Forms/FieldValidationMessage';
 import { Icon } from '../../Icon/Icon';
 import { Input } from '../../Input/Input';
 import { Tooltip } from '../../Tooltip/Tooltip';
-import { useHiResFormatToolbar, useHiResTimestamps } from '../HiResTimestampsContext';
+import { useHiResTimestamps } from '../HiResTimestampsContext';
 import { type WeekStart } from '../WeekStartPicker';
 import { commonFormat } from '../commonFormat';
 import { isValid } from '../utils';
@@ -76,7 +76,6 @@ export const TimeRangeContent = (props: Props) => {
     weekStart,
   } = props;
   const hiResTimestamps = useHiResTimestamps();
-  const hiResFormatToolbar = useHiResFormatToolbar();
   const enforceHiResTimestamps = Boolean(hiResTimestamps);
   const thresholdDays = hiResTimestamps?.thresholdDays ?? HIRES_TIMESTAMPS_DEFAULT_THRESHOLD_DAYS;
   const [fromValue, toValue] = valueToState(
@@ -118,6 +117,36 @@ export const TimeRangeContent = (props: Props) => {
     [setOpen]
   );
 
+  const applySnappedRange = useCallback(
+    (fromValue: string, toValue: string) => {
+      const formattedFrom = snapAbsoluteTime(fromValue, timeZone, 'start');
+      const formattedTo = snapAbsoluteTime(toValue, timeZone, 'end');
+      const [nextFrom, nextTo] = valueToState(
+        formattedFrom,
+        formattedTo,
+        timeZone,
+        fiscalYearStartMonth,
+        enforceHiResTimestamps,
+        thresholdDays
+      );
+      setFrom(nextFrom);
+      setTo(nextTo);
+
+      if (nextFrom.invalid || nextTo.invalid) {
+        return false;
+      }
+
+      const raw: RawTimeRange = { from: nextFrom.value, to: nextTo.value };
+      onApplyFromProps(
+        applyHourBoundaryMillis(
+          rangeUtil.convertRawToRange(raw, timeZone, fiscalYearStartMonth, commonFormat)
+        )
+      );
+      return true;
+    },
+    [enforceHiResTimestamps, fiscalYearStartMonth, onApplyFromProps, thresholdDays, timeZone]
+  );
+
   const onApply = useCallback(() => {
     const [nextFrom, nextTo] = valueToState(
       from.value,
@@ -131,6 +160,11 @@ export const TimeRangeContent = (props: Props) => {
     setTo(nextTo);
 
     if (nextFrom.invalid || nextTo.invalid) {
+      const hasOtherErrors =
+        (nextFrom.invalid && !nextFrom.hiResInvalid) || (nextTo.invalid && !nextTo.hiResInvalid);
+      if (!hasOtherErrors && (nextFrom.hiResInvalid || nextTo.hiResInvalid)) {
+        applySnappedRange(from.value, to.value);
+      }
       return;
     }
 
@@ -140,44 +174,16 @@ export const TimeRangeContent = (props: Props) => {
     );
 
     onApplyFromProps(timeRange);
-  }, [enforceHiResTimestamps, from.value, onApplyFromProps, thresholdDays, timeZone, to.value, fiscalYearStartMonth]);
-
-  const onFormatAndApply = useCallback(() => {
-    const formattedFrom = snapAbsoluteTime(from.value, timeZone, 'start');
-    const formattedTo = snapAbsoluteTime(to.value, timeZone, 'end');
-    const [nextFrom, nextTo] = valueToState(
-      formattedFrom,
-      formattedTo,
-      timeZone,
-      fiscalYearStartMonth,
-      enforceHiResTimestamps,
-      thresholdDays
-    );
-    setFrom(nextFrom);
-    setTo(nextTo);
-
-    if (nextFrom.invalid || nextTo.invalid) {
-      return;
-    }
-
-    const raw: RawTimeRange = { from: nextFrom.value, to: nextTo.value };
-    const timeRange = applyHourBoundaryMillis(
-      rangeUtil.convertRawToRange(raw, timeZone, fiscalYearStartMonth, commonFormat)
-    );
-    onApplyFromProps(timeRange);
-  }, [enforceHiResTimestamps, from.value, onApplyFromProps, thresholdDays, timeZone, to.value, fiscalYearStartMonth]);
-
-  useEffect(() => {
-    hiResFormatToolbar?.setDraftNeedsFormat(
-      Boolean(from.hiResInvalid || to.hiResInvalid),
-      `${from.value}|${to.value}`
-    );
-  }, [from.hiResInvalid, from.value, hiResFormatToolbar, to.hiResInvalid, to.value]);
-
-  useEffect(() => {
-    hiResFormatToolbar?.registerFormat(onFormatAndApply);
-    return () => hiResFormatToolbar?.registerFormat(undefined);
-  }, [hiResFormatToolbar, onFormatAndApply]);
+  }, [
+    applySnappedRange,
+    enforceHiResTimestamps,
+    from.value,
+    onApplyFromProps,
+    thresholdDays,
+    timeZone,
+    to.value,
+    fiscalYearStartMonth,
+  ]);
 
   const onChange = useCallback(
     (from: DateTime | string, to: DateTime | string) => {
@@ -195,8 +201,6 @@ export const TimeRangeContent = (props: Props) => {
     [enforceHiResTimestamps, fiscalYearStartMonth, thresholdDays, timeZone]
   );
 
-  const hasOtherErrors = (from.invalid && !from.hiResInvalid) || (to.invalid && !to.hiResInvalid);
-  const showFormatAndApply = Boolean((from.hiResInvalid || to.hiResInvalid) && !hasOtherErrors);
   const hourOnly =
     enforceHiResTimestamps &&
     shouldBlockHiResMinutes(from.value, to.value, timeZone, fiscalYearStartMonth, thresholdDays);
@@ -204,11 +208,7 @@ export const TimeRangeContent = (props: Props) => {
 
   const submitOnEnter = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
-      if (showFormatAndApply) {
-        onFormatAndApply();
-      } else {
-        onApply();
-      }
+      onApply();
     }
   };
 
@@ -350,24 +350,8 @@ export const TimeRangeContent = (props: Props) => {
           type="button"
           onClick={onPaste}
         />
-        <Button
-          data-testid={selectors.components.TimePicker.applyTimeRange}
-          type="button"
-          tooltip={
-            showFormatAndApply
-              ? t(
-                  'time-picker.range-content.format-apply-tooltip',
-                  'Format updates From time to hour start and To time to hour end.'
-                )
-              : undefined
-          }
-          onClick={showFormatAndApply ? onFormatAndApply : onApply}
-        >
-          {showFormatAndApply ? (
-            <Trans i18nKey="time-picker.range-content.format-apply-button">Format & Apply time range</Trans>
-          ) : (
-            <Trans i18nKey="time-picker.range-content.apply-button">Apply time range</Trans>
-          )}
+        <Button data-testid={selectors.components.TimePicker.applyTimeRange} type="button" onClick={onApply}>
+          <Trans i18nKey="time-picker.range-content.apply-button">Apply time range</Trans>
         </Button>
       </div>
 
