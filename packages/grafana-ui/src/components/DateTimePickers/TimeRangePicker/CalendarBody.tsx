@@ -1,16 +1,25 @@
-import { css } from '@emotion/css';
-import { useCallback } from 'react';
+import { css, cx } from '@emotion/css';
+import { useCallback, useState } from 'react';
 import Calendar, { type CalendarType } from 'react-calendar';
 
-import { type GrafanaTheme2, dateTimeParse, type DateTime, type TimeZone } from '@grafana/data';
+import {
+  type DateTime,
+  dateTimeForTimeZone,
+  dateTimeParse,
+  getTimeZone,
+  type GrafanaTheme2,
+  type TimeZone,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { Icon } from '../../Icon/Icon';
 import { getWeekStart, type WeekStart } from '../WeekStartPicker';
+import { commonFormat } from '../commonFormat';
 import { adjustDateForReactCalendar } from '../utils/adjustDateForReactCalendar';
 
 import { type TimePickerCalendarProps } from './TimePickerCalendar';
+import { snapAbsoluteTime, valueAsString } from './hiResHourBounds';
 
 const weekStartMap: Record<WeekStart, CalendarType> = {
   saturday: 'islamic',
@@ -18,9 +27,19 @@ const weekStartMap: Record<WeekStart, CalendarType> = {
   monday: 'iso8601',
 };
 
-export function Body({ onChange, from, to, timeZone, weekStart }: TimePickerCalendarProps) {
+export function Body({
+  onChange,
+  from,
+  to,
+  timeZone,
+  weekStart,
+  hourOnly,
+  onRangeDayClick,
+  inline,
+}: TimePickerCalendarProps) {
   const value = inputToValue(from, to, new Date(), timeZone);
-  const onCalendarChange = useOnCalendarChange(onChange, timeZone);
+  const [activeStartDate, setActiveStartDate] = useState<Date | undefined>();
+  const onCalendarChange = useOnCalendarChange(onChange, from, to, timeZone, hourOnly, setActiveStartDate);
   const styles = useStyles2(getBodyStyles);
   const weekStartValue = getWeekStart(weekStart);
 
@@ -29,14 +48,22 @@ export function Body({ onChange, from, to, timeZone, weekStart }: TimePickerCale
       selectRange={true}
       next2Label={null}
       prev2Label={null}
-      className={styles.body}
+      className={cx(styles.body, inline && styles.bodyFit)}
       tileClassName={styles.title}
       value={value}
+      {...(activeStartDate ? { activeStartDate } : {})}
+      onActiveStartDateChange={({ action, activeStartDate: next }) => {
+        if (!next || action === 'onChange') {
+          return;
+        }
+        setActiveStartDate(next);
+      }}
       nextLabel={<Icon name="angle-right" />}
       nextAriaLabel={t('time-picker.calendar.next-month', 'Next month')}
       prevLabel={<Icon name="angle-left" />}
       prevAriaLabel={t('time-picker.calendar.previous-month', 'Previous month')}
       onChange={onCalendarChange}
+      onClickDay={onRangeDayClick}
       locale="en"
       calendarType={weekStartMap[weekStartValue]}
     />
@@ -66,7 +93,14 @@ export function inputToValue(
   return [fromAsDate, toAsDate];
 }
 
-function useOnCalendarChange(onChange: (from: DateTime, to: DateTime) => void, timeZone?: TimeZone) {
+function useOnCalendarChange(
+  onChange: (from: DateTime, to: DateTime) => void,
+  from: DateTime,
+  to: DateTime,
+  timeZone?: TimeZone,
+  hourOnly?: boolean,
+  onRangeSelected?: (toDate: Date) => void
+) {
   return useCallback<NonNullable<React.ComponentProps<typeof Calendar>['onChange']>>(
     (value) => {
       if (!Array.isArray(value)) {
@@ -74,14 +108,56 @@ function useOnCalendarChange(onChange: (from: DateTime, to: DateTime) => void, t
       }
 
       if (value[0] && value[1]) {
-        const from = dateTimeParse(dateInfo(value[0]), { timeZone });
-        const to = dateTimeParse(dateInfo(value[1]), { timeZone });
+        let nextFrom = applyCalendarDate(from, value[0], timeZone, 'start');
+        let nextTo = applyCalendarDate(to, value[1], timeZone, 'end');
 
-        onChange(from, to);
+        if (hourOnly) {
+          nextFrom = snapCalendarDateTime(nextFrom, timeZone, 'start');
+          nextTo = snapCalendarDateTime(nextTo, timeZone, 'end');
+        }
+
+        onChange(nextFrom, nextTo);
+        onRangeSelected?.(value[1]);
       }
     },
-    [onChange, timeZone]
+    [from, hourOnly, onChange, onRangeSelected, timeZone, to]
   );
+}
+
+export function applyCalendarDate(
+  existing: DateTime,
+  calendarDate: Date,
+  timeZone?: TimeZone,
+  timeOfDay: 'start' | 'end' | 'keep' = 'keep'
+): DateTime {
+  const next = existing.isValid()
+    ? dateTimeForTimeZone(getTimeZone({ timeZone }), existing)
+    : dateTimeParse(dateInfo(calendarDate), { timeZone });
+
+  next.set('year', calendarDate.getFullYear());
+  next.set('month', calendarDate.getMonth());
+  next.set('date', calendarDate.getDate());
+
+  if (timeOfDay === 'start') {
+    next.set('hour', 0);
+    next.set('minute', 0);
+    next.set('second', 0);
+    next.set('millisecond', 0);
+  } else if (timeOfDay === 'end') {
+    next.set('hour', 23);
+    next.set('minute', 59);
+    next.set('second', 59);
+    next.set('millisecond', 0);
+  }
+
+  return next;
+}
+
+export function snapCalendarDateTime(value: DateTime, timeZone: TimeZone | undefined, bound: 'start' | 'end'): DateTime {
+  return dateTimeParse(snapAbsoluteTime(valueAsString(value, timeZone), timeZone, bound), {
+    timeZone,
+    format: commonFormat,
+  });
 }
 
 function dateInfo(date: Date): number[] {
@@ -109,6 +185,22 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
         cursor: 'not-allowed',
       },
     }),
+    bodyFit: css({
+      width: '100%',
+      maxWidth: '100%',
+      boxSizing: 'border-box',
+
+      '.react-calendar__month-view__weekdays, .react-calendar__month-view__days': {
+        display: 'flex',
+        flexWrap: 'wrap',
+      },
+
+      '.react-calendar__tile, .react-calendar__month-view__weekdays__weekday': {
+        flex: '0 0 14.2857%',
+        maxWidth: '14.2857%',
+        boxSizing: 'border-box',
+      },
+    }),
     body: css({
       zIndex: theme.zIndex.modal,
       backgroundColor: theme.colors.background.elevated,
@@ -129,7 +221,7 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
       '.react-calendar__month-view__weekdays': {
         backgroundColor: 'inherit',
         textAlign: 'center',
-        color: theme.colors.primary.text,
+        color: theme.colors.text.primary,
 
         abbr: {
           border: 0,
@@ -144,10 +236,15 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
         backgroundColor: 'inherit',
       },
 
-      '.react-calendar__tile, .react-calendar__tile--now': {
+      '.react-calendar__tile': {
         marginBottom: '4px',
         backgroundColor: 'inherit',
         height: '26px',
+      },
+
+      '.react-calendar__tile--now:not(.react-calendar__tile--active):not(.react-calendar__tile--hasActive)': {
+        color: theme.v1.palette.orange,
+        fontWeight: theme.typography.fontWeightMedium,
       },
 
       '.react-calendar__navigation__label, .react-calendar__navigation > button:focus, .time-picker-calendar-tile:focus':
@@ -195,9 +292,9 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
 
       [`${hasActiveSelector}, .react-calendar__tile--active, .react-calendar__tile--rangeEnd, .react-calendar__tile--rangeStart`]:
         {
-          color: theme.colors.primary.contrastText,
+          color: theme.colors.text.primary,
           fontWeight: theme.typography.fontWeightMedium,
-          background: theme.colors.primary.main,
+          background: `color-mix(in srgb, ${theme.v1.palette.orange} 16%, transparent)`,
           border: '0px',
         },
     }),

@@ -2,18 +2,19 @@ import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
-import { createRef, type FormEvent, memo } from 'react';
+import { createRef, type FormEvent, memo, useCallback, useEffect, useState } from 'react';
 
-import { type DateTime, type GrafanaTheme2, type TimeZone } from '@grafana/data';
+import { type DateTime, dateTimeForTimeZone, getTimeZone, type GrafanaTheme2, type TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { getModalStyles } from '../../Modal/getModalStyles';
 import { type WeekStart } from '../WeekStartPicker';
 
-import { Body } from './CalendarBody';
+import { Body, snapCalendarDateTime } from './CalendarBody';
 import { Footer } from './CalendarFooter';
 import { Header } from './CalendarHeader';
+import { CalendarTimePicker, type CalendarTimeBound, type TimeOfDayParts } from './CalendarTimePicker';
 
 export const getStyles = (theme: GrafanaTheme2, isReversed = false) => {
   return {
@@ -38,6 +39,18 @@ export const getStyles = (theme: GrafanaTheme2, isReversed = false) => {
       backgroundColor: theme.colors.background.elevated,
       border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
+    }),
+
+    inline: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(1),
+      marginTop: theme.spacing(1),
+      flex: 1,
+      width: '100%',
+      minWidth: 0,
+      maxWidth: '100%',
+      label: 'calendar-inline',
     }),
 
     modal: css({
@@ -68,14 +81,20 @@ export interface TimePickerCalendarProps {
   isFullscreen: boolean;
   timeZone?: TimeZone;
   isReversed?: boolean;
+  hourOnly?: boolean;
+  onRangeDayClick?: () => void;
+  /** Render the calendar and time wheels in-place instead of a popup. */
+  inline?: boolean;
 }
 
 function TimePickerCalendar(props: TimePickerCalendarProps) {
   const theme = useTheme2();
   const { modalBackdrop } = useStyles2(getModalStyles);
   const styles = getStyles(theme, props.isReversed);
-  const { isOpen, isFullscreen: isFullscreenProp, onClose } = props;
+  const { isOpen, isFullscreen: isFullscreenProp, onClose, from, to, timeZone, hourOnly, onChange, inline } = props;
   const ref = createRef<HTMLElement>();
+  const [activeBound, setActiveBound] = useState<CalendarTimeBound>('from');
+  const [pickingStart, setPickingStart] = useState(true);
   const { dialogProps } = useDialog(
     {
       'aria-label': selectors.components.TimePicker.calendar.label,
@@ -91,8 +110,64 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
     ref
   );
 
+  useEffect(() => {
+    if (isOpen || inline) {
+      setActiveBound('from');
+      setPickingStart(true);
+    }
+  }, [inline, isOpen]);
+
+  const onRangeDayClick = useCallback(() => {
+    if (pickingStart) {
+      setActiveBound('to');
+      setPickingStart(false);
+    } else {
+      setPickingStart(true);
+    }
+  }, [pickingStart]);
+
+  const onTimeChange = useCallback(
+    (parts: TimeOfDayParts) => {
+      const current = activeBound === 'from' ? from : to;
+      let next = applyTimeOfDay(current, parts, timeZone);
+      if (hourOnly) {
+        next = snapCalendarDateTime(next, timeZone, activeBound === 'from' ? 'start' : 'end');
+      }
+      if (activeBound === 'from') {
+        onChange(next, to);
+      } else {
+        onChange(from, next);
+      }
+    },
+    [activeBound, from, hourOnly, onChange, timeZone, to]
+  );
+
   // This prop is confusingly worded, so rename it to something more intuitive.
   const showInModal = !isFullscreenProp;
+
+  const timePicker = (
+    <CalendarTimePicker
+      from={from}
+      to={to}
+      activeBound={activeBound}
+      hourOnly={hourOnly}
+      onActiveBoundChange={setActiveBound}
+      onTimeChange={onTimeChange}
+    />
+  );
+
+  if (inline) {
+    return (
+      <section
+        className={styles.inline}
+        data-testid={selectors.components.TimePicker.calendar.label}
+        aria-label={selectors.components.TimePicker.calendar.label}
+      >
+        <Body {...props} onRangeDayClick={onRangeDayClick} />
+        {timePicker}
+      </section>
+    );
+  }
 
   if (!isOpen) {
     return null;
@@ -107,7 +182,8 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
       data-testid={selectors.components.TimePicker.calendar.label}
     >
       <Header {...props} />
-      <Body {...props} />
+      <Body {...props} onRangeDayClick={onRangeDayClick} />
+      {timePicker}
       {showInModal && <Footer {...props} />}
     </section>
   );
@@ -132,5 +208,14 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
     </OverlayContainer>
   );
 }
+function applyTimeOfDay(existing: DateTime, parts: TimeOfDayParts, timeZone?: TimeZone): DateTime {
+  const next = dateTimeForTimeZone(getTimeZone({ timeZone }), existing.isValid() ? existing : new Date());
+  next.set('hour', parts.hour);
+  next.set('minute', parts.minute);
+  next.set('second', parts.second);
+  next.set('millisecond', 0);
+  return next;
+}
+
 export default memo(TimePickerCalendar);
 TimePickerCalendar.displayName = 'TimePickerCalendar';

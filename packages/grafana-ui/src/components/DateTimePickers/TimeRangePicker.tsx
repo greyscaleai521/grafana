@@ -207,24 +207,18 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
           aria-controls="TimePickerContent"
           onClick={onToolbarButtonSwitch}
           icon={
-            <span className={styles.timePickerLeading}>
-              {hiResTimestamps && (
-                <Tooltip content={hiResTimestampsLabel} placement="bottom">
-                  <span
-                    data-testid={selectors.components.TimePicker.hiResTimestamps}
-                    className={cx(styles.hiRes, hiResTimestamps.enabled ? styles.hiResOn : styles.hiResOff)}
-                  >
-                    <span>
-                      <Trans i18nKey="time-picker.range-picker.hi">Hi</Trans>
-                    </span>
-                    <span>
-                      <Trans i18nKey="time-picker.range-picker.res">Res</Trans>
-                    </span>
-                  </span>
-                </Tooltip>
-              )}
+            hiResTimestamps ? (
+              <Tooltip content={hiResTimestampsLabel} placement="bottom">
+                <span
+                  data-testid={selectors.components.TimePicker.hiResTimestamps}
+                  className={hiResTimestamps.enabled ? styles.hiResOn : styles.hiResOff}
+                >
+                  <Icon name={timePickerIcon} size="lg" />
+                </span>
+              </Tooltip>
+            ) : (
               <Icon name={timePickerIcon} size="lg" />
-            </span>
+            )
           }
           isOpen={isOpen}
           type="button"
@@ -384,28 +378,19 @@ const getStyles = (theme: GrafanaTheme2) => {
         zIndex: theme.zIndex.modal,
       },
     }),
-    timePickerLeading: css({
-      display: 'inline-flex',
-      alignItems: 'center',
-      maxHeight: '100%',
-    }),
-    hiRes: css({
-      display: 'inline-flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginRight: theme.spacing(0.5),
-      lineHeight: 1.1,
-      fontSize: theme.typography.size.xs,
-      fontWeight: theme.typography.fontWeightMedium,
-      cursor: 'default',
-      userSelect: 'none',
-    }),
     hiResOn: css({
+      display: 'inline-flex',
       color: theme.v1.palette.orange,
+      svg: {
+        fill: 'currentColor',
+      },
     }),
     hiResOff: css({
+      display: 'inline-flex',
       color: theme.colors.text.disabled,
+      svg: {
+        fill: 'currentColor',
+      },
     }),
   };
 };

@@ -54,6 +54,17 @@ beforeEach(() => {
   mockOnApply.mockClear();
 });
 
+function boundTab(name: 'From' | 'To', container?: HTMLElement) {
+  const root = container ? within(container) : screen;
+  return root.getByRole('tab', { name: new RegExp(`^${name}`) });
+}
+
+function expectBound(name: 'From' | 'To', date: string, time: string, container?: HTMLElement) {
+  const tab = boundTab(name, container);
+  expect(tab).toHaveTextContent(date);
+  expect(tab).toHaveTextContent(time);
+}
+
 function setup(initial: TimeRange = defaultTimeRange, timeZone = 'utc', hiResTimestamps?: { enabled: boolean }) {
   const content = <TimeRangeContent isFullscreen={true} value={initial} onApply={mockOnApply} timeZone={timeZone} />;
 
@@ -86,35 +97,37 @@ describe('TimeRangeForm', () => {
   });
 
   it('should render form correctly', () => {
-    const { getByLabelText, getByText, getAllByRole } = setup();
+    const { getByText } = setup();
+    const { TimePicker } = selectors.components;
 
     expect(getByText('Apply time range')).toBeInTheDocument();
-    expect(getAllByRole('button', { name: 'Open calendar' })).toHaveLength(2);
-    expect(getByLabelText('From')).toBeInTheDocument();
-    expect(getByLabelText('To')).toBeInTheDocument();
+    expect(boundTab('From')).toBeInTheDocument();
+    expect(boundTab('To')).toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'From' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'To' })).not.toBeInTheDocument();
+    expect(screen.getByTestId(TimePicker.calendar.label)).toBeInTheDocument();
   });
 
-  it('should display calendar when clicking the calendar icon', async () => {
+  it('shows the calendar and time picker in the absolute range form', () => {
     setup();
     const { TimePicker } = selectors.components;
-    const openCalendarButton = screen.getAllByRole('button', { name: 'Open calendar' });
 
-    await user.click(openCalendarButton[0]);
-    expect(screen.getByLabelText(TimePicker.calendar.label)).toBeInTheDocument();
+    expect(screen.getByTestId(TimePicker.calendar.label)).toBeInTheDocument();
+    expect(screen.getByTestId('calendar-time-picker')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /From/ })).toHaveTextContent('2021-06-17');
+    expect(screen.getByRole('tab', { name: /To/ })).toHaveTextContent('2021-06-19');
+    expect(screen.getByRole('tab', { name: /To/ })).toHaveTextContent('23:59:00');
   });
 
   it('should have passed time range entered in form', () => {
-    const { getByLabelText } = setup();
+    setup();
 
-    const fromValue = defaultTimeRange.raw.from as string;
-    const toValue = defaultTimeRange.raw.to as string;
-
-    expect(getByLabelText('From')).toHaveValue(fromValue);
-    expect(getByLabelText('To')).toHaveValue(toValue);
+    expectBound('From', '2021-06-17', '00:00:00');
+    expectBound('To', '2021-06-19', '23:59:00');
   });
 
   it('should parse UTC iso strings and render in current timezone', () => {
-    const { getByLabelText } = setup(
+    setup(
       {
         from: defaultTimeRange.from,
         to: defaultTimeRange.to,
@@ -126,8 +139,8 @@ describe('TimeRangeForm', () => {
       'America/New_York'
     );
 
-    expect(getByLabelText('From')).toHaveValue('2021-06-16 20:00:00');
-    expect(getByLabelText('To')).toHaveValue('2021-06-19 19:59:00');
+    expectBound('From', '2021-06-16', '20:00:00');
+    expectBound('To', '2021-06-19', '19:59:00');
   });
 
   it('copy in UTC then paste into different timezone should convert times', async () => {
@@ -157,26 +170,27 @@ describe('TimeRangeForm', () => {
     const targetPasteButton = within(target.container).getByTestId('data-testid TimePicker paste button');
     await user.click(targetPasteButton);
 
-    expect(within(target.container).getByLabelText('From')).toHaveValue('2021-06-16 20:00:00');
-    expect(within(target.container).getByLabelText('To')).toHaveValue('2021-06-19 19:59:00');
+    expectBound('From', '2021-06-16', '20:00:00', target.container);
+    expectBound('To', '2021-06-19', '19:59:00', target.container);
   });
 
   describe('when common format are entered', () => {
-    it('parses those dates in the current timezone', async () => {
-      setup();
-
-      const fromInput = screen.getByLabelText('From');
-      const toInput = screen.getByLabelText('To');
-      await user.clear(fromInput);
-      await user.type(fromInput, '2021-05-10 20:00:00');
-      await user.clear(toInput);
-      await user.type(toInput, '2021-05-12 19:59:00');
+    it('applies those dates in the current timezone', async () => {
+      const range: TimeRange = {
+        from: dateTimeParse('2021-05-10 20:00:00', { timeZone: 'utc' }),
+        to: dateTimeParse('2021-05-12 19:59:00', { timeZone: 'utc' }),
+        raw: {
+          from: '2021-05-10 20:00:00',
+          to: '2021-05-12 19:59:00',
+        },
+      };
+      setup(range);
 
       await user.click(screen.getByRole('button', { name: 'Apply time range' }));
 
       const appliedOrUndefined = mockOnApply.mock.lastCall?.at(0) as undefined | TimeRange;
       expect(appliedOrUndefined).not.toBe(undefined);
-      const applied = appliedOrUndefined!; // previous line throws if undefined
+      const applied = appliedOrUndefined!;
       expect(applied.from.toISOString()).toBe('2021-05-10T20:00:00.000Z');
       expect(applied.to.toISOString()).toBe('2021-05-12T19:59:00.000Z');
     });
@@ -194,8 +208,8 @@ describe('TimeRangeForm', () => {
       systemDateFormats.fullDate = originalFullDate;
     });
 
-    it('should parse UTC iso strings and render them in the common format and current timezone', () => {
-      const { getByLabelText } = setup(
+    it('should parse UTC iso strings and render them in the current timezone', () => {
+      setup(
         {
           from: defaultTimeRange.from,
           to: defaultTimeRange.to,
@@ -207,26 +221,27 @@ describe('TimeRangeForm', () => {
         'America/New_York'
       );
 
-      expect(getByLabelText('From')).toHaveValue('2021-06-16 20:00:00');
-      expect(getByLabelText('To')).toHaveValue('2021-06-19 19:59:00');
+      expectBound('From', '2021-06-16', '20:00:00');
+      expectBound('To', '2021-06-19', '19:59:00');
     });
 
     describe('when common format dates are entered', () => {
-      it('parses those dates in the current timezone', async () => {
-        setup();
-
-        const fromInput = screen.getByLabelText('From');
-        const toInput = screen.getByLabelText('To');
-        await user.clear(fromInput);
-        await user.type(fromInput, '2021-05-10 20:00:00');
-        await user.clear(toInput);
-        await user.type(toInput, '2021-05-12 19:59:00');
+      it('applies those dates in the current timezone', async () => {
+        const range: TimeRange = {
+          from: dateTimeParse('2021-05-10 20:00:00', { timeZone: 'utc' }),
+          to: dateTimeParse('2021-05-12 19:59:00', { timeZone: 'utc' }),
+          raw: {
+            from: '2021-05-10 20:00:00',
+            to: '2021-05-12 19:59:00',
+          },
+        };
+        setup(range);
 
         await user.click(screen.getByRole('button', { name: 'Apply time range' }));
 
         const appliedOrUndefined = mockOnApply.mock.lastCall?.at(0) as undefined | TimeRange;
         expect(appliedOrUndefined).not.toBe(undefined);
-        const applied = appliedOrUndefined!; // previous line throws if undefined
+        const applied = appliedOrUndefined!;
         expect(applied.from.toISOString()).toBe('2021-05-10T20:00:00.000Z');
         expect(applied.to.toISOString()).toBe('2021-05-12T19:59:00.000Z');
       });
@@ -239,8 +254,8 @@ describe('TimeRangeForm', () => {
         mockSetCommonFormat(false);
       });
 
-      it('should parse UTC ISO strings and render them in the system format', () => {
-        const { getByLabelText } = setup(
+      it('should parse UTC ISO strings and render them in the current timezone', () => {
+        setup(
           {
             from: defaultTimeRange.from,
             to: defaultTimeRange.to,
@@ -252,47 +267,46 @@ describe('TimeRangeForm', () => {
           'America/New_York'
         );
 
-        expect(getByLabelText('From')).toHaveValue('16.06.2021 20:00:00');
-        expect(getByLabelText('To')).toHaveValue('19.06.2021 19:59:00');
+        expectBound('From', '2021-06-16', '20:00:00');
+        expectBound('To', '2021-06-19', '19:59:00');
       });
 
-      describe('when common format dates are entered', () => {
-        it('should show an error because of parsing failure', async () => {
-          setup();
-
-          const fromInput = screen.getByLabelText('From');
-          const toInput = screen.getByLabelText('To');
-          await user.clear(fromInput);
-          await user.type(fromInput, '2021-05-10 20:00:00');
-          await user.clear(toInput);
-          await user.type(toInput, '2021-05-12 19:59:00');
-
-          await user.click(screen.getByRole('button', { name: 'Apply time range' }));
+      describe('when common format dates are used', () => {
+        it('should show an error because of parsing failure', () => {
+          const invalidTimeRange: TimeRange = {
+            from: dateTimeParse('2021-05-10 20:00:00', { timeZone: 'utc' }),
+            to: dateTimeParse('2021-05-12 19:59:00', { timeZone: 'utc' }),
+            raw: {
+              from: '2021-05-10 20:00:00',
+              to: '2021-05-12 19:59:00',
+            },
+          };
+          setup(invalidTimeRange);
 
           const error = screen.getAllByRole('alert');
-
           expect(error).toHaveLength(2);
           expect(error[0]).toBeVisible();
           expect(error[0]).toHaveTextContent('Please enter a past date or "now"');
         });
       });
 
-      describe('when common format dates are entered', () => {
-        it('should show an error because of parsing failure', async () => {
-          setup();
-
-          const fromInput = screen.getByLabelText('From');
-          const toInput = screen.getByLabelText('To');
-          await user.clear(fromInput);
-          await user.type(fromInput, '10.05.2021 20:00:00');
-          await user.clear(toInput);
-          await user.type(toInput, '12.05.2021 19:59:00');
+      describe('when system format dates are used', () => {
+        it('should apply the parsed range', async () => {
+          const range: TimeRange = {
+            from: dateTimeParse('10.05.2021 20:00:00', { timeZone: 'utc' }),
+            to: dateTimeParse('12.05.2021 19:59:00', { timeZone: 'utc' }),
+            raw: {
+              from: '10.05.2021 20:00:00',
+              to: '12.05.2021 19:59:00',
+            },
+          };
+          setup(range);
 
           await user.click(screen.getByRole('button', { name: 'Apply time range' }));
 
           const appliedOrUndefined = mockOnApply.mock.lastCall?.at(0) as undefined | TimeRange;
           expect(appliedOrUndefined).not.toBe(undefined);
-          const applied = appliedOrUndefined!; // previous line throws if undefined
+          const applied = appliedOrUndefined!;
           expect(applied.from.toISOString()).toBe('2021-05-10T20:00:00.000Z');
           expect(applied.to.toISOString()).toBe('2021-05-12T19:59:00.000Z');
         });
@@ -300,30 +314,8 @@ describe('TimeRangeForm', () => {
     });
   });
 
-  it('should close calendar when clicking the close icon', async () => {
-    const { queryByLabelText, getAllByRole, getByRole } = setup();
-    const { TimePicker } = selectors.components;
-    const openCalendarButton = getAllByRole('button', { name: 'Open calendar' });
-
-    await user.click(openCalendarButton[0]);
-    expect(getByRole('button', { name: 'Close calendar' })).toBeInTheDocument();
-
-    await user.click(getByRole('button', { name: 'Close calendar' }));
-    expect(queryByLabelText(TimePicker.calendar.label)).not.toBeInTheDocument();
-  });
-
-  it('should not display calendar without clicking the calendar icon', () => {
-    const { queryByLabelText } = setup();
-    const { TimePicker } = selectors.components;
-
-    expect(queryByLabelText(TimePicker.calendar.label)).not.toBeInTheDocument();
-  });
-
-  it('should have passed time range selected in calendar', async () => {
-    const { getAllByRole, getCalendarDayByLabelText } = setup();
-    const openCalendarButton = getAllByRole('button', { name: 'Open calendar' });
-
-    await user.click(openCalendarButton[0]);
+  it('should have passed time range selected in calendar', () => {
+    const { getCalendarDayByLabelText } = setup();
     const from = getCalendarDayByLabelText('June 17, 2021');
     const to = getCalendarDayByLabelText('June 19, 2021');
 
@@ -331,16 +323,59 @@ describe('TimeRangeForm', () => {
     expect(to).toHaveClass('react-calendar__tile--rangeEnd');
   });
 
-  it('should select correct time range in calendar when having a custom time zone', async () => {
-    const { getAllByRole, getCalendarDayByLabelText } = setup(defaultTimeRange, 'Asia/Tokyo');
-    const openCalendarButton = getAllByRole('button', { name: 'Open calendar' });
-
-    await user.click(openCalendarButton[1]);
+  it('should select correct time range in calendar when having a custom time zone', () => {
+    const { getCalendarDayByLabelText } = setup(defaultTimeRange, 'Asia/Tokyo');
     const from = getCalendarDayByLabelText('June 17, 2021');
     const to = getCalendarDayByLabelText('June 19, 2021');
 
     expect(from).toHaveClass('react-calendar__tile--rangeStart');
     expect(to).toHaveClass('react-calendar__tile--rangeEnd');
+  });
+
+  it('shows from and to time wheels in the calendar', () => {
+    setup();
+
+    expect(screen.getByTestId('calendar-time-picker')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /From/ })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('button', { name: 'Hour 00', pressed: true })).toBeInTheDocument();
+  });
+
+  it('switches the time wheels to To after the from date is selected', async () => {
+    const { getCalendarDayByLabelText } = setup();
+
+    await user.click(getCalendarDayByLabelText('June 18, 2021'));
+
+    expect(screen.getByRole('tab', { name: /To/ })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('defaults from to 00:00:00 and to to 23:59:59 when dates are selected', async () => {
+    const { getCalendarDayByLabelText } = setup();
+
+    await user.click(getCalendarDayByLabelText('June 18, 2021'));
+    await user.click(getCalendarDayByLabelText('June 20, 2021'));
+
+    expectBound('From', '2021-06-18', '00:00:00');
+    expectBound('To', '2021-06-20', '23:59:59');
+  });
+
+  it('keeps showing the to date month after a range is selected', async () => {
+    const { getCalendarDayByLabelText } = setup();
+
+    await user.click(getCalendarDayByLabelText('June 18, 2021'));
+    await user.click(screen.getByRole('button', { name: 'Next month' }));
+    await user.click(getCalendarDayByLabelText('July 5, 2021'));
+
+    expect(screen.getByText('July 2021')).toBeInTheDocument();
+    expectBound('From', '2021-06-18', '00:00:00');
+    expectBound('To', '2021-07-05', '23:59:59');
+  });
+
+  it('updates From time from the hour wheel', async () => {
+    setup();
+
+    await user.click(screen.getByRole('button', { name: 'Hour 15' }));
+
+    expectBound('From', '2021-06-17', '15:00:00');
   });
 
   it('should copy time range to clipboard', async () => {
@@ -353,14 +388,14 @@ describe('TimeRangeForm', () => {
   });
 
   it('should paste time range from clipboard', async () => {
-    const { getByTestId, getByLabelText } = setup();
+    const { getByTestId } = setup();
 
     mockClipboard.readText.mockResolvedValue(JSON.stringify(customRawTimeRange));
 
     await userEvent.click(getByTestId('data-testid TimePicker paste button'));
 
-    expect(getByLabelText('From')).toHaveValue(customRawTimeRange.from);
-    expect(getByLabelText('To')).toHaveValue(customRawTimeRange.to);
+    expectBound('From', '2023-06-17', '00:00:00');
+    expectBound('To', '2023-06-19', '23:59:00');
   });
 
   describe('dates error handling', () => {
@@ -416,28 +451,39 @@ describe('TimeRangeForm', () => {
   });
 
   describe('when HiRes timestamps are off', () => {
-    it('blocks apply for absolute times with minutes or seconds', async () => {
+    it('blocks apply for absolute times with minutes or seconds', () => {
       const hourRange: TimeRange = {
-        from: dateTimeParse('2020-01-01 14:00:00', { timeZone: 'utc' }),
+        from: dateTimeParse('2020-01-01 14:32:08', { timeZone: 'utc' }),
         to: dateTimeParse('2020-01-03 15:59:59', { timeZone: 'utc' }),
         raw: {
-          from: '2020-01-01 14:00:00',
+          from: '2020-01-01 14:32:08',
           to: '2020-01-03 15:59:59',
         },
       };
       setup(hourRange, 'utc', { enabled: false });
 
-      const fromInput = screen.getByLabelText('From');
-      await user.clear(fromInput);
-      await user.type(fromInput, '2020-01-01 14:32:08');
-
       expect(screen.getByRole('alert')).toHaveTextContent(
         'HiRes is off. Format sets time to the hour start.'
       );
       expect(screen.getByRole('alert')).toHaveStyle({ background: '#fff' });
-      expect(screen.getByLabelText('From')).not.toHaveAttribute('aria-invalid', 'true');
       expect(screen.getByRole('button', { name: 'Apply time range' })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Format & Apply time range' })).not.toBeInTheDocument();
+    });
+
+    it('disables calendar minute and second wheels', async () => {
+      const hourRange: TimeRange = {
+        from: dateTimeParse('2020-01-01 14:32:08', { timeZone: 'utc' }),
+        to: dateTimeParse('2020-01-03 15:59:59', { timeZone: 'utc' }),
+        raw: {
+          from: '2020-01-01 14:32:08',
+          to: '2020-01-03 15:59:59',
+        },
+      };
+      setup(hourRange, 'utc', { enabled: false });
+
+      expect(screen.getByRole('button', { name: 'Hour 15' })).toBeEnabled();
+      expect(screen.getByRole('button', { name: 'Min 32' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Sec 08' })).toBeDisabled();
     });
 
     it('allows apply for hour-only absolute times', async () => {
@@ -476,23 +522,16 @@ describe('TimeRangeForm', () => {
       expect(applied.to.format('YYYY-MM-DD HH:mm:ss.SSS')).toBe('2026-07-24 23:59:59.999');
     });
 
-    it('revalidates on edit when the draft range requires hour-only', async () => {
-      const recentRange: TimeRange = {
-        from: dateTimeParse('now-6h', { timeZone: 'utc' }),
-        to: dateTimeParse('now', { timeZone: 'utc' }),
+    it('revalidates when the draft range requires hour-only', () => {
+      const hourRange: TimeRange = {
+        from: dateTimeParse('2020-01-01 14:32:08', { timeZone: 'utc' }),
+        to: dateTimeParse('2020-01-03 15:59:59', { timeZone: 'utc' }),
         raw: {
-          from: 'now-6h',
-          to: 'now',
+          from: '2020-01-01 14:32:08',
+          to: '2020-01-03 15:59:59',
         },
       };
-      setup(recentRange, 'utc', { enabled: true });
-
-      const fromInput = screen.getByLabelText('From');
-      const toInput = screen.getByLabelText('To');
-      await user.clear(fromInput);
-      await user.type(fromInput, '2020-01-01 14:32:08');
-      await user.clear(toInput);
-      await user.type(toInput, '2020-01-03 15:59:59');
+      setup(hourRange, 'utc', { enabled: false });
 
       expect(screen.getByRole('alert')).toHaveTextContent(
         'HiRes is off. Format sets time to the hour start.'
@@ -500,20 +539,16 @@ describe('TimeRangeForm', () => {
       expect(screen.getByRole('button', { name: 'Apply time range' })).toBeInTheDocument();
     });
 
-    it('always revalidates when applying from and to', async () => {
+    it('always revalidates when applying from and to', () => {
       const hourRange: TimeRange = {
-        from: dateTimeParse('2020-01-01 14:00:00', { timeZone: 'utc' }),
+        from: dateTimeParse('2020-01-01 14:15:00', { timeZone: 'utc' }),
         to: dateTimeParse('2020-01-03 16:59:59', { timeZone: 'utc' }),
         raw: {
-          from: '2020-01-01 14:00:00',
+          from: '2020-01-01 14:15:00',
           to: '2020-01-03 16:59:59',
         },
       };
       setup(hourRange, 'utc', { enabled: false });
-
-      const fromInput = screen.getByLabelText('From');
-      await user.clear(fromInput);
-      await user.type(fromInput, '2020-01-01 14:15:00');
 
       expect(screen.getByRole('alert')).toHaveTextContent(
         'HiRes is off. Format sets time to the hour start.'

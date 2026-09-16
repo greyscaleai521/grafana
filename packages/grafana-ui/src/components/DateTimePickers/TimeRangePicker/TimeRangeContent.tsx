@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
-import { type FormEvent, useCallback, useEffect, useId, useState } from 'react';
-import * as React from 'react';
+import { useCallback, useEffect, useState, type MutableRefObject } from 'react';
 
 import {
   type DateTime,
@@ -17,10 +16,8 @@ import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { Button } from '../../Button/Button';
-import { Field } from '../../Forms/Field';
 import { FieldValidationMessage } from '../../Forms/FieldValidationMessage';
 import { Icon } from '../../Icon/Icon';
-import { Input } from '../../Input/Input';
 import { Tooltip } from '../../Tooltip/Tooltip';
 import { useHiResTimestamps } from '../HiResTimestampsContext';
 import { type WeekStart } from '../WeekStartPicker';
@@ -47,6 +44,7 @@ interface Props {
   isReversed?: boolean;
   onError?: (error?: string) => void;
   weekStart?: WeekStart;
+  applyRef?: MutableRefObject<(() => void) | undefined>;
 }
 
 interface InputState {
@@ -74,6 +72,7 @@ export const TimeRangeContent = (props: Props) => {
     fiscalYearStartMonth,
     onError,
     weekStart,
+    applyRef,
   } = props;
   const hiResTimestamps = useHiResTimestamps();
   const enforceHiResTimestamps = Boolean(hiResTimestamps);
@@ -90,10 +89,6 @@ export const TimeRangeContent = (props: Props) => {
 
   const [from, setFrom] = useState<InputState>(fromValue);
   const [to, setTo] = useState<InputState>(toValue);
-  const [isOpen, setOpen] = useState(false);
-
-  const fromFieldId = useId();
-  const toFieldId = useId();
 
   // Synchronize internal state with external value
   useEffect(() => {
@@ -108,14 +103,6 @@ export const TimeRangeContent = (props: Props) => {
     setFrom(fromValue);
     setTo(toValue);
   }, [value.raw.from, value.raw.to, timeZone, fiscalYearStartMonth, enforceHiResTimestamps, thresholdDays]);
-
-  const onOpen = useCallback(
-    (event: FormEvent<HTMLElement>) => {
-      event.preventDefault();
-      setOpen(true);
-    },
-    [setOpen]
-  );
 
   const applySnappedRange = useCallback(
     (fromValue: string, toValue: string) => {
@@ -185,6 +172,16 @@ export const TimeRangeContent = (props: Props) => {
     fiscalYearStartMonth,
   ]);
 
+  useEffect(() => {
+    if (!applyRef) {
+      return;
+    }
+    applyRef.current = onApply;
+    return () => {
+      applyRef.current = undefined;
+    };
+  }, [applyRef, onApply]);
+
   const onChange = useCallback(
     (from: DateTime | string, to: DateTime | string) => {
       const [fromValue, toValue] = valueToState(
@@ -205,12 +202,6 @@ export const TimeRangeContent = (props: Props) => {
     enforceHiResTimestamps &&
     shouldBlockHiResMinutes(from.value, to.value, timeZone, fiscalYearStartMonth, thresholdDays);
   const showUtcHourNote = hourOnly && hasFractionalHourOffset(timeZone);
-
-  const submitOnEnter = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
-      onApply();
-    }
-  };
 
   const onCopy = () => {
     const rawSource: RawTimeRange = value.raw;
@@ -260,69 +251,35 @@ export const TimeRangeContent = (props: Props) => {
     </div>
   );
 
-  const icon = (
-    <Button
-      aria-label={t('time-picker.range-content.open-input-calendar', 'Open calendar')}
-      data-testid={selectors.components.TimePicker.calendar.openButton}
-      icon="calendar-alt"
-      variant="secondary"
-      type="button"
-      onClick={onOpen}
-    />
-  );
-
   return (
     <div>
-      <div className={style.fieldContainer}>
-        <div>
-          <Field
-            label={t('time-picker.range-content.from-input', 'From')}
-            invalid={from.invalid && !from.hiResInvalid}
-            error={from.hiResInvalid ? undefined : from.errorMessage}
-            noMargin={from.hiResInvalid}
-          >
-            <Input
-              id={fromFieldId}
-              onClick={(event) => event.stopPropagation()}
-              onChange={(event) => onChange(event.currentTarget.value, to.value)}
-              onBlur={() => onChange(from.value, to.value)}
-              addonAfter={icon}
-              onKeyDown={submitOnEnter}
-              data-testid={selectors.components.TimePicker.fromField}
-              value={from.value}
-            />
-          </Field>
-          {from.hiResInvalid && (
-            <FieldValidationMessage className={style.hiResAlert}>{from.errorMessage}</FieldValidationMessage>
-          )}
-        </div>
-        {fyTooltip}
+      <div className={style.pickerHeader}>
+        <TimePickerCalendar
+          inline
+          isOpen
+          isFullscreen={isFullscreen}
+          from={dateTimeParse(from.value, { timeZone, format: commonFormat })}
+          to={dateTimeParse(to.value, { timeZone, format: commonFormat })}
+          onApply={onApply}
+          onClose={() => {}}
+          onChange={onChange}
+          timeZone={timeZone}
+          isReversed={isReversed}
+          weekStart={weekStart}
+          hourOnly={hourOnly}
+        />
+        {rangeUtil.isFiscal(value) ? fyTooltip : null}
       </div>
-      <div className={style.fieldContainer}>
-        <div>
-          <Field
-            label={t('time-picker.range-content.to-input', 'To')}
-            invalid={to.invalid && !to.hiResInvalid}
-            error={to.hiResInvalid ? undefined : to.errorMessage}
-            noMargin={to.hiResInvalid}
-          >
-            <Input
-              id={toFieldId}
-              onClick={(event) => event.stopPropagation()}
-              onChange={(event) => onChange(from.value, event.currentTarget.value)}
-              onBlur={() => onChange(from.value, to.value)}
-              addonAfter={icon}
-              onKeyDown={submitOnEnter}
-              data-testid={selectors.components.TimePicker.toField}
-              value={to.value}
-            />
-          </Field>
-          {to.hiResInvalid && (
-            <FieldValidationMessage className={style.hiResAlert}>{to.errorMessage}</FieldValidationMessage>
-          )}
-        </div>
-        {fyTooltip}
-      </div>
+      {from.invalid && (
+        <FieldValidationMessage className={from.hiResInvalid ? style.hiResAlert : undefined}>
+          {from.errorMessage}
+        </FieldValidationMessage>
+      )}
+      {to.invalid && (
+        <FieldValidationMessage className={to.hiResInvalid ? style.hiResAlert : undefined}>
+          {to.errorMessage}
+        </FieldValidationMessage>
+      )}
       {showUtcHourNote && (
         <div className={style.utcHourNote}>
           <Icon name="info-circle" size="sm" />
@@ -350,23 +307,16 @@ export const TimeRangeContent = (props: Props) => {
           type="button"
           onClick={onPaste}
         />
-        <Button data-testid={selectors.components.TimePicker.applyTimeRange} type="button" onClick={onApply}>
+        <Button
+          data-testid={selectors.components.TimePicker.applyTimeRange}
+          type="button"
+          variant="secondary"
+          className={style.orangeApply}
+          onClick={onApply}
+        >
           <Trans i18nKey="time-picker.range-content.apply-button">Apply time range</Trans>
         </Button>
       </div>
-
-      <TimePickerCalendar
-        isFullscreen={isFullscreen}
-        isOpen={isOpen}
-        from={dateTimeParse(from.value, { timeZone })}
-        to={dateTimeParse(to.value, { timeZone })}
-        onApply={onApply}
-        onClose={() => setOpen(false)}
-        onChange={onChange}
-        timeZone={timeZone}
-        isReversed={isReversed}
-        weekStart={weekStart}
-      />
     </div>
   );
 };
@@ -421,14 +371,17 @@ function valueToState(
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    fieldContainer: css({
+    pickerHeader: css({
       display: 'flex',
+      width: '100%',
+      minWidth: 0,
     }),
     buttonsContainer: css({
       display: 'flex',
       gap: theme.spacing(0.5),
       marginTop: theme.spacing(1),
     }),
+    orangeApply: getOrangeApplyStyle(theme),
     tooltip: css({
       paddingLeft: theme.spacing(1),
       paddingTop: theme.spacing(3),
@@ -470,4 +423,20 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
   };
+}
+
+export function getOrangeApplyStyle(theme: GrafanaTheme2) {
+  const orange = theme.v1.palette.orange;
+
+  return css({
+    color: orange,
+    background: `color-mix(in srgb, ${orange} 16%, transparent)`,
+    borderColor: 'transparent',
+
+    '&:hover': {
+      color: orange,
+      background: `color-mix(in srgb, ${orange} 24%, transparent)`,
+      borderColor: 'transparent',
+    },
+  });
 }

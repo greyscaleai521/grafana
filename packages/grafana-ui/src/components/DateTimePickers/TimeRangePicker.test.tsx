@@ -42,30 +42,7 @@ describe('TimePicker', () => {
     expect(screen.queryByTestId(selectors.hiResTimestamps)).not.toBeInTheDocument();
   });
 
-  it('renders HiRes in two lines to the left of the clock icon', () => {
-    render(
-      <HiResTimestampsProvider value={{ enabled: true, interactive: false, onToggle: jest.fn() }}>
-        <TimeRangePicker
-          onChangeTimeZone={() => {}}
-          onChange={(value) => {}}
-          value={value}
-          onMoveBackward={() => {}}
-          onMoveForward={() => {}}
-          onZoom={() => {}}
-        />
-      </HiResTimestampsProvider>
-    );
-
-    const hiRes = screen.getByTestId(selectors.hiResTimestamps);
-    const openButton = screen.getByTestId(selectors.openButton);
-    expect(hiRes).toHaveTextContent('HiRes');
-    expect(hiRes).toHaveTextContent('Hi');
-    expect(hiRes).toHaveTextContent('Res');
-    expect(hiRes.tagName).toBe('SPAN');
-    expect(openButton).toContainElement(hiRes);
-  });
-
-  it('shows the resolved real-time threshold in the HiRes hover', async () => {
+  it('applies HiRes color and hover to the clock icon', async () => {
     render(
       <HiResTimestampsProvider value={{ enabled: true, interactive: false, onToggle: jest.fn(), thresholdDays: 7 }}>
         <TimeRangePicker
@@ -79,32 +56,20 @@ describe('TimePicker', () => {
       </HiResTimestampsProvider>
     );
 
-    await userEvent.hover(screen.getByTestId(selectors.hiResTimestamps));
+    const clock = screen.getByTestId(selectors.hiResTimestamps);
+    const openButton = screen.getByTestId(selectors.openButton);
+    expect(clock).toBeInTheDocument();
+    expect(clock.querySelector('svg')).toBeInTheDocument();
+    expect(clock).not.toHaveTextContent('HiRes');
+    expect(openButton).toContainElement(clock);
+    expect(screen.queryByRole('button', { name: /HiRes/ })).not.toBeInTheDocument();
+
+    await userEvent.hover(clock);
     expect(await screen.findByText(/within 7 days of now/)).toBeInTheDocument();
   });
 
-  it('renders HiRes as text only, not a button', () => {
-    const onToggle = jest.fn();
+  it('keeps the HiRes clock marker when HiRes is off', () => {
     render(
-      <HiResTimestampsProvider value={{ enabled: true, interactive: false, onToggle }}>
-        <TimeRangePicker
-          onChangeTimeZone={() => {}}
-          onChange={(value) => {}}
-          value={value}
-          onMoveBackward={() => {}}
-          onMoveForward={() => {}}
-          onZoom={() => {}}
-        />
-      </HiResTimestampsProvider>
-    );
-
-    const hiRes = screen.getByTestId(selectors.hiResTimestamps);
-    expect(hiRes.tagName).toBe('SPAN');
-    expect(screen.queryByRole('button', { name: /HiRes/ })).not.toBeInTheDocument();
-  });
-
-  it('renders HiRes on and off styles', () => {
-    const { rerender } = render(
       <HiResTimestampsProvider value={{ enabled: false, interactive: false, onToggle: jest.fn() }}>
         <TimeRangePicker
           onChangeTimeZone={() => {}}
@@ -117,22 +82,8 @@ describe('TimePicker', () => {
       </HiResTimestampsProvider>
     );
 
-    expect(screen.getByTestId(selectors.hiResTimestamps)).toHaveTextContent('HiRes');
-
-    rerender(
-      <HiResTimestampsProvider value={{ enabled: true, interactive: false, onToggle: jest.fn() }}>
-        <TimeRangePicker
-          onChangeTimeZone={() => {}}
-          onChange={(value) => {}}
-          value={value}
-          onMoveBackward={() => {}}
-          onMoveForward={() => {}}
-          onZoom={() => {}}
-        />
-      </HiResTimestampsProvider>
-    );
-
-    expect(screen.getByTestId(selectors.hiResTimestamps)).toHaveTextContent('HiRes');
+    expect(screen.getByTestId(selectors.hiResTimestamps).querySelector('svg')).toBeInTheDocument();
+    expect(screen.queryByText('HiRes')).not.toBeInTheDocument();
   });
 
   it('auto-formats hour bounds when From/To would alert', () => {
