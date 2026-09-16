@@ -3,16 +3,12 @@ import { type FormEvent, useCallback, useEffect, useId, useState } from 'react';
 import * as React from 'react';
 
 import {
-  dateMath,
   type DateTime,
-  dateTimeFormat,
   dateTimeParse,
   type GrafanaTheme2,
   HIRES_TIMESTAMPS_DEFAULT_THRESHOLD_DAYS,
-  isDateTime,
   rangeUtil,
   type RawTimeRange,
-  resolveHiResTimestampsEnabled,
   type TimeRange,
   type TimeZone,
 } from '@grafana/data';
@@ -22,15 +18,24 @@ import { t, Trans } from '@grafana/i18n';
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { Button } from '../../Button/Button';
 import { Field } from '../../Forms/Field';
+import { FieldValidationMessage } from '../../Forms/FieldValidationMessage';
 import { Icon } from '../../Icon/Icon';
 import { Input } from '../../Input/Input';
 import { Tooltip } from '../../Tooltip/Tooltip';
-import { useHiResTimestamps } from '../HiResTimestampsContext';
+import { useHiResFormatToolbar, useHiResTimestamps } from '../HiResTimestampsContext';
 import { type WeekStart } from '../WeekStartPicker';
 import { commonFormat } from '../commonFormat';
 import { isValid } from '../utils';
 
 import TimePickerCalendar from './TimePickerCalendar';
+import {
+  applyHourBoundaryMillis,
+  hasFractionalHourOffset,
+  isDisallowedWhenHourOnly,
+  shouldBlockHiResMinutes,
+  snapAbsoluteTime,
+  valueAsString,
+} from './hiResHourBounds';
 
 interface Props {
   isFullscreen: boolean;
@@ -54,7 +59,9 @@ interface InputState {
 const ERROR_MESSAGES = {
   default: () => t('time-picker.range-content.default-error', 'Please enter a past date or "{{now}}"', { now: 'now' }),
   range: () => t('time-picker.range-content.range-error', '"From" can\'t be after "To"'),
-  hiRes: () => t('time-picker.range-content.hires-timestamps-error', 'HiRes timerange not allowed for this period'),
+  hiResFrom: () =>
+    t('time-picker.range-content.hires-from-error', 'HiRes is off. Format sets time to the hour start.'),
+  hiResTo: () => t('time-picker.range-content.hires-to-error', 'HiRes is off. Format sets time to the hour end.'),
 };
 
 export const TimeRangeContent = (props: Props) => {
@@ -69,6 +76,7 @@ export const TimeRangeContent = (props: Props) => {
     weekStart,
   } = props;
   const hiResTimestamps = useHiResTimestamps();
+  const hiResFormatToolbar = useHiResFormatToolbar();
   const enforceHiResTimestamps = Boolean(hiResTimestamps);
   const thresholdDays = hiResTimestamps?.thresholdDays ?? HIRES_TIMESTAMPS_DEFAULT_THRESHOLD_DAYS;
   const [fromValue, toValue] = valueToState(
@@ -134,12 +142,12 @@ export const TimeRangeContent = (props: Props) => {
     onApplyFromProps(timeRange);
   }, [enforceHiResTimestamps, from.value, onApplyFromProps, thresholdDays, timeZone, to.value, fiscalYearStartMonth]);
 
-  const onFixAndApply = useCallback(() => {
-    const fixedFrom = snapAbsoluteTime(from.value, timeZone, 'start');
-    const fixedTo = snapAbsoluteTime(to.value, timeZone, 'end');
+  const onFormatAndApply = useCallback(() => {
+    const formattedFrom = snapAbsoluteTime(from.value, timeZone, 'start');
+    const formattedTo = snapAbsoluteTime(to.value, timeZone, 'end');
     const [nextFrom, nextTo] = valueToState(
-      fixedFrom,
-      fixedTo,
+      formattedFrom,
+      formattedTo,
       timeZone,
       fiscalYearStartMonth,
       enforceHiResTimestamps,
@@ -159,6 +167,18 @@ export const TimeRangeContent = (props: Props) => {
     onApplyFromProps(timeRange);
   }, [enforceHiResTimestamps, from.value, onApplyFromProps, thresholdDays, timeZone, to.value, fiscalYearStartMonth]);
 
+  useEffect(() => {
+    hiResFormatToolbar?.setDraftNeedsFormat(
+      Boolean(from.hiResInvalid || to.hiResInvalid),
+      `${from.value}|${to.value}`
+    );
+  }, [from.hiResInvalid, from.value, hiResFormatToolbar, to.hiResInvalid, to.value]);
+
+  useEffect(() => {
+    hiResFormatToolbar?.registerFormat(onFormatAndApply);
+    return () => hiResFormatToolbar?.registerFormat(undefined);
+  }, [hiResFormatToolbar, onFormatAndApply]);
+
   const onChange = useCallback(
     (from: DateTime | string, to: DateTime | string) => {
       const [fromValue, toValue] = valueToState(
@@ -176,7 +196,7 @@ export const TimeRangeContent = (props: Props) => {
   );
 
   const hasOtherErrors = (from.invalid && !from.hiResInvalid) || (to.invalid && !to.hiResInvalid);
-  const showFixAndApply = Boolean((from.hiResInvalid || to.hiResInvalid) && !hasOtherErrors);
+  const showFormatAndApply = Boolean((from.hiResInvalid || to.hiResInvalid) && !hasOtherErrors);
   const hourOnly =
     enforceHiResTimestamps &&
     shouldBlockHiResMinutes(from.value, to.value, timeZone, fiscalYearStartMonth, thresholdDays);
@@ -184,8 +204,8 @@ export const TimeRangeContent = (props: Props) => {
 
   const submitOnEnter = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
-      if (showFixAndApply) {
-        onFixAndApply();
+      if (showFormatAndApply) {
+        onFormatAndApply();
       } else {
         onApply();
       }
@@ -254,37 +274,53 @@ export const TimeRangeContent = (props: Props) => {
   return (
     <div>
       <div className={style.fieldContainer}>
-        <Field
-          label={t('time-picker.range-content.from-input', 'From')}
-          invalid={from.invalid}
-          error={from.errorMessage}
-        >
-          <Input
-            id={fromFieldId}
-            onClick={(event) => event.stopPropagation()}
-            onChange={(event) => onChange(event.currentTarget.value, to.value)}
-            onBlur={() => onChange(from.value, to.value)}
-            addonAfter={icon}
-            onKeyDown={submitOnEnter}
-            data-testid={selectors.components.TimePicker.fromField}
-            value={from.value}
-          />
-        </Field>
+        <div>
+          <Field
+            label={t('time-picker.range-content.from-input', 'From')}
+            invalid={from.invalid && !from.hiResInvalid}
+            error={from.hiResInvalid ? undefined : from.errorMessage}
+            noMargin={from.hiResInvalid}
+          >
+            <Input
+              id={fromFieldId}
+              onClick={(event) => event.stopPropagation()}
+              onChange={(event) => onChange(event.currentTarget.value, to.value)}
+              onBlur={() => onChange(from.value, to.value)}
+              addonAfter={icon}
+              onKeyDown={submitOnEnter}
+              data-testid={selectors.components.TimePicker.fromField}
+              value={from.value}
+            />
+          </Field>
+          {from.hiResInvalid && (
+            <FieldValidationMessage className={style.hiResAlert}>{from.errorMessage}</FieldValidationMessage>
+          )}
+        </div>
         {fyTooltip}
       </div>
       <div className={style.fieldContainer}>
-        <Field label={t('time-picker.range-content.to-input', 'To')} invalid={to.invalid} error={to.errorMessage}>
-          <Input
-            id={toFieldId}
-            onClick={(event) => event.stopPropagation()}
-            onChange={(event) => onChange(from.value, event.currentTarget.value)}
-            onBlur={() => onChange(from.value, to.value)}
-            addonAfter={icon}
-            onKeyDown={submitOnEnter}
-            data-testid={selectors.components.TimePicker.toField}
-            value={to.value}
-          />
-        </Field>
+        <div>
+          <Field
+            label={t('time-picker.range-content.to-input', 'To')}
+            invalid={to.invalid && !to.hiResInvalid}
+            error={to.hiResInvalid ? undefined : to.errorMessage}
+            noMargin={to.hiResInvalid}
+          >
+            <Input
+              id={toFieldId}
+              onClick={(event) => event.stopPropagation()}
+              onChange={(event) => onChange(from.value, event.currentTarget.value)}
+              onBlur={() => onChange(from.value, to.value)}
+              addonAfter={icon}
+              onKeyDown={submitOnEnter}
+              data-testid={selectors.components.TimePicker.toField}
+              value={to.value}
+            />
+          </Field>
+          {to.hiResInvalid && (
+            <FieldValidationMessage className={style.hiResAlert}>{to.errorMessage}</FieldValidationMessage>
+          )}
+        </div>
         {fyTooltip}
       </div>
       {showUtcHourNote && (
@@ -318,17 +354,17 @@ export const TimeRangeContent = (props: Props) => {
           data-testid={selectors.components.TimePicker.applyTimeRange}
           type="button"
           tooltip={
-            showFixAndApply
+            showFormatAndApply
               ? t(
-                  'time-picker.range-content.fix-apply-tooltip',
-                  'Fix updates From time to hour start and To time to hour end.'
+                  'time-picker.range-content.format-apply-tooltip',
+                  'Format updates From time to hour start and To time to hour end.'
                 )
               : undefined
           }
-          onClick={showFixAndApply ? onFixAndApply : onApply}
+          onClick={showFormatAndApply ? onFormatAndApply : onApply}
         >
-          {showFixAndApply ? (
-            <Trans i18nKey="time-picker.range-content.fix-apply-button">Fix & Apply time range</Trans>
+          {showFormatAndApply ? (
+            <Trans i18nKey="time-picker.range-content.format-apply-button">Format & Apply time range</Trans>
           ) : (
             <Trans i18nKey="time-picker.range-content.apply-button">Apply time range</Trans>
           )}
@@ -359,101 +395,6 @@ function isRangeInvalid(from: string, to: string, timezone?: string): boolean {
   return !valid;
 }
 
-function utcMinutesSeconds(value: DateTime | string, timeZone?: TimeZone): string {
-  if (isDateTime(value)) {
-    return dateTimeFormat(value, { timeZone: 'utc', format: 'mmss' });
-  }
-
-  const parsed = dateTimeParse(value, { timeZone, format: commonFormat });
-  if (!parsed.isValid()) {
-    return '';
-  }
-
-  return dateTimeFormat(parsed, { timeZone: 'utc', format: 'mmss' });
-}
-
-function hasFractionalHourOffset(timeZone?: TimeZone): boolean {
-  const offsetMinutes = dateTimeParse(Date.now(), { timeZone }).utcOffset();
-  return offsetMinutes % 60 !== 0;
-}
-
-function snapAbsoluteTime(value: string, timeZone: TimeZone | undefined, bound: 'start' | 'end'): string {
-  if (dateMath.isMathString(value)) {
-    return value;
-  }
-
-  const parsed = dateTimeParse(value, { timeZone, format: commonFormat });
-  if (!parsed.isValid()) {
-    return value;
-  }
-
-  const utcTime = parsed.utc();
-  let snapped;
-  if (bound === 'start') {
-    // UTC 13:59:59 is the end of an hour; the hour-only start is 13:00:00.000Z.
-    snapped = utcTime.startOf('hour');
-  } else if (utcTime.format('mmss') === '0000') {
-    // UTC 14:00:00.000 is the start of an hour; the hour-only end is 13:59:59.999Z.
-    snapped = utcTime.subtract(1, 'millisecond');
-  } else {
-    snapped = utcTime.endOf('hour');
-  }
-
-  return dateTimeFormat(snapped, { timeZone, format: commonFormat });
-}
-
-function applyHourBoundaryMillis(range: TimeRange): TimeRange {
-  if (!dateMath.isMathString(range.raw.from) && utcMinutesSeconds(range.from) === '0000') {
-    range.from.set('millisecond', 0);
-  }
-  if (!dateMath.isMathString(range.raw.to) && utcMinutesSeconds(range.to) === '5959') {
-    range.to.set('millisecond', 999);
-  }
-  return range;
-}
-
-function isDisallowedWhenHourOnly(value: string, timeZone: TimeZone | undefined, bound: 'from' | 'to'): boolean {
-  if (dateMath.isMathString(value)) {
-    return false;
-  }
-
-  const minutesAndSeconds = utcMinutesSeconds(value, timeZone);
-  if (!minutesAndSeconds) {
-    return false;
-  }
-
-  // To must end at UTC :59:59. From must start at UTC :00:00.
-  if (bound === 'to') {
-    return minutesAndSeconds !== '5959';
-  }
-
-  return minutesAndSeconds !== '0000';
-}
-
-function shouldBlockHiResMinutes(
-  fromValue: string,
-  toValue: string,
-  timeZone?: TimeZone,
-  fiscalYearStartMonth?: number,
-  thresholdDays = HIRES_TIMESTAMPS_DEFAULT_THRESHOLD_DAYS
-): boolean {
-  if (!isValid(fromValue, false, timeZone) || !isValid(toValue, true, timeZone)) {
-    return false;
-  }
-
-  const timeRange = rangeUtil.convertRawToRange(
-    { from: fromValue, to: toValue },
-    timeZone,
-    fiscalYearStartMonth,
-    commonFormat
-  );
-  if (!timeRange.from.isValid() || !timeRange.to.isValid()) {
-    return false;
-  }
-
-  return !resolveHiResTimestampsEnabled(timeRange, Date.now(), thresholdDays);
-}
-
 function valueToState(
   rawFrom: DateTime | string,
   rawTo: DateTime | string,
@@ -480,7 +421,7 @@ function valueToState(
       invalid: fromInvalid || rangeInvalid || fromHiResInvalid,
       hiResInvalid: fromHiResInvalid,
       errorMessage: fromHiResInvalid
-        ? ERROR_MESSAGES.hiRes()
+        ? ERROR_MESSAGES.hiResFrom()
         : rangeInvalid && !fromInvalid
           ? ERROR_MESSAGES.range()
           : ERROR_MESSAGES.default(),
@@ -489,22 +430,9 @@ function valueToState(
       value: toValue,
       invalid: toInvalid || toHiResInvalid,
       hiResInvalid: toHiResInvalid,
-      errorMessage: toHiResInvalid ? ERROR_MESSAGES.hiRes() : ERROR_MESSAGES.default(),
+      errorMessage: toHiResInvalid ? ERROR_MESSAGES.hiResTo() : ERROR_MESSAGES.default(),
     },
   ];
-}
-
-function valueAsString(value: DateTime | string, timeZone?: TimeZone): string {
-  if (isDateTime(value)) {
-    return dateTimeFormat(value, { timeZone, format: commonFormat });
-  }
-
-  if (value.endsWith('Z')) {
-    const dt = dateTimeParse(value);
-    return dateTimeFormat(dt, { timeZone, format: commonFormat });
-  }
-
-  return value;
 }
 
 function getStyles(theme: GrafanaTheme2) {
@@ -529,6 +457,33 @@ function getStyles(theme: GrafanaTheme2) {
       color: theme.colors.text.secondary,
       fontSize: theme.typography.bodySmall.fontSize,
       lineHeight: theme.typography.bodySmall.lineHeight,
+    }),
+    hiResAlert: css({
+      color: '#111',
+      background: '#fff',
+      border: `1px solid ${theme.colors.border.medium}`,
+      marginTop: 5,
+      marginBottom: theme.spacing(2),
+      a: {
+        color: '#111',
+      },
+      '&:before': {
+        left: '8px',
+        top: '-6px',
+        borderWidth: '0 5px 6px 5px',
+        borderColor: `transparent transparent ${theme.colors.border.medium} transparent`,
+      },
+      '&:after': {
+        content: '""',
+        position: 'absolute',
+        left: '9px',
+        top: '-5px',
+        width: 0,
+        height: 0,
+        borderWidth: '0 4px 5px 4px',
+        borderStyle: 'solid',
+        borderColor: 'transparent transparent #fff transparent',
+      },
     }),
   };
 }

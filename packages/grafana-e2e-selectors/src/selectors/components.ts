@@ -115,6 +115,9 @@ export const versionedComponents = {
     hiResTimestamps: {
       '13.0.0': 'data-testid TimePicker hires timestamps',
     },
+    formatTimeRange: {
+      '13.0.0': 'data-testid TimePicker format button',
+    },
     openButton: {
       [MIN_GRAFANA_VERSION]: 'data-testid TimePicker Open Button',
     },

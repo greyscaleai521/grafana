@@ -431,8 +431,12 @@ describe('TimeRangeForm', () => {
       await user.clear(fromInput);
       await user.type(fromInput, '2020-01-01 14:32:08');
 
-      expect(screen.getByRole('alert')).toHaveTextContent('HiRes timerange not allowed for this period');
-      expect(screen.getByRole('button', { name: 'Fix & Apply time range' })).toBeInTheDocument();
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'HiRes is off. Format sets time to the hour start.'
+      );
+      expect(screen.getByRole('alert')).toHaveStyle({ background: '#fff' });
+      expect(screen.getByLabelText('From')).not.toHaveAttribute('aria-invalid', 'true');
+      expect(screen.getByRole('button', { name: 'Format & Apply time range' })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Apply time range' })).not.toBeInTheDocument();
     });
 
@@ -490,8 +494,10 @@ describe('TimeRangeForm', () => {
       await user.clear(toInput);
       await user.type(toInput, '2020-01-03 15:59:59');
 
-      expect(screen.getByRole('alert')).toHaveTextContent('HiRes timerange not allowed for this period');
-      expect(screen.getByRole('button', { name: 'Fix & Apply time range' })).toBeInTheDocument();
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'HiRes is off. Format sets time to the hour start.'
+      );
+      expect(screen.getByRole('button', { name: 'Format & Apply time range' })).toBeInTheDocument();
     });
 
     it('always revalidates when applying from and to', async () => {
@@ -509,11 +515,13 @@ describe('TimeRangeForm', () => {
       await user.clear(fromInput);
       await user.type(fromInput, '2020-01-01 14:15:00');
 
-      expect(screen.getByRole('alert')).toHaveTextContent('HiRes timerange not allowed for this period');
-      expect(screen.getByRole('button', { name: 'Fix & Apply time range' })).toBeInTheDocument();
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'HiRes is off. Format sets time to the hour start.'
+      );
+      expect(screen.getByRole('button', { name: 'Format & Apply time range' })).toBeInTheDocument();
     });
 
-    it('shows Fix & Apply when From is 59:59 and snaps From to 00:00.000', async () => {
+    it('shows Format & Apply when From is 59:59 and snaps From to 00:00.000', async () => {
       const range: TimeRange = {
         from: dateTimeParse('2026-08-03 13:59:59', { timeZone: 'utc' }),
         to: dateTimeParse('2026-08-04 14:59:59', { timeZone: 'utc' }),
@@ -524,10 +532,12 @@ describe('TimeRangeForm', () => {
       };
       setup(range, 'utc', { enabled: false });
 
-      expect(screen.getByRole('alert')).toHaveTextContent('HiRes timerange not allowed for this period');
-      expect(screen.getByRole('button', { name: 'Fix & Apply time range' })).toBeInTheDocument();
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'HiRes is off. Format sets time to the hour start.'
+      );
+      expect(screen.getByRole('button', { name: 'Format & Apply time range' })).toBeInTheDocument();
 
-      await user.click(screen.getByRole('button', { name: 'Fix & Apply time range' }));
+      await user.click(screen.getByRole('button', { name: 'Format & Apply time range' }));
 
       expect(mockOnApply).toHaveBeenCalled();
       const applied = mockOnApply.mock.lastCall?.[0] as TimeRange;
@@ -535,7 +545,7 @@ describe('TimeRangeForm', () => {
       expect(applied.to.format('YYYY-MM-DD HH:mm:ss.SSS')).toBe('2026-08-04 14:59:59.999');
     });
 
-    it('shows Fix & Apply when To is 00:00 and snaps To to the previous second', async () => {
+    it('shows Format & Apply when To is 00:00 and snaps To to the previous second', async () => {
       const range: TimeRange = {
         from: dateTimeParse('2020-01-01 14:00:00', { timeZone: 'utc' }),
         to: dateTimeParse('2020-01-03 15:00:00', { timeZone: 'utc' }),
@@ -546,10 +556,12 @@ describe('TimeRangeForm', () => {
       };
       setup(range, 'utc', { enabled: false });
 
-      expect(screen.getByRole('alert')).toHaveTextContent('HiRes timerange not allowed for this period');
-      expect(screen.getByRole('button', { name: 'Fix & Apply time range' })).toBeInTheDocument();
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'HiRes is off. Format sets time to the hour end.'
+      );
+      expect(screen.getByRole('button', { name: 'Format & Apply time range' })).toBeInTheDocument();
 
-      await user.click(screen.getByRole('button', { name: 'Fix & Apply time range' }));
+      await user.click(screen.getByRole('button', { name: 'Format & Apply time range' }));
 
       expect(mockOnApply).toHaveBeenCalled();
       const applied = mockOnApply.mock.lastCall?.[0] as TimeRange;
@@ -557,7 +569,7 @@ describe('TimeRangeForm', () => {
       expect(applied.to.format('YYYY-MM-DD HH:mm:ss.SSS')).toBe('2020-01-03 14:59:59.999');
     });
 
-    it('Fix & Apply rounds from to 00:00.000 and to to 59:59.999', async () => {
+    it('Format & Apply rounds from to 00:00.000 and to to 59:59.999', async () => {
       const range: TimeRange = {
         from: dateTimeParse('2020-01-01 14:32:08', { timeZone: 'utc' }),
         to: dateTimeParse('2020-01-03 23:56:59', { timeZone: 'utc' }),
@@ -568,7 +580,13 @@ describe('TimeRangeForm', () => {
       };
       setup(range, 'utc', { enabled: false });
 
-      await user.click(screen.getByRole('button', { name: 'Fix & Apply time range' }));
+      const alerts = screen.getAllByRole('alert');
+      expect(alerts[0]).toHaveTextContent('HiRes is off. Format sets time to the hour start.');
+      expect(alerts[1]).toHaveTextContent('HiRes is off. Format sets time to the hour end.');
+      expect(alerts[0]).toHaveStyle({ background: '#fff' });
+      expect(alerts[1]).toHaveStyle({ background: '#fff' });
+
+      await user.click(screen.getByRole('button', { name: 'Format & Apply time range' }));
 
       expect(mockOnApply).toHaveBeenCalled();
       const applied = mockOnApply.mock.lastCall?.[0] as TimeRange;
@@ -590,9 +608,9 @@ describe('TimeRangeForm', () => {
       expect(
         screen.getByText('HiRes off snaps hours in UTC. In this timezone that shows as :30 or :29.')
       ).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Fix & Apply time range' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Format & Apply time range' })).toBeInTheDocument();
 
-      await user.click(screen.getByRole('button', { name: 'Fix & Apply time range' }));
+      await user.click(screen.getByRole('button', { name: 'Format & Apply time range' }));
 
       expect(mockOnApply).toHaveBeenCalled();
       const applied = mockOnApply.mock.lastCall?.[0] as TimeRange;
