@@ -45,13 +45,16 @@ export function valueAsString(value: DateTime | string, timeZone?: TimeZone): st
   return value;
 }
 
-export function snapAbsoluteTime(value: string, timeZone: TimeZone | undefined, bound: 'start' | 'end'): string {
-  if (dateMath.isMathString(value)) {
-    return value;
-  }
+function parseForHourBounds(value: string, timeZone?: TimeZone) {
+  const parsed = dateMath.isMathString(value)
+    ? dateTimeParse(value, { timeZone })
+    : dateTimeParse(value, { timeZone, format: commonFormat });
+  return parsed.isValid() ? parsed : undefined;
+}
 
-  const parsed = dateTimeParse(value, { timeZone, format: commonFormat });
-  if (!parsed.isValid()) {
+export function snapAbsoluteTime(value: string, timeZone: TimeZone | undefined, bound: 'start' | 'end'): string {
+  const parsed = parseForHourBounds(value, timeZone);
+  if (!parsed) {
     return value;
   }
 
@@ -81,11 +84,12 @@ export function applyHourBoundaryMillis(range: TimeRange): TimeRange {
 }
 
 export function isDisallowedWhenHourOnly(value: string, timeZone: TimeZone | undefined, bound: 'from' | 'to'): boolean {
-  if (dateMath.isMathString(value)) {
+  const parsed = parseForHourBounds(value, timeZone);
+  if (!parsed) {
     return false;
   }
 
-  const minutesAndSeconds = utcMinutesSeconds(value, timeZone);
+  const minutesAndSeconds = utcMinutesSeconds(parsed, timeZone);
   if (!minutesAndSeconds) {
     return false;
   }

@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { dateTimeParse, type FeatureToggles, systemDateFormats, type TimeRange } from '@grafana/data';
@@ -669,7 +669,9 @@ describe('TimeRangeForm', () => {
       ).not.toBeInTheDocument();
     });
 
-    it('allows relative ranges', async () => {
+    it('formats relative ranges when HiRes is off', async () => {
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2026-09-16T14:32:08.000Z'));
       const relativeRange: TimeRange = {
         from: dateTimeParse('now-90d', { timeZone: 'utc' }),
         to: dateTimeParse('now', { timeZone: 'utc' }),
@@ -680,9 +682,14 @@ describe('TimeRangeForm', () => {
       };
       setup(relativeRange, 'utc', { enabled: false });
 
-      await user.click(screen.getByRole('button', { name: 'Apply time range' }));
+      expect(screen.getAllByRole('alert').length).toBeGreaterThan(0);
+      fireEvent.click(screen.getByRole('button', { name: 'Apply time range' }));
 
       expect(mockOnApply).toHaveBeenCalled();
+      const applied = mockOnApply.mock.lastCall?.[0] as TimeRange;
+      expect(applied.from.format('YYYY-MM-DD HH:mm:ss.SSS')).toBe('2026-06-18 14:00:00.000');
+      expect(applied.to.format('YYYY-MM-DD HH:mm:ss.SSS')).toBe('2026-09-16 14:59:59.999');
+      jest.useRealTimers();
     });
 
     it('Apply leaves HiRes-on absolute minutes unchanged', async () => {

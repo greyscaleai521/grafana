@@ -145,7 +145,7 @@ describe('TimePicker', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('does not auto-format relative ranges', () => {
+  it('does not auto-format relative ranges when HiRes is on', () => {
     const onChange = jest.fn();
 
     render(
@@ -163,6 +163,37 @@ describe('TimePicker', () => {
     );
 
     expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('auto-formats relative ranges when From/To would alert', () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-09-16T14:32:08.000Z'));
+    const onChange = jest.fn();
+    const longRelative: TimeRange = {
+      from: dateTimeParse('now-90d', { timeZone: 'utc' }),
+      to: dateTimeParse('now', { timeZone: 'utc' }),
+      raw: { from: 'now-90d', to: 'now' },
+    };
+
+    render(
+      <HiResTimestampsProvider value={{ enabled: false, interactive: false, onToggle: jest.fn() }}>
+        <TimeRangePicker
+          onChangeTimeZone={() => {}}
+          onChange={onChange}
+          value={longRelative}
+          timeZone="utc"
+          onMoveBackward={() => {}}
+          onMoveForward={() => {}}
+          onZoom={() => {}}
+        />
+      </HiResTimestampsProvider>
+    );
+
+    expect(onChange).toHaveBeenCalled();
+    const applied = onChange.mock.lastCall?.[0] as TimeRange;
+    expect(applied.from.format('YYYY-MM-DD HH:mm:ss.SSS')).toBe('2026-06-18 14:00:00.000');
+    expect(applied.to.format('YYYY-MM-DD HH:mm:ss.SSS')).toBe('2026-09-16 14:59:59.999');
+    jest.useRealTimers();
   });
 
   it('renders move buttons with relative range', () => {
