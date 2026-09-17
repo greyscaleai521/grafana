@@ -20,11 +20,10 @@ describe('CalendarTimePicker', () => {
       />
     );
 
-    expect(screen.getByRole('tab', { name: /From/ })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByRole('tab', { name: /From/ })).toHaveTextContent('2021-06-17');
-    expect(screen.getByRole('tab', { name: /From/ })).toHaveTextContent('14:32:08');
-    expect(screen.getByRole('tab', { name: /To/ })).toHaveTextContent('2021-06-19');
-    expect(screen.getByRole('tab', { name: /To/ })).toHaveTextContent('23:59:00');
+    expect(screen.getByRole('textbox', { name: 'From' })).toHaveAttribute('readonly');
+    expect(screen.getByRole('textbox', { name: 'From' })).toHaveValue('2021-06-17 14:32:08');
+    expect(screen.getByRole('textbox', { name: 'To' })).toHaveAttribute('readonly');
+    expect(screen.getByRole('textbox', { name: 'To' })).toHaveValue('2021-06-19 23:59:00');
     expect(screen.getByRole('button', { name: 'Hour 14', pressed: true })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Min 32', pressed: true })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Sec 08', pressed: true })).toBeInTheDocument();
@@ -45,7 +44,7 @@ describe('CalendarTimePicker', () => {
       />
     );
 
-    await user.click(screen.getByRole('tab', { name: /To/ }));
+    await user.click(screen.getByRole('textbox', { name: 'To' }));
     expect(onActiveBoundChange).toHaveBeenCalledWith('to');
   });
 

@@ -175,7 +175,7 @@ const NarrowScreenForm = (props: FormProps) => {
           aria-controls="expanded-timerange"
         >
           <TimePickerTitle>
-            <Trans i18nKey="time-picker.absolute.title">Absolute time range</Trans>
+            <Trans i18nKey="time-picker.absolute.title">Absolute time</Trans>
           </TimePickerTitle>
           {!hideQuickRanges && <Icon name={!collapsed ? 'angle-up' : 'angle-down'} />}
         </button>
@@ -215,12 +215,7 @@ const FullScreenForm = (props: FormProps) => {
 
   return (
     <>
-      <div className={styles.container}>
-        <div className={styles.title} data-testid={selectors.components.TimePicker.absoluteTimeRangeTitle}>
-          <TimePickerTitle>
-            <Trans i18nKey="time-picker.absolute.title">Absolute time range</Trans>
-          </TimePickerTitle>
-        </div>
+      <div className={styles.container} data-testid={selectors.components.TimePicker.absoluteTimeRangeTitle}>
         <TimeRangeContent
           value={value}
           timeZone={timeZone}

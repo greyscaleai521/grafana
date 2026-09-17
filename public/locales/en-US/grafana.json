@@ -15298,7 +15298,7 @@
   "time-picker": {
     "absolute": {
       "recent-title": "Recently used absolute ranges",
-      "title": "Absolute time range"
+      "title": "Absolute time"
     },
     "calendar": {
       "apply-button": "Apply time range",

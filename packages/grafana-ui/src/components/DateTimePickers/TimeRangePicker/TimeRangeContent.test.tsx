@@ -8,6 +8,7 @@ import { HiResTimestampsProvider } from '../HiResTimestampsContext';
 import * as commonFormatModule from '../commonFormat';
 
 import { TimeRangeContent } from './TimeRangeContent';
+import { isAllowedNowInput } from './RelativeTimeFields';
 
 // If this flag is deleted, this mock also should be, and the additional tests for when
 // the flag was disabled.
@@ -54,15 +55,13 @@ beforeEach(() => {
   mockOnApply.mockClear();
 });
 
-function boundTab(name: 'From' | 'To', container?: HTMLElement) {
+function boundInput(name: 'From' | 'To', container?: HTMLElement) {
   const root = container ? within(container) : screen;
-  return root.getByRole('tab', { name: new RegExp(`^${name}`) });
+  return root.getByRole('textbox', { name });
 }
 
 function expectBound(name: 'From' | 'To', date: string, time: string, container?: HTMLElement) {
-  const tab = boundTab(name, container);
-  expect(tab).toHaveTextContent(date);
-  expect(tab).toHaveTextContent(time);
+  expect(boundInput(name, container)).toHaveValue(`${date} ${time}`);
 }
 
 function setup(initial: TimeRange = defaultTimeRange, timeZone = 'utc', hiResTimestamps?: { enabled: boolean }) {
@@ -85,6 +84,24 @@ function setup(initial: TimeRange = defaultTimeRange, timeZone = 'utc', hiResTim
   };
 }
 
+describe('isAllowedNowInput', () => {
+  it('allows empty, now prefixes, and now-relative values', () => {
+    expect(isAllowedNowInput('')).toBe(true);
+    expect(isAllowedNowInput('n')).toBe(true);
+    expect(isAllowedNowInput('no')).toBe(true);
+    expect(isAllowedNowInput('now')).toBe(true);
+    expect(isAllowedNowInput('now-5m')).toBe(true);
+    expect(isAllowedNowInput('NOW-1h')).toBe(true);
+  });
+
+  it('rejects values that do not start with now', () => {
+    expect(isAllowedNowInput('y')).toBe(false);
+    expect(isAllowedNowInput('yesterday')).toBe(false);
+    expect(isAllowedNowInput('5m')).toBe(false);
+    expect(isAllowedNowInput('last-5m')).toBe(false);
+  });
+});
+
 describe('TimeRangeForm', () => {
   let user: ReturnType<typeof userEvent.setup>;
   beforeEach(() => {
@@ -101,10 +118,8 @@ describe('TimeRangeForm', () => {
     const { TimePicker } = selectors.components;
 
     expect(getByText('Apply time range')).toBeInTheDocument();
-    expect(boundTab('From')).toBeInTheDocument();
-    expect(boundTab('To')).toBeInTheDocument();
-    expect(screen.queryByRole('textbox', { name: 'From' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('textbox', { name: 'To' })).not.toBeInTheDocument();
+    expect(boundInput('From')).toHaveAttribute('readonly');
+    expect(boundInput('To')).toHaveAttribute('readonly');
     expect(screen.getByTestId(TimePicker.calendar.label)).toBeInTheDocument();
   });
 
@@ -114,9 +129,8 @@ describe('TimeRangeForm', () => {
 
     expect(screen.getByTestId(TimePicker.calendar.label)).toBeInTheDocument();
     expect(screen.getByTestId('calendar-time-picker')).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /From/ })).toHaveTextContent('2021-06-17');
-    expect(screen.getByRole('tab', { name: /To/ })).toHaveTextContent('2021-06-19');
-    expect(screen.getByRole('tab', { name: /To/ })).toHaveTextContent('23:59:00');
+    expectBound('From', '2021-06-17', '00:00:00');
+    expectBound('To', '2021-06-19', '23:59:00');
   });
 
   it('should have passed time range entered in form', () => {
@@ -124,6 +138,92 @@ describe('TimeRangeForm', () => {
 
     expectBound('From', '2021-06-17', '00:00:00');
     expectBound('To', '2021-06-19', '23:59:00');
+  });
+
+  it('toggles to Relative time with empty From and To dropdowns', async () => {
+    const { TimePicker } = selectors.components;
+    setup();
+
+    expect(screen.getByRole('tab', { name: 'Absolute time' })).toHaveAttribute('aria-selected', 'true');
+    await user.click(screen.getByRole('tab', { name: 'Relative time' }));
+
+    expect(screen.getByRole('tab', { name: 'Relative time' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.queryByTestId(TimePicker.calendar.label)).not.toBeInTheDocument();
+    expect(screen.getByTestId('relative-time-fields')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'From' })).toHaveValue('');
+    expect(screen.getByRole('combobox', { name: 'To' })).toHaveValue('');
+  });
+
+  it('applies a preset relative range from the dropdowns', async () => {
+    setup();
+    await user.click(screen.getByRole('tab', { name: 'Relative time' }));
+
+    await user.type(screen.getByRole('combobox', { name: 'From' }), 'now-5m');
+    await user.keyboard('{Enter}');
+    await user.type(screen.getByRole('combobox', { name: 'To' }), 'now');
+    await user.keyboard('{Enter}');
+    await user.click(screen.getByRole('button', { name: 'Apply time range' }));
+
+    expect(mockOnApply).toHaveBeenCalled();
+    const applied = mockOnApply.mock.lastCall?.[0] as TimeRange;
+    expect(applied.raw.from).toBe('now-5m');
+    expect(applied.raw.to).toBe('now');
+  });
+
+  it('applies a custom relative range that starts with now', async () => {
+    setup();
+    await user.click(screen.getByRole('tab', { name: 'Relative time' }));
+
+    await user.type(screen.getByRole('combobox', { name: 'From' }), 'now-45m');
+    await user.keyboard('{Enter}');
+    await user.type(screen.getByRole('combobox', { name: 'To' }), 'now-5m');
+    await user.keyboard('{Enter}');
+    await user.click(screen.getByRole('button', { name: 'Apply time range' }));
+
+    expect(mockOnApply).toHaveBeenCalled();
+    const applied = mockOnApply.mock.lastCall?.[0] as TimeRange;
+    expect(applied.raw.from).toBe('now-45m');
+    expect(applied.raw.to).toBe('now-5m');
+  });
+
+  it('only allows now to be typed first in relative From and To', async () => {
+    setup();
+    await user.click(screen.getByRole('tab', { name: 'Relative time' }));
+
+    const from = screen.getByRole('combobox', { name: 'From' });
+    await user.type(from, 'yesterday');
+    expect(from).toHaveValue('');
+
+    await user.type(from, 'now-45m');
+    expect(from).toHaveValue('now-45m');
+  });
+
+  it('rejects relative apply when From or To is empty', async () => {
+    setup();
+    await user.click(screen.getByRole('tab', { name: 'Relative time' }));
+
+    await user.type(screen.getByRole('combobox', { name: 'To' }), 'now');
+    await user.keyboard('{Enter}');
+    await user.click(screen.getByRole('button', { name: 'Apply time range' }));
+
+    expect(screen.getByText('Must start with now')).toBeInTheDocument();
+    expect(mockOnApply).not.toHaveBeenCalled();
+  });
+
+  it('prefills relative dropdowns when the current range is already relative', () => {
+    const relativeRange: TimeRange = {
+      from: dateTimeParse('now-30d', { timeZone: 'utc' }),
+      to: dateTimeParse('now', { timeZone: 'utc' }),
+      raw: {
+        from: 'now-30d',
+        to: 'now',
+      },
+    };
+    setup(relativeRange);
+
+    expect(screen.getByRole('tab', { name: 'Relative time' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('combobox', { name: 'From' })).toHaveValue('now-30d');
+    expect(screen.getByRole('combobox', { name: 'To' })).toHaveValue('now');
   });
 
   it('should parse UTC iso strings and render in current timezone', () => {
@@ -336,7 +436,6 @@ describe('TimeRangeForm', () => {
     setup();
 
     expect(screen.getByTestId('calendar-time-picker')).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /From/ })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('button', { name: 'Hour 00', pressed: true })).toBeInTheDocument();
   });
 
@@ -345,7 +444,7 @@ describe('TimeRangeForm', () => {
 
     await user.click(getCalendarDayByLabelText('June 18, 2021'));
 
-    expect(screen.getByRole('tab', { name: /To/ })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('button', { name: 'Hour 23', pressed: true })).toBeInTheDocument();
   });
 
   it('defaults from to 00:00:00 and to to 23:59:59 when dates are selected', async () => {
@@ -356,7 +455,7 @@ describe('TimeRangeForm', () => {
 
     expectBound('From', '2021-06-18', '00:00:00');
     expectBound('To', '2021-06-20', '23:59:59');
-    expect(screen.getByRole('tab', { name: /From/ })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('button', { name: 'Hour 00', pressed: true })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Next month' })).not.toBeInTheDocument();
   });
 
@@ -691,7 +790,6 @@ describe('TimeRangeForm', () => {
       };
       setup(relativeRange, 'utc', { enabled: false });
 
-      expect(screen.getAllByRole('alert').length).toBeGreaterThan(0);
       fireEvent.click(screen.getByRole('button', { name: 'Apply time range' }));
 
       expect(mockOnApply).toHaveBeenCalled();

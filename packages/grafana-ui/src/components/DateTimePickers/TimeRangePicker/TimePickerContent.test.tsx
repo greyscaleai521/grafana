@@ -96,22 +96,23 @@ describe('TimePickerContent', () => {
 
     it('renders with absolute picker when absolute value and quick ranges are visible', () => {
       renderComponent({ value: absoluteValue, isFullscreen: false });
-      expect(screen.getByRole('tab', { name: /From/ })).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: 'From' })).toBeInTheDocument();
     });
 
     it('renders with absolute picker when absolute value and quick ranges are hidden', () => {
       renderComponent({ value: absoluteValue, isFullscreen: false, hideQuickRanges: true });
-      expect(screen.getByRole('tab', { name: /From/ })).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: 'From' })).toBeInTheDocument();
     });
 
     it('renders without absolute picker when narrow screen and quick ranges are visible', () => {
       renderComponent({ value: relativeValue, isFullscreen: false });
-      expect(screen.queryByRole('tab', { name: /From/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: 'From' })).not.toBeInTheDocument();
     });
 
-    it('renders with absolute picker when narrow screen and quick ranges are hidden', () => {
+    it('renders with relative picker when narrow screen and quick ranges are hidden', () => {
       renderComponent({ value: relativeValue, isFullscreen: false, hideQuickRanges: true });
-      expect(screen.getByRole('tab', { name: /From/ })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Relative time' })).toHaveAttribute('aria-selected', 'true');
+      expect(screen.getByRole('combobox', { name: 'From' })).toBeInTheDocument();
     });
 
     it('renders without timezone picker', () => {

@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useCallback, useEffect, useState } from 'react';
 
 import {
@@ -24,11 +24,13 @@ import { type WeekStart } from '../WeekStartPicker';
 import { commonFormat } from '../commonFormat';
 import { isValid } from '../utils';
 
+import { RelativeTimeFields, startsWithNow } from './RelativeTimeFields';
 import TimePickerCalendar from './TimePickerCalendar';
 import {
   applyHourBoundaryMillis,
   hasFractionalHourOffset,
   isDisallowedWhenHourOnly,
+  rangeNeedsHiResFormat,
   shouldBlockHiResMinutes,
   snapAbsoluteTime,
   valueAsString,
@@ -59,7 +61,14 @@ const ERROR_MESSAGES = {
   hiResFrom: () =>
     t('time-picker.range-content.hires-from-error', 'HiRes is off. Format sets time to the hour start.'),
   hiResTo: () => t('time-picker.range-content.hires-to-error', 'HiRes is off. Format sets time to the hour end.'),
+  relativeNow: () => t('time-picker.range-content.relative-now-error', 'Must start with now'),
 };
+
+type TimeInputMode = 'absolute' | 'relative';
+
+function rawRelativeValue(value: DateTime | string): string {
+  return typeof value === 'string' && startsWithNow(value) ? value : '';
+}
 
 export const TimeRangeContent = (props: Props) => {
   const {
@@ -87,6 +96,13 @@ export const TimeRangeContent = (props: Props) => {
 
   const [from, setFrom] = useState<InputState>(fromValue);
   const [to, setTo] = useState<InputState>(toValue);
+  const [mode, setMode] = useState<TimeInputMode>(() =>
+    rangeUtil.isRelativeTimeRange(value.raw) ? 'relative' : 'absolute'
+  );
+  const [relativeFrom, setRelativeFrom] = useState(() => rawRelativeValue(value.raw.from));
+  const [relativeTo, setRelativeTo] = useState(() => rawRelativeValue(value.raw.to));
+  const [relativeFromError, setRelativeFromError] = useState('');
+  const [relativeToError, setRelativeToError] = useState('');
 
   // Synchronize internal state with external value
   useEffect(() => {
@@ -100,6 +116,10 @@ export const TimeRangeContent = (props: Props) => {
     );
     setFrom(fromValue);
     setTo(toValue);
+    if (rangeUtil.isRelativeTimeRange(value.raw)) {
+      setRelativeFrom(rawRelativeValue(value.raw.from));
+      setRelativeTo(rawRelativeValue(value.raw.to));
+    }
   }, [value.raw.from, value.raw.to, timeZone, fiscalYearStartMonth, enforceHiResTimestamps, thresholdDays]);
 
   const applySnappedRange = useCallback(
@@ -133,6 +153,32 @@ export const TimeRangeContent = (props: Props) => {
   );
 
   const onApply = useCallback(() => {
+    if (mode === 'relative') {
+      const nextFrom = relativeFrom.trim();
+      const nextTo = relativeTo.trim();
+      const fromError = startsWithNow(nextFrom) ? '' : ERROR_MESSAGES.relativeNow();
+      const toError = startsWithNow(nextTo) ? '' : ERROR_MESSAGES.relativeNow();
+      setRelativeFromError(fromError);
+      setRelativeToError(toError);
+      if (fromError || toError) {
+        return;
+      }
+
+      const relativeRange = applyHourBoundaryMillis(
+        rangeUtil.convertRawToRange({ from: nextFrom, to: nextTo }, timeZone, fiscalYearStartMonth, commonFormat)
+      );
+      if (
+        enforceHiResTimestamps &&
+        rangeNeedsHiResFormat(relativeRange, timeZone, fiscalYearStartMonth, thresholdDays)
+      ) {
+        applySnappedRange(nextFrom, nextTo);
+        return;
+      }
+
+      onApplyFromProps(relativeRange);
+      return;
+    }
+
     const [nextFrom, nextTo] = valueToState(
       from.value,
       to.value,
@@ -163,12 +209,25 @@ export const TimeRangeContent = (props: Props) => {
     applySnappedRange,
     enforceHiResTimestamps,
     from.value,
+    mode,
     onApplyFromProps,
+    relativeFrom,
+    relativeTo,
     thresholdDays,
     timeZone,
     to.value,
     fiscalYearStartMonth,
   ]);
+
+  const onModeChange = (next: TimeInputMode) => {
+    setMode(next);
+    setRelativeFromError('');
+    setRelativeToError('');
+    if (next === 'relative') {
+      setRelativeFrom('');
+      setRelativeTo('');
+    }
+  };
 
   const onChange = useCallback(
     (from: DateTime | string, to: DateTime | string) => {
@@ -220,6 +279,8 @@ export const TimeRangeContent = (props: Props) => {
     );
     setFrom(fromValue);
     setTo(toValue);
+    setRelativeFrom(rawRelativeValue(range.from));
+    setRelativeTo(rawRelativeValue(range.to));
   };
 
   const fiscalYear = rangeUtil.convertRawToRange({ from: 'now/fy', to: 'now/fy' }, timeZone, fiscalYearStartMonth);
@@ -241,32 +302,73 @@ export const TimeRangeContent = (props: Props) => {
 
   return (
     <div>
-      <div className={style.pickerHeader}>
-        <TimePickerCalendar
-          inline
-          isOpen
-          isFullscreen={isFullscreen}
-          from={dateTimeParse(from.value, { timeZone, format: commonFormat })}
-          to={dateTimeParse(to.value, { timeZone, format: commonFormat })}
-          onApply={onApply}
-          onClose={() => {}}
-          onChange={onChange}
-          timeZone={timeZone}
-          isReversed={isReversed}
-          weekStart={weekStart}
-          hourOnly={hourOnly}
-        />
-        {rangeUtil.isFiscal(value) ? fyTooltip : null}
+      <div className={style.modeToggle} role="tablist" aria-label={t('time-picker.range-content.mode', 'Time input mode')}>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === 'absolute'}
+          className={cx(style.modeTab, mode === 'absolute' && style.orangeApply)}
+          onClick={() => onModeChange('absolute')}
+        >
+          {t('time-picker.absolute.title', 'Absolute time')}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === 'relative'}
+          className={cx(style.modeTab, mode === 'relative' && style.orangeApply)}
+          onClick={() => onModeChange('relative')}
+        >
+          {t('time-picker.relative.title', 'Relative time')}
+        </button>
       </div>
-      {from.invalid && (
-        <FieldValidationMessage className={from.hiResInvalid ? style.hiResAlert : undefined}>
-          {from.errorMessage}
-        </FieldValidationMessage>
-      )}
-      {to.invalid && (
-        <FieldValidationMessage className={to.hiResInvalid ? style.hiResAlert : undefined}>
-          {to.errorMessage}
-        </FieldValidationMessage>
+      {mode === 'relative' ? (
+        <RelativeTimeFields
+          from={relativeFrom}
+          to={relativeTo}
+          fromInvalid={Boolean(relativeFromError)}
+          toInvalid={Boolean(relativeToError)}
+          fromError={relativeFromError}
+          toError={relativeToError}
+          onFromChange={(next) => {
+            setRelativeFrom(next);
+            setRelativeFromError('');
+          }}
+          onToChange={(next) => {
+            setRelativeTo(next);
+            setRelativeToError('');
+          }}
+        />
+      ) : (
+        <>
+          <div className={style.pickerHeader}>
+            <TimePickerCalendar
+              inline
+              isOpen
+              isFullscreen={isFullscreen}
+              from={dateTimeParse(from.value, { timeZone, format: commonFormat })}
+              to={dateTimeParse(to.value, { timeZone, format: commonFormat })}
+              onApply={onApply}
+              onClose={() => {}}
+              onChange={onChange}
+              timeZone={timeZone}
+              isReversed={isReversed}
+              weekStart={weekStart}
+              hourOnly={hourOnly}
+            />
+            {rangeUtil.isFiscal(value) ? fyTooltip : null}
+          </div>
+          {from.invalid && (
+            <FieldValidationMessage className={from.hiResInvalid ? style.hiResAlert : undefined}>
+              {from.errorMessage}
+            </FieldValidationMessage>
+          )}
+          {to.invalid && (
+            <FieldValidationMessage className={to.hiResInvalid ? style.hiResAlert : undefined}>
+              {to.errorMessage}
+            </FieldValidationMessage>
+          )}
+        </>
       )}
       {showUtcHourNote && (
         <div className={style.utcHourNote}>
@@ -359,6 +461,27 @@ function valueToState(
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    modeToggle: css({
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      padding: 2,
+      marginBottom: theme.spacing(0.5),
+      background: theme.colors.background.secondary,
+      borderRadius: theme.shape.radius.default,
+    }),
+    modeTab: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: theme.spacing(0.5, 1),
+      border: 'none',
+      borderRadius: theme.shape.radius.default,
+      background: 'transparent',
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.size.md,
+      fontWeight: theme.typography.fontWeightMedium,
+      cursor: 'pointer',
+    }),
     pickerHeader: css({
       display: 'flex',
       width: '100%',

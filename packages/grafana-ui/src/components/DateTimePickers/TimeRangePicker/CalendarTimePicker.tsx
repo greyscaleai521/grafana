@@ -2,12 +2,13 @@ import { css, cx } from '@emotion/css';
 import { useEffect, useRef, type ReactNode } from 'react';
 
 import { type DateTime, type GrafanaTheme2 } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { Icon } from '../../Icon/Icon';
 import { Tooltip } from '../../Tooltip/Tooltip';
+
+import { RelativeTimeFields } from './RelativeTimeFields';
 
 export type CalendarTimeBound = 'from' | 'to';
 
@@ -47,24 +48,14 @@ export function CalendarTimePicker({
 
   return (
     <div className={styles.container} data-testid="calendar-time-picker">
-      <div className={styles.toggle} role="tablist" aria-label={t('time-picker.calendar.time-bound', 'Time bound')}>
-        <BoundTab
-          bound="from"
-          label={t('time-picker.range-content.from-input', 'From')}
-          value={from}
-          selected={activeBound === 'from'}
-          testId={selectors.components.TimePicker.fromField}
-          onSelect={onActiveBoundChange}
-        />
-        <BoundTab
-          bound="to"
-          label={t('time-picker.range-content.to-input', 'To')}
-          value={to}
-          selected={activeBound === 'to'}
-          testId={selectors.components.TimePicker.toField}
-          onSelect={onActiveBoundChange}
-        />
-      </div>
+      <RelativeTimeFields
+        from={`${formatDate(from)} ${formatTime(from)}`}
+        to={`${formatDate(to)} ${formatTime(to)}`}
+        readOnly
+        activeBound={activeBound}
+        onFromFocus={() => onActiveBoundChange('from')}
+        onToFocus={() => onActiveBoundChange('to')}
+      />
       {calendar}
       <div className={styles.wheels}>
         <div className={styles.highlight} />
@@ -90,34 +81,6 @@ export function CalendarTimePicker({
         />
       </div>
     </div>
-  );
-}
-
-interface BoundTabProps {
-  bound: CalendarTimeBound;
-  label: string;
-  value: DateTime;
-  selected: boolean;
-  testId: string;
-  onSelect: (bound: CalendarTimeBound) => void;
-}
-
-function BoundTab({ bound, label, value, selected, testId, onSelect }: BoundTabProps) {
-  const styles = useStyles2(getStyles);
-
-  return (
-    <button
-      type="button"
-      role="tab"
-      aria-selected={selected}
-      data-testid={testId}
-      className={cx(styles.tab, selected && styles.tabSelected)}
-      onClick={() => onSelect(bound)}
-    >
-      <span>{label}</span>
-      <span className={styles.tabDate}>{formatDate(value)}</span>
-      <span className={styles.tabTime}>{formatTime(value)}</span>
-    </button>
   );
 }
 
@@ -294,41 +257,6 @@ function getStyles(theme: GrafanaTheme2) {
       width: '100%',
       maxWidth: '100%',
       minWidth: 0,
-    }),
-    toggle: css({
-      display: 'grid',
-      gridTemplateColumns: '1fr 1fr',
-      padding: 2,
-      background: theme.colors.background.secondary,
-      borderRadius: theme.shape.radius.default,
-    }),
-    tab: css({
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'flex-start',
-      gap: 2,
-      padding: theme.spacing(0.5, 1),
-      border: 'none',
-      borderRadius: theme.shape.radius.default,
-      background: 'transparent',
-      color: theme.colors.text.secondary,
-      fontSize: theme.typography.bodySmall.fontSize,
-      textAlign: 'left',
-      cursor: 'pointer',
-    }),
-    tabSelected: css({
-      background: theme.colors.background.primary,
-      color: theme.colors.text.primary,
-      boxShadow: theme.shadows.z1,
-    }),
-    tabDate: css({
-      fontVariantNumeric: 'tabular-nums',
-      color: theme.colors.text.primary,
-      fontWeight: theme.typography.fontWeightMedium,
-    }),
-    tabTime: css({
-      fontVariantNumeric: 'tabular-nums',
-      fontWeight: theme.typography.fontWeightRegular,
     }),
     wheels: css({
       position: 'relative',
