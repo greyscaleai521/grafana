@@ -1,12 +1,15 @@
-import { type Observable, of } from 'rxjs';
+import { type Observable, of, throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
 import {
+  AppEvents,
+  DataQueryErrorType,
   getDefaultTimeRange,
   dataFrameToJSON,
   type DataQueryRequest,
   type DataQueryResponse,
   type DataSourceInstanceSettings,
+  type EventBus,
   dateTime,
   FieldType,
   LoadingState,
@@ -16,7 +19,9 @@ import {
   type BackendSrv,
   type DataSourceSrv,
   type FetchResponse,
+  getAppEvents,
   getBackendSrv,
+  setAppEvents,
   setBackendSrv,
   getDataSourceSrv,
   setDataSourceSrv,
@@ -805,6 +810,146 @@ describe('PostgreSQLDatasource', () => {
       const { ds } = setupTestContext({}, undefined, templateSrv);
 
       expect(ds.targetContainsTemplate(query)).toBeFalsy();
+    });
+  });
+
+  describe('when a panel query hits an API Gateway timeout', () => {
+    const emit = jest.fn();
+    const retryNotice = 'Panel query timed out. Retrying…';
+    let previousAppEvents: EventBus;
+    let clock = 1_000_000;
+    let nowSpy: jest.SpyInstance;
+
+    const successResponse = {
+      results: {
+        A: { refId: 'A', frames: [] },
+      },
+    };
+
+    const gatewayTimeout = () => ({
+      status: 504,
+      statusText: 'Gateway Timeout',
+      data: { message: 'Endpoint request timed out' },
+    });
+
+    const panelQueryRequest = (): DataQueryRequest<SQLQuery> => ({
+      range: defaultRange,
+      targets: [
+        {
+          format: QueryFormat.Table,
+          rawQuery: true,
+          rawSql: 'select 1',
+          refId: 'A',
+          datasource: { type: 'grafana-postgresql-datasource', uid: 'pg' },
+        },
+      ],
+      requestId: 'SQR106',
+      interval: '1m',
+      intervalMs: 60000,
+      scopedVars: {},
+      timezone: 'Etc/UTC',
+      app: 'dashboard',
+      startTime: 0,
+    });
+
+    const collectResponses = (source: Observable<DataQueryResponse>) =>
+      new Promise<DataQueryResponse[]>((resolve, reject) => {
+        const emissions: DataQueryResponse[] = [];
+        source.subscribe({
+          next: (value) => emissions.push(value),
+          error: reject,
+          complete: () => resolve(emissions),
+        });
+      });
+
+    beforeAll(() => {
+      previousAppEvents = getAppEvents();
+      setAppEvents({ emit } as unknown as EventBus);
+    });
+
+    afterAll(() => {
+      setAppEvents(previousAppEvents);
+    });
+
+    beforeEach(() => {
+      clock += 10_000;
+      nowSpy = jest.spyOn(Date, 'now').mockReturnValue(clock);
+    });
+
+    afterEach(() => {
+      nowSpy.mockRestore();
+    });
+
+    it('retries a 504 and emits only the successful response', async () => {
+      const { ds } = setupTestContext({});
+      fetchMock.mockReset();
+      fetchMock
+        .mockImplementationOnce(() => throwError(() => gatewayTimeout()))
+        .mockImplementationOnce(() => of(createFetchResponse(successResponse)));
+
+      const emissions = await collectResponses(ds.query(panelQueryRequest()));
+
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(emissions).toHaveLength(1);
+      expect(emissions[0].state).toBe(LoadingState.Done);
+      expect(emit).toHaveBeenCalledTimes(1);
+      expect(emit).toHaveBeenCalledWith(AppEvents.alertWarning, [retryNotice]);
+    });
+
+    it('returns the error after two retries are also timeouts', async () => {
+      const { ds } = setupTestContext({});
+      fetchMock.mockReset();
+      fetchMock.mockImplementation(() => throwError(() => gatewayTimeout()));
+
+      const emissions = await collectResponses(ds.query(panelQueryRequest()));
+
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+      expect(emissions).toHaveLength(1);
+      expect(emissions[0].state).toBe(LoadingState.Error);
+      expect(emissions[0].error?.status).toBe(504);
+      expect(emissions[0].error?.message).toBe('Endpoint request timed out');
+      expect(emit).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not retry a non-timeout error', async () => {
+      const { ds } = setupTestContext({});
+      fetchMock.mockReset();
+      fetchMock.mockImplementation(() =>
+        throwError(() => ({
+          status: 400,
+          statusText: 'Bad Request',
+          data: { message: 'syntax error at or near "select"' },
+        }))
+      );
+
+      const emissions = await collectResponses(ds.query(panelQueryRequest()));
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(emissions).toHaveLength(1);
+      expect(emissions[0].state).toBe(LoadingState.Error);
+      expect(emissions[0].error?.message).toBe('syntax error at or near "select"');
+      expect(emit).not.toHaveBeenCalled();
+    });
+
+    it('does not retry a cancelled query', async () => {
+      const { ds } = setupTestContext({});
+      fetchMock.mockReset();
+      fetchMock.mockImplementation(() =>
+        throwError(() => ({
+          type: DataQueryErrorType.Cancelled,
+          cancelled: true,
+          status: -1,
+          statusText: 'Request was aborted',
+          data: { message: 'Request was aborted' },
+        }))
+      );
+
+      const emissions = await collectResponses(ds.query(panelQueryRequest()));
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(emissions).toHaveLength(1);
+      expect(emissions[0].state).toBe(LoadingState.Error);
+      expect(emit).not.toHaveBeenCalled();
     });
   });
 });

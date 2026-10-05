@@ -1,8 +1,21 @@
+import { of, type Observable } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 
-import { type DataSourceInstanceSettings, type ScopedVars, type VariableWithMultiSupport } from '@grafana/data';
+import {
+  AppEvents,
+  DataQueryErrorType,
+  LoadingState,
+  type DataQueryError,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
+  type EventBusExtended,
+  type ScopedVars,
+  type VariableWithMultiSupport,
+} from '@grafana/data';
 import { type LanguageDefinition } from '@grafana/plugin-ui';
-import { type TemplateSrv } from '@grafana/runtime';
+import { getAppEvents, type TemplateSrv } from '@grafana/runtime';
 import {
   COMMON_FNS,
   type DB,
@@ -21,6 +34,51 @@ import { fetchColumns, fetchTables, getSqlCompletionProvider } from './sqlComple
 import { getFieldConfig, toRawSql } from './sqlUtil';
 import { type PostgresOptions } from './types';
 
+/** Extra attempts after the first API Gateway timeout. Three calls total. */
+const MAX_GATEWAY_TIMEOUT_RETRIES = 2;
+const GATEWAY_TIMEOUT_MESSAGE = 'Endpoint request timed out';
+const RETRY_NOTICE = 'Panel query timed out. Retrying…';
+const RETRY_NOTICE_DEBOUNCE_MS = 5000;
+
+let lastRetryNoticeAt = 0;
+
+/**
+ * API Gateway closes /api/ds/query at 30s. DataSourceWithBackend turns that 504 into a
+ * LoadingState.Error emission (it does not error the observable), so retry has to happen
+ * on the response. Cancelled queries and other failures are returned as-is.
+ */
+function isApiGatewayTimeout(response: DataQueryResponse): boolean {
+  if (response.state !== LoadingState.Error || !response.error || isCancelledQueryError(response.error)) {
+    return false;
+  }
+
+  if (response.error.status === 504) {
+    return true;
+  }
+
+  const message = response.error.message || response.error.data?.message;
+  return message === GATEWAY_TIMEOUT_MESSAGE;
+}
+
+function isCancelledQueryError(error: DataQueryError): boolean {
+  if (error.type === DataQueryErrorType.Cancelled) {
+    return true;
+  }
+
+  return 'cancelled' in error && Boolean((error as { cancelled?: boolean }).cancelled);
+}
+
+function notifyQueryRetry(): void {
+  const now = Date.now();
+  if (now - lastRetryNoticeAt < RETRY_NOTICE_DEBOUNCE_MS) {
+    return;
+  }
+
+  lastRetryNoticeAt = now;
+  const appEvents = getAppEvents() as EventBusExtended | undefined;
+  appEvents?.emit(AppEvents.alertWarning, [RETRY_NOTICE]);
+}
+
 export class PostgresDatasource extends SqlDatasource {
   sqlLanguageDefinition: LanguageDefinition | undefined = undefined;
 
@@ -32,6 +90,26 @@ export class PostgresDatasource extends SqlDatasource {
 
   getQueryModel(target?: SQLQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars): PostgresQueryModel {
     return new PostgresQueryModel(target, templateSrv, scopedVars);
+  }
+
+  /**
+   * Re-issue this panel's query when API Gateway times out. Intermediate failures are
+   * not emitted, so the panel stays in its loading state until the last attempt.
+   */
+  query(request: DataQueryRequest<SQLQuery>): Observable<DataQueryResponse> {
+    return this.queryAttempt(request, 0);
+  }
+
+  private queryAttempt(request: DataQueryRequest<SQLQuery>, attempt: number): Observable<DataQueryResponse> {
+    return super.query(request).pipe(
+      switchMap((response) => {
+        if (attempt < MAX_GATEWAY_TIMEOUT_RETRIES && isApiGatewayTimeout(response)) {
+          notifyQueryRetry();
+          return this.queryAttempt(request, attempt + 1);
+        }
+        return of(response);
+      })
+    );
   }
 
   interpolateVariable = (value: string | string[] | number, variable: VariableWithMultiSupport) => {
